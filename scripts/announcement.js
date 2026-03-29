@@ -1,12 +1,8 @@
-/* --- scripts/announcement.js --- */
-
 document.addEventListener("DOMContentLoaded", () => {
     const JSON_PATH = 'data/announcements.json';
     const STORAGE_KEY = 'anno_hide_date'; 
 
     // 1. 檢查是否為「直接進入」(非返回)
-    // 只有在 type 為 'navigate' (正常輸入網址或點書籤) 或 'reload' 時顯示
-    // 如果是 'back_forward' (上一頁) 則不顯示
     const navEntry = performance.getEntriesByType("navigation")[0];
     if (navEntry && navEntry.type === 'back_forward') {
         return; 
@@ -34,27 +30,26 @@ function filterValidAnnouncements(list) {
     if (!list) return [];
     const now = new Date();
     return list.filter(item => {
-        const itemDate = new Date(item.date);
-        const diffTime = Math.abs(now - itemDate);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        return diffDays <= 7 && itemDate <= now;
+        const startDate = new Date(item.date);
+        const endDate = new Date(startDate);
+        endDate.setDate(startDate.getDate() + 7); // 截止日期 = date + 7天
+        return now <= endDate; // 在截止日期之前都顯示
     });
 }
 
-// 使用 Class 封裝邏輯，方便管理計時器與狀態
+// 使用 Class 封裝邏輯
 class AnnouncementModal {
     constructor(annos) {
         this.annos = annos;
         this.currentIndex = 0;
         this.timer = null;
         this.progressTimer = null;
-        this.isExpanded = false; // 是否已點擊展開
+        this.isExpanded = false;
         this.autoPlayTime = 5000; // 5秒
         
         this.createDOM();
         this.renderContent(0, 'init');
         
-        // 只有多則公告時才啟動自動播放
         if (this.annos.length > 1) {
             this.startAutoPlay();
         }
@@ -71,9 +66,7 @@ class AnnouncementModal {
                     <div class="progress-bar-container"><div class="progress-bar"></div></div>
                 ` : ''}
                 
-                <div id="anno-content-wrapper" title="點擊展開閱讀更多">
-                    <!-- 內容區 -->
-                </div>
+                <div id="anno-content-wrapper" title="點擊展開閱讀更多"></div>
 
                 <div class="anno-footer">
                     <label class="dont-show-row">
@@ -85,30 +78,24 @@ class AnnouncementModal {
         `;
         document.body.appendChild(this.overlay);
         
-        // 顯示動畫
         setTimeout(() => this.overlay.classList.add('show'), 50);
 
-        // 綁定事件
         this.wrapper = this.overlay.querySelector('#anno-content-wrapper');
         this.bar = this.overlay.querySelector('.progress-bar');
         
-        // 1. 關閉按鈕
         this.overlay.querySelector('.btn-close').onclick = () => this.close();
         
-        // 2. 點擊內容：暫停播放 + 展開內容
         this.wrapper.onclick = () => {
             this.stopAutoPlay();
             this.wrapper.classList.add('expanded');
-            this.wrapper.removeAttribute('title'); // 移除提示
+            this.wrapper.removeAttribute('title');
             this.isExpanded = true;
-            // 隱藏進度條 (因為停止播放了)
             if(this.bar) this.bar.parentElement.style.display = 'none';
         };
 
-        // 3. 左右切換
         if (this.annos.length > 1) {
             this.overlay.querySelector('.nav-prev').onclick = (e) => {
-                e.stopPropagation(); // 防止觸發 wrapper click
+                e.stopPropagation();
                 this.manualSwitch(-1);
             };
             this.overlay.querySelector('.nav-next').onclick = (e) => {
@@ -133,22 +120,23 @@ class AnnouncementModal {
             });
         }
 
-        // 產生內容 HTML
+        const startDate = new Date(data.date);
+        const endDate = new Date(startDate);
+        endDate.setDate(startDate.getDate() + 7);
+
         const contentHTML = `
             ${data.cover ? `<img src="${data.cover}" class="anno-cover">` : ''}
             <div class="anno-body">
                 <h2 class="anno-title">${data.title}</h2>
-                <div class="anno-date">${data.date} (${index + 1}/${this.annos.length})</div>
+                <div class="anno-date">(${index + 1}/${this.annos.length})</div>
                 ${blocksHtml}
             </div>
         `;
 
-        // 處理動畫類別
         this.wrapper.innerHTML = contentHTML;
         
-        // 移除舊動畫 class 重新觸發
         this.wrapper.classList.remove('slide-in-right', 'slide-in-left');
-        void this.wrapper.offsetWidth; // Trigger reflow
+        void this.wrapper.offsetWidth;
 
         if (direction === 'next') {
             this.wrapper.classList.add('slide-in-right');
@@ -156,16 +144,13 @@ class AnnouncementModal {
             this.wrapper.classList.add('slide-in-left');
         }
         
-        // 每次切換都重置捲軸位置到頂部
         this.wrapper.scrollTop = 0;
     }
 
     startAutoPlay() {
-        if (this.isExpanded) return; // 如果已展開，不自動播放
-
-        this.stopAutoPlay(); // 先清除舊的
+        if (this.isExpanded) return;
+        this.stopAutoPlay();
         
-        // 啟動進度條動畫
         if(this.bar) {
             this.bar.style.transition = 'none';
             this.bar.style.width = '0%';
@@ -191,11 +176,10 @@ class AnnouncementModal {
     nextSlide() {
         this.currentIndex = (this.currentIndex + 1) % this.annos.length;
         this.renderContent(this.currentIndex, 'next');
-        this.startAutoPlay(); // 繼續下一輪
+        this.startAutoPlay();
     }
 
     manualSwitch(direction) {
-        // 手動切換時，先暫停，切換後重新計時 (除非已展開)
         this.stopAutoPlay();
         
         if (direction === 1) {
@@ -221,4 +205,11 @@ class AnnouncementModal {
         this.overlay.classList.remove('show');
         setTimeout(() => this.overlay.remove(), 300);
     }
+}
+
+// 簡單的 Markdown 轉換器 (可依需求擴充)
+function parseMarkdown(text) {
+    return text
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>');
 }

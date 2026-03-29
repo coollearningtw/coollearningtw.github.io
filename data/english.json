@@ -1085,6 +1085,202 @@
       "name": "龍騰 S2",
       "lessons": [
         {
+          "lesson": 1,
+          "title": "第一課",
+          "vocabulary": [
+            {
+              "word": "champion",
+              "pos": "n. [C]",
+              "chinese": "冠軍"
+            },
+            {
+              "word": "dedication",
+              "pos": "n. [U]",
+              "chinese": "奉獻；投入"
+            },
+            {
+              "word": "dedicate",
+              "pos": "vt.",
+              "chinese": "把……奉獻於；將……投入於"
+            },
+            {
+              "word": "medal",
+              "pos": "n. [C]",
+              "chinese": "獎牌"
+            },
+            {
+              "word": "injury",
+              "pos": "n. [C][U]",
+              "chinese": "受傷"
+            },
+            {
+              "word": "injure",
+              "pos": "vt.",
+              "chinese": "使……受傷"
+            },
+            {
+              "word": "success",
+              "pos": "n. [U]",
+              "chinese": "成功"
+            },
+            {
+              "word": "succeed",
+              "pos": "vi.",
+              "chinese": "成功辦到"
+            },
+            {
+              "word": "successful",
+              "pos": "adj.",
+              "chinese": "成功的"
+            },
+            {
+              "word": "pain",
+              "pos": "n. [C][U]",
+              "chinese": "疼痛"
+            },
+            {
+              "word": "painfully",
+              "pos": "adv.",
+              "chinese": "痛苦地"
+            },
+            {
+              "word": "painful",
+              "pos": "adj.",
+              "chinese": "疼痛的"
+            },
+            {
+              "word": "immediately",
+              "pos": "adv.",
+              "chinese": "立即；馬上"
+            },
+            {
+              "word": "immediate",
+              "pos": "adj.",
+              "chinese": "立即的"
+            },
+            {
+              "word": "collapse",
+              "pos": "vi.",
+              "chinese": "倒下"
+            },
+            {
+              "word": "collapse",
+              "pos": "n. [U]",
+              "chinese": "倒塌"
+            },
+            {
+              "word": "medical",
+              "pos": "adj.",
+              "chinese": "醫療的"
+            },
+            {
+              "word": "staff",
+              "pos": "n. [U][C]",
+              "chinese": "全體員工"
+            },
+            {
+              "word": "courage",
+              "pos": "n. [U]",
+              "chinese": "勇氣"
+            },
+            {
+              "word": "strength",
+              "pos": "n. [U]",
+              "chinese": "意志力"
+            },
+            {
+              "word": "strengthen",
+              "pos": "vt.",
+              "chinese": "強化"
+            },
+            {
+              "word": "support",
+              "pos": "n. [U]",
+              "chinese": "支持"
+            },
+            {
+              "word": "support",
+              "pos": "vt.",
+              "chinese": "支持"
+            },
+            {
+              "word": "struggle",
+              "pos": "vi.",
+              "chinese": "艱難地前進"
+            },
+            {
+              "word": "struggle",
+              "pos": "n. [C]",
+              "chinese": "奮鬥；努力"
+            },
+            {
+              "word": "pride",
+              "pos": "n. [U]",
+              "chinese": "驕傲；得意"
+            },
+            {
+              "word": "proud",
+              "pos": "adj.",
+              "chinese": "驕傲的；得意的"
+            },
+            {
+              "word": "emotional",
+              "pos": "adj.",
+              "chinese": "情緒激動的"
+            },
+            {
+              "word": "emotion",
+              "pos": "n. [C][U]",
+              "chinese": "情緒；情感"
+            },
+            {
+              "word": "admiration",
+              "pos": "n. [U]",
+              "chinese": "欽佩"
+            },
+            {
+              "word": "admire",
+              "pos": "vt.",
+              "chinese": "欽佩"
+            },
+            {
+              "word": "respect",
+              "pos": "n. [U]",
+              "chinese": "尊敬；尊重"
+            },
+            {
+              "word": "respect",
+              "pos": "vt.",
+              "chinese": "尊敬；尊重"
+            },
+            {
+              "word": "take off",
+              "pos": "phr.",
+              "chinese": "出發"
+            },
+            {
+              "word": "have one's heart set on",
+              "pos": "phr.",
+              "chinese": "一心一意想要做某事"
+            },
+            {
+              "word": "speed (...) up",
+              "pos": "phr.",
+              "chinese": "加速"
+            },
+            {
+              "word": "rise to one's feet",
+              "pos": "phr.",
+              "chinese": "（重新）站起來"
+            },
+            {
+              "word": "carry...through",
+              "pos": "phr.",
+              "chinese": "幫助……渡過難關"
+            }
+          ]
+        },
+        {
           "lesson": 2,
           "title": "第二課",
           "vocabulary": [
@@ -3015,6 +3211,27 @@
               "word": "fort",
               "pos": "n. [C]",
               "chinese": "要塞；堡壘"
+            }
+          ]
+        },
+        {
+          "lesson": 42,
+          "title": "4-2",
+          "vocabulary": [
+            {
+              "word": "fountain",
+              "pos": "n. [C]",
+              "chinese": "噴水池"
+            },
+            {
+              "word": "frequency",
+              "pos": "n. [C][U]",
+              "chinese": "頻率"
+            },
+            {
+              "word": "frequent",
+              "pos": "adj.",
+              "chinese": "頻繁的"
             }
           ]
         }

@@ -1331,123 +1331,128 @@
             },
             {
               "word": "normally",
-              "pos": "",
-              "chinese": ""
+              "pos": "adv.",
+              "chinese": "通常"
             },
             {
               "word": "normal",
-              "pos": "",
-              "chinese": ""
+              "pos": "adj.",
+              "chinese": "正常的"
             },
             {
               "word": "distinguish",
-              "pos": "",
-              "chinese": ""
+              "pos": "vi. vt.",
+              "chinese": "分辨"
             },
             {
               "word": "accurately",
-              "pos": "",
-              "chinese": ""
+              "pos": "adv.",
+              "chinese": "精確地；準確地"
             },
             {
               "word": "accurate",
-              "pos": "",
-              "chinese": ""
+              "pos": "adj.",
+              "chinese": "精確的；準確的"
             },
             {
               "word": "function",
-              "pos": "",
-              "chinese": ""
+              "pos": "vi.",
+              "chinese": "運作；起作用"
             },
             {
               "word": "function",
-              "pos": "",
-              "chinese": ""
+              "pos": "n. [C]",
+              "chinese": "功能"
             },
             {
               "word": "blame",
-              "pos": "",
-              "chinese": ""
+              "pos": "vt.",
+              "chinese": "歸咎於；責怪"
             },
             {
               "word": "affect",
-              "pos": "",
-              "chinese": ""
+              "pos": "vt.",
+              "chinese": "影響"
             },
             {
               "word": "passenger",
-              "pos": "",
-              "chinese": ""
+              "pos": "n. [C]",
+              "chinese": "乘客"
             },
             {
               "word": "distract",
-              "pos": "",
-              "chinese": ""
+              "pos": "vt.",
+              "chinese": "使分心；使轉移注意力"
             },
             {
               "word": "distraction",
-              "pos": "",
-              "chinese": ""
+              "pos": "n. [C]",
+              "chinese": "使人分心的事物"
             },
             {
               "word": "indicate",
-              "pos": "",
-              "chinese": ""
+              "pos": "vt.",
+              "chinese": "指出"
             },
             {
               "word": "indication",
-              "pos": "",
-              "chinese": ""
+              "pos": "n. [C][U]",
+              "chinese": "跡象"
             },
             {
               "word": "conditios",
-              "pos": "",
-              "chinese": ""
+              "pos": "n. pl.",
+              "chinese": "情況；環境"
             },
             {
               "word": "condition",
-              "pos": "",
-              "chinese": ""
+              "pos": "n. [U]",
+              "chinese": "狀況"
             },
             {
               "word": "solution",
-              "pos": "",
-              "chinese": ""
+              "pos": "n. [C]",
+              "chinese": "解決方法"
+            },
+            {
+              "word": "solve",
+              "pos": "vt.",
+              "chinese": "解決"
             },
             {
               "word": "ingredient",
-              "pos": "",
-              "chinese": ""
+              "pos": "n. [C]",
+              "chinese": "（食物的）材料；成分"
             },
             {
               "word": "recipe",
-              "pos": "",
-              "chinese": ""
+              "pos": "n. [C]",
+              "chinese": "食譜"
             },
             {
               "word": "comparison",
-              "pos": "",
-              "chinese": ""
+              "pos": "n. [C][U]",
+              "chinese": "比較"
             },
             {
               "word": "compare",
-              "pos": "",
-              "chinese": ""
+              "pos": "vt.",
+              "chinese": "比較"
             },
             {
               "word": "remain",
-              "pos": "",
-              "chinese": ""
+              "pos": "vi.",
+              "chinese": "保持"
             },
             {
               "word": "provide",
-              "pos": "",
-              "chinese": ""
+              "pos": "vt.",
+              "chinese": "提供"
             },
             {
               "word": "pleasant",
-              "pos": "",
-              "chinese": ""
+              "pos": "adj.",
+              "chinese": "令人愉快的"
             }
           ]
         },

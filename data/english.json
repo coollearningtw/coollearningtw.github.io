@@ -1286,53 +1286,48 @@
           "vocabulary": [
             {
               "word": "warn",
-              "pos": "",
-              "chinese": ""
+              "pos": "vt.",
+              "chinese": "警告；提醒"
             },
             {
               "word": "warning",
-              "pos": "",
-              "chinese": ""
+              "pos": "n. [C]",
+              "chinese": "警告"
             },
             {
               "word": "announcement",
-              "pos": "",
-              "chinese": ""
+              "pos": "n. [C]",
+              "chinese": "公告；廣播通知"
             },
             {
               "word": "announce",
-              "pos": "",
-              "chinese": ""
+              "pos": "vt.",
+              "chinese": "宣布"
             },
             {
               "word": "research",
-              "pos": "",
-              "chinese": ""
+              "pos": "n. [U]",
+              "chinese": "研究"
             },
             {
               "word": "research",
-              "pos": "",
-              "chinese": ""
+              "pos": "vt.",
+              "chinese": "研究"
             },
             {
               "word": "flavor",
-              "pos": "",
-              "chinese": ""
+              "pos": "n. [C][U]",
+              "chinese": "味道"
             },
             {
               "word": "flavoring",
-              "pos": "",
-              "chinese": ""
+              "pos": "n. [C][U]",
+              "chinese": "調味料"
             },
             {
               "word": "pressure",
-              "pos": "",
-              "chinese": ""
-            },
-            {
-              "word": "pressure",
-              "pos": "",
-              "chinese": ""
+              "pos": "n. [U]",
+              "chinese": "（液體；氣體等）壓力"
             },
             {
               "word": "normally",
@@ -1473,7 +1468,7 @@
             {
               "word": "desperately",
               "pos": "adv.",
-              "chinese": "拼命地"
+              "chinese": "拚命地"
             },
             {
               "word": "desperate",

@@ -1,29 +1,6 @@
 {
   "sources": [
     {
-      "name": "龍騰 S1",
-      "lessons": [
-        {
-          "lesson": 4,
-          "title": "第四課",
-          "sentences": [
-            {
-              "en": "This is the title of the lesson.",
-              "ch": "這是課文標題。"
-            },
-            {
-              "en": "Dogs can detect many smells.",
-              "ch": "狗可以偵測到許多氣味。"
-            },
-            {
-              "en": "This helps them find items.",
-              "ch": "這幫助牠們找到物品。"
-            }
-          ]
-        }
-      ]
-    },
-    {
       "name": "空中美語No. 311",
       "lessons": [
         {

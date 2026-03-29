@@ -3232,6 +3232,568 @@
               "word": "frequent",
               "pos": "adj.",
               "chinese": "頻繁的"
+            },
+            {
+              "word": "gallery",
+              "pos": "n. [C]",
+              "chinese": "畫廊"
+            },
+            {
+              "word": "garage",
+              "pos": "n. [C]",
+              "chinese": "車庫"
+            },
+            {
+              "word": "generation",
+              "pos": "n. [C]",
+              "chinese": "一代；世代"
+            },
+            {
+              "word": "global",
+              "pos": "adj.",
+              "chinese": "全球的"
+            },
+            {
+              "word": "globe",
+              "pos": "n. [S]",
+              "chinese": "地球；世界"
+            },
+            {
+              "word": "greenhouse",
+              "pos": "n. [C]",
+              "chinese": "花房；溫室"
+            },
+            {
+              "word": "hallway",
+              "pos": "n. [C]",
+              "chinese": "門廳；走廊"
+            },
+            {
+              "word": "harbor",
+              "pos": "n. [C]",
+              "chinese": "港口"
+            },
+            {
+              "word": "headquarters",
+              "pos": "n. [C]",
+              "chinese": "總部"
+            },
+            {
+              "word": "hive",
+              "pos": "n. [C]",
+              "chinese": "蜂窩"
+            },
+            {
+              "word": "homeland",
+              "pos": "n. [C]",
+              "chinese": "祖國；故鄉"
+            },
+            {
+              "word": "hometown",
+              "pos": "n. [C]",
+              "chinese": "家鄉"
+            },
+            {
+              "word": "hourly",
+              "pos": "adj.",
+              "chinese": "每小時的"
+            },
+            {
+              "word": "immediate",
+              "pos": "adj.",
+              "chinese": "直接的；立刻的"
+            },
+            {
+              "word": "indoor",
+              "pos": "adj.",
+              "chinese": "室內的"
+            },
+            {
+              "word": "indoors",
+              "pos": "adv.",
+              "chinese": "在室內"
+            },
+            {
+              "word": "inn",
+              "pos": "n. [C]",
+              "chinese": "（通常位於鄉間的）小旅館"
+            },
+            {
+              "word": "inner",
+              "pos": "adj.",
+              "chinese": "內部的；內心的"
+            },
+            {
+              "word": "jail",
+              "pos": "n. [C][U]",
+              "chinese": "監獄；監禁"
+            },
+            {
+              "word": "kindergarten",
+              "pos": "n. [C]",
+              "chinese": "幼稚園；托兒所"
+            },
+            {
+              "word": "kingdom",
+              "pos": "n. [C]",
+              "chinese": "王國"
+            },
+            {
+              "word": "laboratory/lab",
+              "pos": "n. [C]",
+              "chinese": "實驗室"
+            },
+            {
+              "word": "landmark",
+              "pos": "n. [C]",
+              "chinese": "地標"
+            },
+            {
+              "word": "lately",
+              "pos": "adv.",
+              "chinese": "近來；最近"
+            },
+            {
+              "word": "lifetime",
+              "pos": "n. [C]",
+              "chinese": "一生；終身"
+            },
+            {
+              "word": "lighthouse",
+              "pos": "n. [C]",
+              "chinese": "燈塔"
+            },
+            {
+              "word": "lobby",
+              "pos": "n. [C]",
+              "chinese": "（旅館等的）大廳"
+            },
+            {
+              "word": "locate",
+              "pos": "vt.",
+              "chinese": "確定…的位置"
+            },
+            {
+              "word": "location",
+              "pos": "n. [C]",
+              "chinese": "位置"
+            },
+            {
+              "word": "mall",
+              "pos": "n. [C]",
+              "chinese": "購物中心"
+            },
+            {
+              "word": "meanwhile",
+              "pos": "adv.",
+              "chinese": "同時"
+            },
+            {
+              "word": "mill",
+              "pos": "n. [C]",
+              "chinese": "磨坊"
+            },
+            {
+              "word": "monthly",
+              "pos": "adj.",
+              "chinese": "每月的"
+            },
+            {
+              "word": "motel",
+              "pos": "n. [C]",
+              "chinese": "汽車旅館"
+            },
+            {
+              "word": "native",
+              "pos": "adj.",
+              "chinese": "本地的；土生土長的"
+            },
+            {
+              "word": "neighborhood",
+              "pos": "n. [C]",
+              "chinese": "附近地區；社區"
+            },
+            {
+              "word": "nowadays",
+              "pos": "adv.",
+              "chinese": "現今；當今"
+            },
+            {
+              "word": "nursery",
+              "pos": "n. [C]",
+              "chinese": "托兒所"
+            }
+          ]
+        },
+        {
+          "lesson": 43,
+          "title": "4-3",
+          "vocabulary": [
+            {
+              "word": "occasion",
+              "pos": "n. [C]",
+              "chinese": "場合"
+            },
+            {
+              "word": "occasional",
+              "pos": "adj.",
+              "chinese": "有時的；偶爾的"
+            },
+            {
+              "word": "onto",
+              "pos": "prep.",
+              "chinese": "到…上面；向…之上"
+            },
+            {
+              "word": "opposite",
+              "pos": "adj.",
+              "chinese": "對面的"
+            },
+            {
+              "word": "outdoor",
+              "pos": "adj.",
+              "chinese": "戶外的"
+            },
+            {
+              "word": "outdoors",
+              "pos": "adv.",
+              "chinese": "在戶外"
+            },
+            {
+              "word": "outer",
+              "pos": "adj.",
+              "chinese": "外部的"
+            },
+            {
+              "word": "overnight",
+              "pos": "adv.",
+              "chinese": "整夜地；一夜"
+            },
+            {
+              "word": "overseas",
+              "pos": "adj.",
+              "chinese": "海外的；國外的"
+            },
+            {
+              "word": "palace",
+              "pos": "n. [C]",
+              "chinese": "宮殿"
+            },
+            {
+              "word": "passage",
+              "pos": "n. [C]",
+              "chinese": "通道"
+            },
+            {
+              "word": "postpone",
+              "pos": "vt.",
+              "chinese": "使延期"
+            },
+            {
+              "word": "previous",
+              "pos": "adj.",
+              "chinese": "先前的"
+            },
+            {
+              "word": "pub",
+              "pos": "n. [C]",
+              "chinese": "酒館；酒吧"
+            },
+            {
+              "word": "regional",
+              "pos": "adj.",
+              "chinese": "地區的；地方性的"
+            },
+            {
+              "word": "remote",
+              "pos": "adj.",
+              "chinese": "遙遠的；偏僻的"
+            },
+            {
+              "word": "route",
+              "pos": "n. [C]",
+              "chinese": "路線"
+            },
+            {
+              "word": "rural",
+              "pos": "adj.",
+              "chinese": "鄉村的"
+            },
+            {
+              "word": "semester",
+              "pos": "n. [C]",
+              "chinese": "學期"
+            },
+            {
+              "word": "shelter",
+              "pos": "n. [U]",
+              "chinese": "庇護"
+            },
+            {
+              "word": "shortly",
+              "pos": "adv.",
+              "chinese": "不久；馬上"
+            },
+            {
+              "word": "site",
+              "pos": "n. [C]",
+              "chinese": "地點；場所"
+            },
+            {
+              "word": "skyscraper",
+              "pos": "n. [C]",
+              "chinese": "摩天大樓"
+            },
+            {
+              "word": "someday",
+              "pos": "adv.",
+              "chinese": "將來有一天"
+            },
+            {
+              "word": "sometime",
+              "pos": "adv.",
+              "chinese": "（過去或未來）某個時候"
+            },
+            {
+              "word": "stadium",
+              "pos": "n. [C]",
+              "chinese": "運動場"
+            },
+            {
+              "word": "studio",
+              "pos": "n. [C]",
+              "chinese": "攝影棚；錄音室；（藝術家的）工作室"
+            },
+            {
+              "word": "suburb",
+              "pos": "n. [C]",
+              "chinese": "郊區"
+            },
+            {
+              "word": "surround",
+              "pos": "vt.",
+              "chinese": "圍繞；包圍"
+            },
+            {
+              "word": "surroundings",
+              "pos": "n. pl.",
+              "chinese": "環境"
+            },
+            {
+              "word": "temporary",
+              "pos": "adj.",
+              "chinese": "暫時的"
+            },
+            {
+              "word": "territory",
+              "pos": "n. [C][U]",
+              "chinese": "領土"
+            },
+            {
+              "word": "timetable",
+              "pos": "n. [C]",
+              "chinese": "時間表；時刻表"
+            },
+            {
+              "word": "tomb",
+              "pos": "n. [C]",
+              "chinese": "（尤指重要人物的）墳墓"
+            },
+            {
+              "word": "tower",
+              "pos": "n. [C]",
+              "chinese": "塔；塔樓；高樓"
+            },
+            {
+              "word": "tribe",
+              "pos": "n. [C]",
+              "chinese": "部落"
+            },
+            {
+              "word": "tropical",
+              "pos": "adj.",
+              "chinese": "熱帶的"
+            },
+            {
+              "word": "tunnel",
+              "pos": "n. [C]",
+              "chinese": "隧道"
+            },
+            {
+              "word": "urban",
+              "pos": "adj.",
+              "chinese": "都市的"
+            },
+            {
+              "word": "weekly",
+              "pos": "adj.",
+              "chinese": "每週一次的"
+            },
+            {
+              "word": "workplace",
+              "pos": "n. [C]",
+              "chinese": "職場；工作場所"
+            },
+            {
+              "word": "yearly",
+              "pos": "adj.",
+              "chinese": "每年的"
+            },
+            {
+              "word": "zone",
+              "pos": "n. [C]",
+              "chinese": "（尤指有不同特徵或用途的）區域；地帶"
+            }
+          ]
+        },
+        {
+          "lesson": 5,
+          "title": "5",
+          "vocabulary": [
+            {
+              "word": "atom",
+              "pos": "n. [C]",
+              "chinese": "原子"
+            },
+            {
+              "word": "atomic",
+              "pos": "adj.",
+              "chinese": "原子的"
+            },
+            {
+              "word": "bunch",
+              "pos": "n. [C]",
+              "chinese": "串；束；群"
+            },
+            {
+              "word": "bundle",
+              "pos": "n. [C]",
+              "chinese": "束；捆"
+            },
+            {
+              "word": "calorie",
+              "pos": "n. [C]",
+              "chinese": "卡路里"
+            },
+            {
+              "word": "comma",
+              "pos": "n. [C]",
+              "chinese": "逗號"
+            },
+            {
+              "word": "countable",
+              "pos": "adj.",
+              "chinese": "可數的"
+            },
+            {
+              "word": "dime",
+              "pos": "n. [C]",
+              "chinese": "（美國、加拿大的）一角硬幣"
+            },
+            {
+              "word": "extent",
+              "pos": "n. [U]",
+              "chinese": "程度；範圍"
+            },
+            {
+              "word": "gallon",
+              "pos": "n. [C]",
+              "chinese": "加侖（液量單位）"
+            },
+            {
+              "word": "handful",
+              "pos": "n. [C]",
+              "chinese": "一把"
+            },
+            {
+              "word": "heap",
+              "pos": "n. [C]",
+              "chinese": "（凌亂的）一堆"
+            },
+            {
+              "word": "herd",
+              "pos": "n. [C]",
+              "chinese": "獸群"
+            },
+            {
+              "word": "kilometer",
+              "pos": "n. [C]",
+              "chinese": "公里"
+            },
+            {
+              "word": "majority",
+              "pos": "n. [U]",
+              "chinese": "（大）多數"
+            },
+            {
+              "word": "measurable",
+              "pos": "adj.",
+              "chinese": "可測量的；顯著的"
+            },
+            {
+              "word": "measure",
+              "pos": "n. [C]",
+              "chinese": "方法；措施（常用複數形）"
+            },
+            {
+              "word": "parcel",
+              "pos": "n. [C]",
+              "chinese": "包裹"
+            },
+            {
+              "word": "penny",
+              "pos": "n. [C]",
+              "chinese": "便士；一分糖"
+            },
+            {
+              "word": "percent",
+              "pos": "n. [C]",
+              "chinese": "百分之一"
+            },
+            {
+              "word": "percentage",
+              "pos": "n. [C]",
+              "chinese": "百分比；百分率"
+            },
+            {
+              "word": "pile",
+              "pos": "n. [C]",
+              "chinese": "一堆；一疊"
+            },
+            {
+              "word": "pint",
+              "pos": "n. [C]",
+              "chinese": "品脫（液量單位）"
+            },
+            {
+              "word": "plenty",
+              "pos": "n. [U]",
+              "chinese": "大量；充足"
+            },
+            {
+              "word": "portion",
+              "pos": "n. [C]",
+              "chinese": "一部分；（食物的）一份"
+            },
+            {
+              "word": "rainfall",
+              "pos": "n. [U]",
+              "chinese": "降雨量"
+            },
+            {
+              "word": "slice",
+              "pos": "n. [C]",
+              "chinese": "一片"
+            },
+            {
+              "word": "sum",
+              "pos": "n. [C]",
+              "chinese": "總數；金額"
+            },
+            {
+              "word": "ton",
+              "pos": "n. [C]",
+              "chinese": "噸"
             }
           ]
         }

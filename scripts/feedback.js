@@ -127,7 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = await loadEnglishData();
         const source = data.find(s => s.name === selectedSource);
         if (source && source.lessons) {
-            const lessonOptions = source.lessons.map(l => ({ value: l.lesson, text: `第 ${l.lesson} 課: ${l.title}` }));
+            const lessonOptions = source.lessons.map(l => ({ value: l.lesson, text: `${l.title}` }));
             populateSelect(lessonSelect, lessonOptions, '選擇課別...');
         }
         updateScopeHiddenInput();

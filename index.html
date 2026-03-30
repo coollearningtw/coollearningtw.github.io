@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="styles/header.css">
     <link rel="stylesheet" href="styles/index.css">
     <link rel="stylesheet" href="styles/announcement.css">
+    <link rel="stylesheet" href="styles/feedback.css">
     <link rel="icon" type="image/png" href="images/logo2400x.png">
     <style>
         /* 首頁專屬佈局調整 */
@@ -177,8 +178,66 @@
                 </a>
             </div>
         </section>
+        
     </div>
+        <button id="feedback-fab" title="問題回報與建議">&#9993;</button>
 
+    <!-- 2. 表單視窗 (Modal) -->
+    <div id="feedback-modal-overlay" class="feedback-overlay">
+        <div id="feedback-modal-card" class="feedback-card">
+            
+            <!-- 標題與關閉按鈕 -->
+            <div class="feedback-header">
+                <h3>問題回報 & 內容建議</h3>
+                <button id="feedback-close-btn" class="feedback-close">&times;</button>
+            </div>
+
+            <!-- 表單內容 -->
+            <form id="feedback-form">
+                <!-- 回報類型 -->
+                <div class="form-group">
+                    <label for="feedback-type">回報類型 <span class="required">*</span></label>
+                    <select id="feedback-type" name="entry.499601865" required>
+                        <option value="" disabled selected>請選擇...</option>
+                        <option value="問題回報 (網站功能、顯示異常等)">問題回報 (網站功能、顯示異常等)</option>
+                        <option value="內容勘誤 (單字、翻譯錯誤等)">內容勘誤 (單字、翻譯錯誤等)</option>
+                        <option value="內容建議 (新增題庫、新功能等)">內容建議 (新增題庫、新功能等)</option>
+                    </select>
+                </div>
+
+                <!-- 內容勘誤的聯動選單 (預設隱藏) -->
+                <div id="cascading-dropdowns" class="form-group-wrapper" style="display: none;">
+                    <p class="form-group-label">勘誤範圍 (選填)</p>
+                    <div class="dropdown-row">
+                        <select id="feedback-source" name="source" disabled><option>選擇版本...</option></select>
+                        <select id="feedback-lesson" name="lesson" disabled><option>選擇課別...</option></select>
+                        <select id="feedback-word" name="word" disabled><option>選擇單字...</option></select>
+                    </div>
+                </div>
+
+                <!-- 詳細說明 -->
+                <div class="form-group">
+                    <label for="feedback-details">詳細說明 <span class="required">*</span></label>
+                    <textarea id="feedback-details" name="entry.608420595" rows="5" placeholder="請盡可能詳細地描述您遇到的問題或建議..." required></textarea>
+                </div>
+
+                <!-- 隱藏欄位，用於合併勘誤範圍資訊 -->
+                <input type="hidden" id="feedback-scope-hidden" name="entry.539772390" value="N/A">
+
+                <!-- 提交按鈕 -->
+                <div class="feedback-footer">
+                    <button type="submit" id="feedback-submit-btn" class="btn">送出回報</button>
+                </div>
+            </form>
+
+            <!-- 提交成功訊息 -->
+            <div id="feedback-success-msg" class="feedback-success" style="display: none;">
+                <h4>&#10004; 感謝您的回報！</h4>
+                <p>我們已收到您的訊息，將會盡快處理。</p>
+                <button id="feedback-close-success-btn" class="btn">關閉</button>
+            </div>
+        </div>
+    </div>
     <script src="scripts/header.js"></script>
     <script>
         // 保留原有的簽到邏輯
@@ -210,5 +269,6 @@
     </script>
     <script src="scripts/announcement.js"></script>
     <script src="scripts/utils.js"></script>
+    <script src="scripts/feedback.js"></script>
 </body>
 </html>

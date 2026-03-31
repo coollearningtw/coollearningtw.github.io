@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>翻譯列表</title>
+    <link rel="stylesheet" href="../styles/style.css">
+    <link rel="stylesheet" href="../styles/header.css">
+    <style>
+        header { justify-content: space-between; }
+        .head-actions { display: flex; gap: 10px; align-items: center; }
+        .trans-item { padding: 20px; margin-bottom: 12px; cursor: pointer; }
+        .ch-txt { font-size: 1.1rem; font-weight: bold; }
+        .en-txt { margin-top: 10px; color: var(--primary); display: none; border-top: 1px dashed #eee; padding-top: 10px; }
+        .en-txt.show { display: block; }
+        .btn-quiz { background: #e3f2fd; color: var(--primary); border: 2px solid var(--primary); padding: 8px 16px; border-radius: 50px; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo"><a href="english.html" class="back-btn">⬅</a> 翻譯列表</div>
+        <div class="head-actions">
+            <button class="icon-btn" id="all-toggle" title="全部翻譯">
+                <svg viewBox="0 0 24 24"><path d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0014.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>
+            </button>
+            <button class="btn-quiz" onclick="location.href='translation-quiz.html'">進入測驗</button>
+        </div>
+    </header>
+
+    <div class="page-container" id="list-root"></div>
+
+    <script>
+        let isAllShown = false;
+        (async () => {
+            const sel = JSON.parse(localStorage.getItem('sel_trans_lessons') || '[]');
+            const res = await fetch('../data/english-translation.json');
+            const data = await res.json();
+            const root = document.getElementById('list-root');
+
+            data.sources.forEach(src => {
+                src.lessons.forEach(l => {
+                    if (sel.some(s => s.source === src.name && s.lesson === l.lesson)) {
+                        l.pairs.forEach(p => {
+                            const card = document.createElement('div');
+                            card.className = 'std-card trans-item';
+                            card.innerHTML = `<div class="ch-txt">${p.ch}</div><div class="en-txt">${p.en}</div>`;
+                            card.onclick = () => card.querySelector('.en-txt').classList.toggle('show');
+                            root.appendChild(card);
+                        });
+                    }
+                });
+            });
+
+            document.getElementById('all-toggle').onclick = () => {
+                isAllShown = !isAllShown;
+                document.querySelectorAll('.en-txt').forEach(el => el.classList.toggle('show', isAllShown));
+            };
+        })();
+    </script>
+</body>
+</html>

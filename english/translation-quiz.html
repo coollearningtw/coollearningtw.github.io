@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>翻譯測驗</title>
+    <link rel="stylesheet" href="../styles/style.css">
+    <link rel="stylesheet" href="../styles/header.css">
+    <style>
+        .quiz-wrapper { max-width: 750px; margin: 20px auto; text-align: center; }
+        .ch-display { font-size: 1.6rem; font-weight: bold; margin-bottom: 20px; color: #333; line-height: 1.4; padding: 0 10px; }
+        
+        textarea { 
+            width: 100%; height: 140px; font-size: 1.25rem; padding: 18px; 
+            border-radius: 16px; border: 2px solid #ddd; outline: none; 
+            resize: none; transition: 0.3s;
+            background: #fff;
+        }
+        textarea:focus { border-color: #8e44ad; box-shadow: 0 4px 15px rgba(142, 68, 173, 0.1); }
+        textarea:disabled { background: #f8f9fa; color: #666; }
+
+        .btn-group { margin-top: 25px; display: flex; gap: 12px; justify-content: center; }
+        
+        /* 按鈕響應式優化 */
+        .btn-action { padding: 12px 45px; font-size: 1.1rem; border-radius: 50px; cursor: pointer; font-weight: bold; border: none; transition: 0.2s; }
+        .btn-check { background: var(--primary); color: #fff; box-shadow: 0 4px 12px rgba(11, 118, 209, 0.2); }
+        .btn-next { background: #333; color: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+
+        @media (max-width: 600px) {
+            .quiz-wrapper { margin: 10px auto; }
+            .ch-display { font-size: 1.3rem; margin-bottom: 15px; }
+            textarea { height: 120px; font-size: 1.1rem; padding: 15px; }
+            .btn-action { padding: 10px 30px; font-size: 1rem; width: 100%; }
+            .btn-group { flex-direction: column; padding: 0 10px; }
+        }
+    </style>
+</head>
+<body>
+    <header><div class="logo"><a href="translation.html" class="back-link">⬅</a> 翻譯測驗</div></header>
+
+    <div class="page-container quiz-wrapper">
+        <div id="quiz-count" style="margin-bottom:12px; color:#999; font-weight: bold; font-size: 0.9rem;">載入中...</div>
+        <div id="ch-text" class="ch-display">準備中...</div>
+        
+        <textarea id="user-input" placeholder="請在此輸入英文翻譯句子..." spellcheck="false"></textarea>
+        
+        <div id="diff-output" class="diff-result-box" style="display:none;"></div>
+
+        <div class="btn-group">
+            <button id="btn-check" class="btn-action btn-check">核對答案</button>
+            <button id="btn-next" class="btn-action btn-next" style="display:none;"></button>
+        </div>
+    </div>
+
+    <script>
+        let quizPool = [];
+        let index = 0;
+
+        function tokenize(text) {
+            // 正則：標點符號與單字拆分
+            return text.replace(/([.,!?;])/g, ' $1 ').split(/\s+/).filter(t => t.length > 0);
+        }
+
+        function generateDiff(userStr, ansStr) {
+            const user = tokenize(userStr);
+            const ans = tokenize(ansStr);
+            let html = ""; let uIdx = 0, aIdx = 0;
+
+            while (aIdx < ans.length || uIdx < user.length) {
+                const uWord = user[uIdx] ? user[uIdx].toLowerCase() : null;
+                const aWord = ans[aIdx] ? ans[aIdx].toLowerCase() : null;
+
+                if (uWord === aWord) {
+                    html += `<span class="diff-correct">${ans[aIdx]}</span> `;
+                    uIdx++; aIdx++;
+                } else {
+                    let foundLaterInAns = false;
+                    for (let i = aIdx; i < ans.length; i++) {
+                        if (ans[i].toLowerCase() === uWord) { foundLaterInAns = true; break; }
+                    }
+
+                    if (uWord && !foundLaterInAns) {
+                        html += `<span class="diff-extra">${user[uIdx]}</span> `;
+                        uIdx++;
+                    } else if (aWord) {
+                        html += `<span class="diff-missing">${ans[aIdx]}</span> `;
+                        aIdx++;
+                    } else if (uWord) {
+                        html += `<span class="diff-extra">${user[uIdx]}</span> `;
+                        uIdx++;
+                    }
+                }
+            }
+            return html;
+        }
+
+        async function init() {
+            const sel = JSON.parse(localStorage.getItem('sel_trans_lessons') || '[]');
+            const res = await fetch('../data/english-translation.json');
+            const data = await res.json();
+            
+            data.sources.forEach(src => {
+                src.lessons.forEach(l => {
+                    if (sel.some(s => s.source === src.name && s.lesson === l.lesson)) {
+                        quizPool.push(...l.pairs);
+                    }
+                });
+            });
+
+            if (quizPool.length === 0) {
+                alert("未選擇題目，請返回選課頁面。");
+                location.href = "english.html";
+                return;
+            }
+
+            quizPool.sort(() => Math.random() - 0.5);
+            render();
+        }
+
+        function render() {
+            const nextBtn = document.getElementById('btn-next');
+            const isLast = (index === quizPool.length - 1);
+            
+            nextBtn.innerText = isLast ? "結束測驗" : "下一題";
+            nextBtn.className = isLast ? "btn-action btn-next" : "btn-action btn-next"; 
+            if(isLast) nextBtn.style.background = "#d32f2f"; // 最後一題特別顏色
+
+            document.getElementById('quiz-count').innerText = `進度：${index + 1} / ${quizPool.length}`;
+            document.getElementById('ch-text').innerText = quizPool[index].ch;
+            document.getElementById('user-input').value = "";
+            document.getElementById('user-input').disabled = false;
+            document.getElementById('diff-output').style.display = "none";
+            document.getElementById('btn-next').style.display = "none";
+            document.getElementById('btn-check').style.display = "block";
+            
+            // 手機版自動聚焦可能導致鍵盤彈出遮擋題目，故延遲或視需求取消
+            if (window.innerWidth > 600) document.getElementById('user-input').focus();
+        }
+
+        document.getElementById('btn-check').onclick = () => {
+            const userIn = document.getElementById('user-input').value.trim();
+            const ans = quizPool[index].en;
+            const diffBox = document.getElementById('diff-output');
+            
+            diffBox.innerHTML = generateDiff(userIn, ans);
+            diffBox.style.display = "block";
+            document.getElementById('user-input').disabled = true;
+            document.getElementById('btn-check').style.display = "none";
+            document.getElementById('btn-next').style.display = "block";
+        };
+
+        document.getElementById('btn-next').onclick = () => {
+            index++;
+            if (index >= quizPool.length) {
+                location.href = 'translation.html';
+            } else {
+                render();
+            }
+        };
+
+        init();
+    </script>
+</body>
+</html>

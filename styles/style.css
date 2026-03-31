@@ -114,3 +114,47 @@ body {
     text-decoration: line-through;
     color: #999;
 }
+
+
+
+/* 翻譯測驗比對專用樣式 */
+/* --- 柔化版翻譯比對樣式 --- */
+.diff-extra {
+    background-color: #ffebee; /* 柔和紅底 */
+    color: #c62828;            /* 深紅字 */
+    border: 3px solid #f88e98; 
+    padding: 2px 8px;
+    border-radius: 8px;        /* 圓角 */
+    margin: 0 3px;
+    display: inline-block;
+    text-decoration: none;     /* 移除刪除線 */
+    font-weight: 500;
+}
+
+.diff-missing {
+    background-color: #fffde7; /* 柔和黃底 */
+    color: #827717;            /* 深黃/橄欖字 */
+    border: 3px solid #cac275; 
+    padding: 2px 8px;
+    border-radius: 8px;        /* 圓角 */
+    margin: 0 3px;
+    font-weight: 700;
+    display: inline-block;
+}
+
+.diff-correct {
+    color: #2e7d32;
+    margin: 0 3px;
+}
+
+.diff-result-box {
+    line-height: 2.5;
+    font-size: 1.4rem;
+    padding: 25px;
+    background: #ffffff;
+    border: 2px solid #f1f3f5;
+    border-radius: 16px;
+    margin-top: 25px;
+    text-align: left;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+}

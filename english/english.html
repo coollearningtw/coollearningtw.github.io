@@ -3,423 +3,141 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="robots" content="index, follow">
-    <title>英文科 - 選課</title>
+    <title>英文科選課</title>
     <link rel="stylesheet" href="../styles/style.css">
     <link rel="stylesheet" href="../styles/header.css">
-    <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
     <style>
-        body { padding-bottom: 90px; }
-        .back-link { text-decoration: none; color: inherit !important; margin-right: 15px; font-size: 1.5rem; }
-        
-        /* --- 書架管理介面 --- */
-        .shelf-container {
-            margin-bottom: 20px;
-            padding: 10px;
-            background: #fff;
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            border: 1px solid #eef;
-        }
-
-        .shelf-controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-            padding: 0 5px;
-        }
-        
-        /* CSS Toggle Switch 樣式 */
-        .switch-label { font-size: 0.9rem; font-weight: bold; color: #555; }
-        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
-        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: var(--primary); }
-        input:checked + .slider:before { transform: translateX(20px); }
-
-        .shelf-tabs {
-            display: flex;
-            gap: 8px;
-            overflow-x: auto;
-            padding-bottom: 8px; /* For scrollbar */
-            scrollbar-width: thin;
-        }
-        .shelf-tab {
-            padding: 8px 16px;
-            border: 1px solid #ddd;
-            border-radius: 20px;
-            background: #f9f9f9;
-            cursor: pointer;
-            white-space: nowrap;
-            transition: all 0.2s;
-            font-size: 0.9rem;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-        .shelf-tab:hover { background: #eee; }
-        .shelf-tab.active { background: var(--primary); color: #fff; border-color: var(--primary); }
-        .shelf-tab.add-btn { color: var(--primary); font-weight: bold; }
-
-        /* --- 課程卡片 --- */
-        .version-group { margin-bottom: 30px; animation: fadeIn 0.5s ease; }
+        .version-group { margin-bottom: 30px; }
         .version-title { font-size: 1.3rem; font-weight: bold; color: var(--primary); margin-bottom: 15px; border-left: 5px solid var(--primary); padding-left: 10px; }
         .lesson-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; }
+        
         .lesson-card {
-            background: #fff; border: 2px solid #e0e0e0; border-radius: 12px; padding: 20px 10px;
-            text-align: center; cursor: pointer; transition: all 0.2s ease; user-select: none;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            font-weight: bold; color: #555; box-shadow: var(--shadow); min-height: 90px; position: relative;
+            background: #fff; border: 1px solid #eee; 
+            border-radius: 12px; padding: 15px; text-align: center; cursor: pointer;
+            transition: all 0.25s ease; user-select: none; min-height: 90px;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02); font-weight: bold; color: #555;
         }
-        .lesson-card:hover { transform: translateY(-3px); border-color: #ccc; }
-        .lesson-card.selected:not(.manage-mode) { border-color: var(--primary); background-color: var(--primary-light); color: var(--primary); box-shadow: 0 5px 15px rgba(11,118,209,0.2); }
-        .lesson-card.selected:not(.manage-mode)::after { content: '✔'; position: absolute; top: 5px; right: 8px; font-size: 0.9rem; }
-        
-        .card-badges { display: flex; gap: 4px; margin-top: 6px; }
-        .badge { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; background: #eee; color: #999; }
-        .badge.has-data { background: #d1fae5; color: #065f46; font-weight: normal; }
-        
-        /* 管理模式下的卡片按鈕 */
-        .manage-btn {
-            position: absolute;
-            top: -8px;
-            right: -8px;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            border: none;
-            color: #fff;
-            font-size: 1.2rem;
-            font-weight: bold;
-            display: none; /* 預設隱藏 */
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-        }
-        .lesson-card.manage-mode .manage-btn { display: flex; }
-        .manage-btn.add { background-color: #2ecc71; }
-        .manage-btn.remove { background-color: #e74c3c; }
 
-        /* 底部導覽 */
-        .bottom-nav-fixed { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; box-shadow: 0 -2px 10px rgba(0,0,0,0.08); z-index: 1000; display: flex; justify-content: center; }
-        .bottom-nav-content { width: 100%; max-width: 980px; height: 80px; display: flex; justify-content: space-around; align-items: center; }
-        .nav-item-btn { flex: 1; height: 100%; border: none; background: none; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.9rem; color: #666; cursor: pointer; text-decoration: none; transition: all 0.2s; }
-        .nav-item-btn:hover:not(:disabled) { background: #f9f9f9; color: var(--primary); }
-        .nav-item-btn svg { width: 24px; height: 24px; margin-bottom: 4px; fill: currentColor; }
-        .nav-item-btn:disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(100%); background: #f5f5f5; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .lesson-card.selected { 
+            border: 2.5px solid var(--primary); 
+            background-color: var(--primary-light); 
+            color: var(--primary);
+            box-shadow: var(--shadow);
+            transform: translateY(-2px);
+        }
+        
+        .section-header { 
+            margin: 60px 0 20px; padding: 10px 0; 
+            border-bottom: 2px solid #eee; color: #888; font-weight: bold; font-size: 1.1rem;
+        }
     </style>
 </head>
 <body>
-    <header>
-        <div class="logo">
-            <a href="../index.html" class="back-link">⬅</a>
-            <span>英文科選課</span>
-        </div>
-    </header>
+    <header><div class="logo"><a href="../index.html" class="back-btn">⬅</a> 英文科選課</div></header>
 
     <div class="page-container">
-        <!-- 書架管理介面 -->
-        <div class="shelf-container">
-            <div class="shelf-controls">
-                <span class="switch-label">管理書架</span>
-                <label class="switch">
-                    <input type="checkbox" id="manage-toggle">
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div id="shelf-tabs" class="shelf-tabs">
-                <!-- Tabs will be generated by JS -->
-            </div>
-        </div>
-        
-        <!-- 課程顯示區 -->
-        <div id="lesson-container">
-            <p style="text-align:center; color:#666; margin-top: 50px;">⏳ 載入課程資料中...</p>
-        </div>
+        <div id="normal-lessons"></div>
+        <div class="section-header">翻譯測驗模式資源</div>
+        <div id="trans-lessons"></div>
     </div>
 
     <div class="bottom-nav-fixed">
         <div class="bottom-nav-content">
-            <button class="nav-item-btn" id="btn-words" onclick="goTo('words')" disabled><svg viewBox="0 0 24 24"><path d="M4 9h16v2H4V9zm0 4h10v2H4v-2zm0-8h16v2H4V5zm0 12h16v2H4v-2z"/></svg><span>單字</span></button>
-            <button class="nav-item-btn" id="btn-recall" onclick="goTo('recall')" disabled><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg><span>提取</span></button>
-            <button class="nav-item-btn" id="btn-textbook" onclick="goTo('textbook')" disabled><svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg><span>課文</span></button>
-            <button class="nav-item-btn" id="btn-quiz" onclick="goTo('quiz')" disabled><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg><span>測驗</span></button>
+            <button class="nav-item-btn" id="btn-words" onclick="goTo('words')" disabled>
+                <svg viewBox="0 0 24 24"><path d="M4 9h16v2H4V9zm0 4h10v2H4v-2zm0-8h16v2H4V5zm0 12h16v2H4v-2z"/></svg>
+                <span>單字</span>
+            </button>
+            
+            <!-- 提取按鈕：僅在未選翻譯時顯示 -->
+            <button class="nav-item-btn" id="btn-recall" onclick="goTo('recall')" disabled>
+                <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+                <span>提取</span>
+            </button>
+
+            <button class="nav-item-btn" id="btn-textbook" onclick="goTo('textbook')" disabled>
+                <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+                <span>課文</span>
+            </button>
+
+            <button class="nav-item-btn" id="btn-quiz" onclick="goTo('quiz')" disabled>
+                <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                <span>測驗</span>
+            </button>
+
+            <!-- 翻譯按鈕：預設隱藏，選擇翻譯課別後顯示 -->
+            <button class="nav-item-btn" id="btn-translation" onclick="goTo('translation')" style="display:none;">
+                <svg viewBox="0 0 24 24"><path d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0014.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>
+                <span>翻譯</span>
+            </button>
         </div>
     </div>
+
     <script>
-        let mergedData = [];
-        let shelves = [];
-        let activeShelfId = 'all';
-        let isManageMode = false;
+        let normalData = [], transData = [];
+        async function init() {
+            const [r1, r2] = await Promise.all([
+                fetch('../data/english.json').then(r => r.json()),
+                fetch('../data/english-translation.json').then(r => r.json())
+            ]);
+            normalData = r1.sources; transData = r2.sources;
+            render();
+        }
 
-        // --- Core Functions ---
-        const loadShelves = () => {
-            shelves = JSON.parse(localStorage.getItem('course_shelves') || '[]');
-        };
-        const saveShelves = () => {
-            localStorage.setItem('course_shelves', JSON.stringify(shelves));
-        };
+        function render() {
+            const nRoot = document.getElementById('normal-lessons');
+            const tRoot = document.getElementById('trans-lessons');
+            normalData.forEach(src => nRoot.appendChild(createVersionBlock(src, 'normal')));
+            transData.forEach(src => tRoot.appendChild(createVersionBlock(src, 'trans')));
+        }
 
-        const renderTabs = () => {
-            const tabsContainer = document.getElementById('shelf-tabs');
-            tabsContainer.innerHTML = '';
-
-            const allTab = document.createElement('div');
-            allTab.className = `shelf-tab ${activeShelfId === 'all' ? 'active' : ''}`;
-            allTab.textContent = '全部課程';
-            allTab.onclick = () => switchShelf('all');
-            tabsContainer.appendChild(allTab);
-
-            shelves.forEach(shelf => {
-                const shelfTab = document.createElement('div');
-                shelfTab.className = `shelf-tab ${activeShelfId === shelf.id ? 'active' : ''}`;
-                shelfTab.textContent = shelf.name;
-                shelfTab.onclick = (e) => {
-                    if (isManageMode && e.target === shelfTab) { // Prevent click on button triggering shelf switch
-                        manageShelf(shelf.id);
-                    } else if (!isManageMode) {
-                        switchShelf(shelf.id);
-                    }
-                };
-
-                if (isManageMode) {
-                    const delBtn = document.createElement('span');
-                    delBtn.innerHTML = '&#x270E;'; // Pencil icon
-                    delBtn.style.marginLeft = '8px';
-                    delBtn.style.cursor = 'pointer';
-                    delBtn.onclick = (e) => {
-                        e.stopPropagation();
-                        manageShelf(shelf.id);
-                    };
-                    shelfTab.appendChild(delBtn);
-                }
-                tabsContainer.appendChild(shelfTab);
+        function createVersionBlock(src, type) {
+            const group = document.createElement('div');
+            group.className = 'version-group';
+            group.innerHTML = `<div class="version-title">${src.name}</div><div class="lesson-grid"></div>`;
+            const grid = group.querySelector('.lesson-grid');
+            src.lessons.forEach(l => {
+                const card = document.createElement('div');
+                card.className = `lesson-card ${type === 'trans' ? 'trans-logic' : 'normal-logic'}`;
+                card.innerHTML = l.title;
+                card.dataset.source = src.name; card.dataset.lesson = l.lesson;
+                card.onclick = () => { card.classList.toggle('selected'); updateUI(); };
+                grid.appendChild(card);
             });
+            return group;
+        }
 
-            const addTab = document.createElement('div');
-            addTab.className = 'shelf-tab add-btn';
-            addTab.textContent = '+ 新增書架';
-            addTab.onclick = addNewShelf;
-            tabsContainer.appendChild(addTab);
-        };
-        
-        const renderLessons = () => {
-            const container = document.getElementById('lesson-container');
-            container.innerHTML = '';
-            let saved = JSON.parse(localStorage.getItem('sel_lessons') || '[]');
-
-            let coursesToShow = mergedData;
-
-            if (activeShelfId !== 'all') {
-                const currentShelf = shelves.find(s => s.id === activeShelfId);
-                if (!currentShelf) {
-                    switchShelf('all'); // Fallback if shelf not found
-                    return;
-                }
-                // Filter mergedData to only include courses in the current shelf
-                coursesToShow = mergedData.map(source => {
-                    const filteredLessons = source.lessons.filter(lesson => 
-                        currentShelf.courses.some(c => c.source === source.name && c.lesson === lesson.lesson)
-                    );
-                    return { ...source, lessons: filteredLessons };
-                }).filter(source => source.lessons.length > 0);
-            }
+        function updateUI() {
+            const normalSelected = document.querySelectorAll('.normal-logic.selected');
+            const transSelected = document.querySelectorAll('.trans-logic.selected');
             
-            if (coursesToShow.length === 0) {
-                container.innerHTML = `<p style="text-align:center; color:#666; margin-top: 50px;">${activeShelfId === 'all' ? '無課程資料' : '這個書架是空的'}</p>`;
-            }
+            const nCnt = normalSelected.length;
+            const tCnt = transSelected.length;
 
-            coursesToShow.forEach(source => {
-                const group = document.createElement('div');
-                group.className = 'version-group';
-                group.innerHTML = `<div class="version-title">${source.name}</div>`;
-                const grid = document.createElement('div');
-                grid.className = 'lesson-grid';
-                source.lessons.forEach(lesson => {
-                    const isSelected = saved.some(s => s.source === source.name && s.lesson === lesson.lesson);
-                    const card = document.createElement('div');
-                    card.className = `lesson-card ${isSelected ? 'selected' : ''} ${isManageMode ? 'manage-mode' : ''}`;
-                    
-                    if (!isManageMode) {
-                        card.onclick = () => { card.classList.toggle('selected'); checkButtonState(); };
-                    }
+            // 按鈕狀態控制
+            document.getElementById('btn-words').disabled = !nCnt;
+            document.getElementById('btn-textbook').disabled = !nCnt;
+            document.getElementById('btn-quiz').disabled = !nCnt;
 
-                    card.dataset.source = source.name;
-                    card.dataset.lesson = lesson.lesson;
-                    card.dataset.hasWords = lesson.hasWords;
-                    card.dataset.hasText = lesson.hasText;
-                    
-                    let manageBtnHtml = '';
-                    if(isManageMode) {
-                        if (activeShelfId === 'all') {
-                            manageBtnHtml = `<button class="manage-btn add" onclick="addCourseToShelf('${source.name}', ${lesson.lesson}, this)">+</button>`;
-                        } else {
-                            manageBtnHtml = `<button class="manage-btn remove" onclick="removeCourseFromShelf('${source.name}', ${lesson.lesson})">-</button>`;
-                        }
-                    }
-
-                    card.innerHTML = `
-                        <div>${lesson.title}</div>
-                        <div class="card-badges">
-                            <span class="badge ${lesson.hasWords ? 'has-data' : ''}">單字</span>
-                            <span class="badge ${lesson.hasText ? 'has-data' : ''}">課文</span>
-                        </div>
-                        ${manageBtnHtml}
-                    `;
-                    grid.appendChild(card);
-                });
-                group.appendChild(grid);
-                container.appendChild(group);
-            });
-        };
-
-        const switchShelf = (shelfId) => {
-            activeShelfId = shelfId;
-            renderTabs();
-            renderLessons();
-            checkButtonState();
-        };
-        
-        const toggleManageMode = () => {
-            isManageMode = document.getElementById('manage-toggle').checked;
-            renderTabs();
-            renderLessons();
-        };
-
-        // --- Shelf & Course Management ---
-        const addNewShelf = () => {
-            const name = prompt('請輸入新書架的名稱：');
-            if (name) {
-                shelves.push({ id: `shelf_${Date.now()}`, name: name, courses: [] });
-                saveShelves();
-                renderTabs();
-            }
-        };
-
-        const manageShelf = (shelfId) => {
-            const shelf = shelves.find(s => s.id === shelfId);
-            if (!shelf) return;
-            const newName = prompt(`編輯書架名稱（留空以刪除）：`, shelf.name);
-            if (newName === null) return; // Cancelled
-            if (newName === '') {
-                if(confirm(`確定要刪除書架 "${shelf.name}" 嗎？`)) {
-                    shelves = shelves.filter(s => s.id !== shelfId);
-                    if (activeShelfId === shelfId) activeShelfId = 'all';
-                }
+            // 核心切換邏輯：若選擇了翻譯，隱藏提取，顯示翻譯
+            if (tCnt > 0) {
+                document.getElementById('btn-recall').style.display = 'none';
+                document.getElementById('btn-translation').style.display = 'flex';
             } else {
-                shelf.name = newName;
+                document.getElementById('btn-recall').style.display = 'flex';
+                document.getElementById('btn-recall').disabled = !nCnt;
+                document.getElementById('btn-translation').style.display = 'none';
             }
-            saveShelves();
-            renderTabs();
-            if (activeShelfId !== 'all') renderLessons();
-        };
-
-        const addCourseToShelf = (source, lesson, btn) => {
-            const customShelves = shelves.filter(s => s.id !== 'all');
-            if (customShelves.length === 0) {
-                alert('請先新增一個自訂書架！');
-                return;
-            }
-
-            const targetShelfId = prompt(
-                '要將此課程新增到哪個書架？\n' +
-                customShelves.map((s, i) => `${i + 1}. ${s.name}`).join('\n'),
-                '1'
-            );
-            
-            if (targetShelfId === null) return;
-            const index = parseInt(targetShelfId, 10) - 1;
-
-            if (index >= 0 && index < customShelves.length) {
-                const shelf = customShelves[index];
-                const courseExists = shelf.courses.some(c => c.source === source && c.lesson === lesson);
-                if (!courseExists) {
-                    shelf.courses.push({ source, lesson });
-                    saveShelves();
-                    btn.textContent = '✔'; // Visual feedback
-                    setTimeout(() => { btn.textContent = '+'; }, 1000);
-                } else {
-                    alert('此課程已在該書架中。');
-                }
-            } else {
-                alert('無效的選擇。');
-            }
-        };
-
-        const removeCourseFromShelf = (source, lesson) => {
-            const shelf = shelves.find(s => s.id === activeShelfId);
-            if (shelf) {
-                shelf.courses = shelf.courses.filter(c => !(c.source === source && c.lesson === lesson));
-                saveShelves();
-                renderLessons();
-            }
-        };
-
-        // --- Event Listeners & Initial Load ---
-        document.getElementById('manage-toggle').addEventListener('change', toggleManageMode);
-
-        Promise.all([
-            fetch('../data/english.json').then(r => r.ok ? r.json() : {sources:[]}).catch(()=>({sources:[]})),
-            fetch('../data/english-textbook.json').then(r => r.ok ? r.json() : {sources:[]}).catch(()=>({sources:[]}))
-        ]).then(([wordData, textData]) => {
-            const map = new Map();
-            if (wordData.sources) wordData.sources.forEach(src => {
-                if (!map.has(src.name)) map.set(src.name, new Map());
-                const lessonsMap = map.get(src.name);
-                src.lessons.forEach(l => {
-                    lessonsMap.set(l.lesson, { title: l.title, hasWords: (l.vocabulary && l.vocabulary.length > 0), hasText: false });
-                });
-            });
-            if (textData.sources) textData.sources.forEach(src => {
-                if (!map.has(src.name)) map.set(src.name, new Map());
-                const lessonsMap = map.get(src.name);
-                src.lessons.forEach(l => {
-                    if (!lessonsMap.has(l.lesson)) {
-                        lessonsMap.set(l.lesson, { title: l.title, hasWords: false, hasText: (l.sentences && l.sentences.length > 0) });
-                    } else {
-                        lessonsMap.get(l.lesson).hasText = (l.sentences && l.sentences.length > 0);
-                    }
-                });
-            });
-            mergedData = Array.from(map.entries()).map(([sourceName, lessonsMap]) => {
-                const lessons = Array.from(lessonsMap.entries()).map(([lessonNum, info]) => ({ lesson: lessonNum, ...info }));
-                lessons.sort((a, b) => a.lesson - b.lesson);
-                return { name: sourceName, lessons: lessons };
-            });
-            
-            loadShelves();
-            renderTabs();
-            renderLessons();
-            checkButtonState();
-        });
-
-        // --- Utility Functions (Unchanged) ---
-        function checkButtonState() {
-            const selected = document.querySelectorAll('.lesson-card.selected');
-            const btns = [document.getElementById('btn-words'), document.getElementById('btn-recall'), document.getElementById('btn-textbook'), document.getElementById('btn-quiz')];
-            if (!selected.length || isManageMode) {
-                btns.forEach(b => b.disabled = true);
-                return;
-            }
-            let anyWords = false, anyText = false;
-            selected.forEach(c => {
-                if (c.dataset.hasWords === 'true') anyWords = true;
-                if (c.dataset.hasText === 'true') anyText = true;
-            });
-            btns[0].disabled = !anyWords; btns[1].disabled = !anyWords; btns[3].disabled = !anyWords;
-            btns[2].disabled = !anyText;
         }
 
         function goTo(page) {
-            const selected = document.querySelectorAll('.lesson-card.selected');
-            const selection = Array.from(selected).map(c => ({ source: c.dataset.source, lesson: parseInt(c.dataset.lesson) }));
-            localStorage.setItem('sel_lessons', JSON.stringify(selection));
+            const isT = (page === 'translation');
+            const sel = document.querySelectorAll(`.selected.${isT?'trans-logic':'normal-logic'}`);
+            const data = Array.from(sel).map(c => ({ source: c.dataset.source, lesson: parseInt(c.dataset.lesson) }));
+            localStorage.setItem(isT ? 'sel_trans_lessons' : 'sel_lessons', JSON.stringify(data));
             window.location.href = page + '.html';
         }
+        init();
     </script>
 </body>
 </html>

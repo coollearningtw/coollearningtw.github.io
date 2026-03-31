@@ -3,69 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>英文科選課</title>
+    <title>英文科 - 選課</title>
     <link rel="stylesheet" href="../styles/style.css">
     <link rel="stylesheet" href="../styles/header.css">
+    <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
     <style>
+        body { padding-bottom: 110px; }
+        .back-link { text-decoration: none; color: inherit !important; margin-right: 15px; font-size: 1.5rem; }
+        
+        /* --- 書架管理介面 --- */
+        .shelf-container {
+            margin-bottom: 20px; padding: 10px;
+            background: #fff; border-radius: var(--radius);
+            box-shadow: var(--shadow); border: 1px solid #eef;
+        }
+        .shelf-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .switch-label { font-size: 0.9rem; font-weight: bold; color: #555; }
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--primary); }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        .shelf-tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: thin; }
+        .shelf-tab {
+            padding: 8px 16px; border: 1px solid #ddd; border-radius: 20px;
+            background: #f9f9f9; cursor: pointer; white-space: nowrap;
+            transition: all 0.2s; font-size: 0.9rem; display: flex; align-items: center; gap: 4px;
+        }
+        .shelf-tab.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+        .shelf-tab.add-btn { color: var(--primary); font-weight: bold; }
+
+        /* --- 課程卡片樣式 --- */
         .version-group { margin-bottom: 30px; }
         .version-title { font-size: 1.3rem; font-weight: bold; color: var(--primary); margin-bottom: 15px; border-left: 5px solid var(--primary); padding-left: 10px; }
         .lesson-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; }
-        
         .lesson-card {
-            background: #fff; border: 1px solid #eee; 
-            border-radius: 12px; padding: 15px; text-align: center; cursor: pointer;
-            transition: all 0.25s ease; user-select: none; min-height: 90px;
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.02); font-weight: bold; color: #555;
+            background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 20px 10px;
+            text-align: center; cursor: pointer; transition: all 0.2s ease; user-select: none;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            font-weight: bold; color: #555; box-shadow: 0 2px 8px rgba(0,0,0,0.02); min-height: 95px; position: relative;
         }
-
-        .lesson-card.selected { 
-            border: 2.5px solid var(--primary); 
-            background-color: var(--primary-light); 
-            color: var(--primary);
-            box-shadow: var(--shadow);
-            transform: translateY(-2px);
-        }
+        .lesson-card.selected:not(.manage-mode) { border: 2.5px solid var(--primary); background-color: var(--primary-light); color: var(--primary); transform: translateY(-2px); }
         
-        .section-header { 
-            margin: 60px 0 20px; padding: 10px 0; 
-            border-bottom: 2px solid #eee; color: #888; font-weight: bold; font-size: 1.1rem;
+        /* 標籤徽章 */
+        .card-badges { display: flex; gap: 4px; margin-top: 6px; }
+        .badge { font-size: 0.65rem; padding: 2px 5px; border-radius: 4px; background: #eee; color: #aaa; }
+        .badge.has-data { background: #d1fae5; color: #065f46; }
+        .badge.is-trans { background: #f3e5f5; color: #8e44ad; }
+
+        /* 管理模式按鈕 */
+        .manage-btn {
+            position: absolute; top: -8px; right: -8px; width: 28px; height: 28px;
+            border-radius: 50%; border: none; color: #fff; font-weight: bold;
+            display: none; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
+        .lesson-card.manage-mode .manage-btn { display: flex; }
+        .manage-btn.add { background-color: #2ecc71; }
+        .manage-btn.remove { background-color: #e74c3c; }
+
+        .section-header { margin: 60px 0 20px; border-bottom: 2px solid #eee; color: #888; font-weight: bold; }
     </style>
 </head>
 <body>
-    <header><div class="logo"><a href="../index.html" class="back-btn">⬅</a> 英文科選課</div></header>
+    <header>
+        <div class="logo"><a href="../index.html" class="back-link">⬅</a> <span>英文科選課</span></div>
+    </header>
 
     <div class="page-container">
-        <div id="normal-lessons"></div>
-        <div class="section-header">翻譯測驗模式資源</div>
-        <div id="trans-lessons"></div>
+        <!-- 書架介面 -->
+        <div class="shelf-container">
+            <div class="shelf-controls">
+                <span class="switch-label">管理書架</span>
+                <label class="switch"><input type="checkbox" id="manage-toggle"><span class="slider"></span></label>
+            </div>
+            <div id="shelf-tabs" class="shelf-tabs"></div>
+        </div>
+        
+        <div id="normal-lessons-root"></div>
+        <div class="section-header">翻譯測驗模式</div>
+        <div id="trans-lessons-root"></div>
     </div>
 
+    <!-- 底部導覽 (圖2 灰色方盒樣式) -->
     <div class="bottom-nav-fixed">
         <div class="bottom-nav-content">
             <button class="nav-item-btn" id="btn-words" onclick="goTo('words')" disabled>
                 <svg viewBox="0 0 24 24"><path d="M4 9h16v2H4V9zm0 4h10v2H4v-2zm0-8h16v2H4V5zm0 12h16v2H4v-2z"/></svg>
                 <span>單字</span>
             </button>
-            
-            <!-- 提取按鈕：僅在未選翻譯時顯示 -->
             <button class="nav-item-btn" id="btn-recall" onclick="goTo('recall')" disabled>
                 <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
                 <span>提取</span>
             </button>
-
             <button class="nav-item-btn" id="btn-textbook" onclick="goTo('textbook')" disabled>
                 <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
                 <span>課文</span>
             </button>
-
             <button class="nav-item-btn" id="btn-quiz" onclick="goTo('quiz')" disabled>
                 <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
                 <span>測驗</span>
             </button>
-
-            <!-- 翻譯按鈕：預設隱藏，選擇翻譯課別後顯示 -->
             <button class="nav-item-btn" id="btn-translation" onclick="goTo('translation')" style="display:none;">
                 <svg viewBox="0 0 24 24"><path d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0014.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>
                 <span>翻譯</span>
@@ -74,69 +113,140 @@
     </div>
 
     <script>
-        let normalData = [], transData = [];
+        let mergedData = [], transData = [];
+        let shelves = [], activeShelfId = 'all', isManageMode = false;
+
+        const loadShelves = () => shelves = JSON.parse(localStorage.getItem('course_shelves') || '[]');
+        const saveShelves = () => localStorage.setItem('course_shelves', JSON.stringify(shelves));
+
         async function init() {
-            const [r1, r2] = await Promise.all([
+            const [wordRes, textRes, transRes] = await Promise.all([
                 fetch('../data/english.json').then(r => r.json()),
+                fetch('../data/english-textbook.json').then(r => r.json()),
                 fetch('../data/english-translation.json').then(r => r.json())
             ]);
-            normalData = r1.sources; transData = r2.sources;
-            render();
+            
+            // 合併單字與課文
+            mergedData = wordRes.sources.map(src => {
+                const textSrc = textRes.sources.find(ts => ts.name === src.name);
+                src.lessons.forEach(l => {
+                    l.hasWords = l.vocabulary?.length > 0;
+                    l.hasText = textSrc?.lessons.find(tl => tl.lesson === l.lesson)?.sentences?.length > 0;
+                });
+                return src;
+            });
+
+            transData = transRes.sources;
+            loadShelves();
+            renderTabs();
+            renderLessons();
         }
 
-        function render() {
-            const nRoot = document.getElementById('normal-lessons');
-            const tRoot = document.getElementById('trans-lessons');
-            normalData.forEach(src => nRoot.appendChild(createVersionBlock(src, 'normal')));
-            transData.forEach(src => tRoot.appendChild(createVersionBlock(src, 'trans')));
+        function renderTabs() {
+            const root = document.getElementById('shelf-tabs');
+            root.innerHTML = `<div class="shelf-tab ${activeShelfId==='all'?'active':''}" onclick="switchShelf('all')">全部課程</div>`;
+            shelves.forEach(s => {
+                const tab = document.createElement('div');
+                tab.className = `shelf-tab ${activeShelfId===s.id?'active':''}`;
+                tab.innerHTML = `${s.name}${isManageMode ? ' <small onclick="manageShelf(\''+s.id+'\', event)">✎</small>' : ''}`;
+                tab.onclick = () => !isManageMode && switchShelf(s.id);
+                root.appendChild(tab);
+            });
+            root.innerHTML += `<div class="shelf-tab add-btn" onclick="addNewShelf()">+ 新增</div>`;
+        }
+
+        function renderLessons() {
+            const nRoot = document.getElementById('normal-lessons-root');
+            const tRoot = document.getElementById('trans-lessons-root');
+            nRoot.innerHTML = ''; tRoot.innerHTML = '';
+
+            const filter = (data) => {
+                if (activeShelfId === 'all') return data;
+                const shelf = shelves.find(s => s.id === activeShelfId);
+                return data.map(src => ({
+                    ...src, lessons: src.lessons.filter(l => shelf.courses.some(c => c.source === src.name && c.lesson === l.lesson))
+                })).filter(src => src.lessons.length > 0);
+            };
+
+            filter(mergedData).forEach(src => nRoot.appendChild(createVersionBlock(src, 'normal')));
+            filter(transData).forEach(src => tRoot.appendChild(createVersionBlock(src, 'trans')));
         }
 
         function createVersionBlock(src, type) {
-            const group = document.createElement('div');
-            group.className = 'version-group';
-            group.innerHTML = `<div class="version-title">${src.name}</div><div class="lesson-grid"></div>`;
-            const grid = group.querySelector('.lesson-grid');
+            const div = document.createElement('div');
+            div.className = 'version-group';
+            div.innerHTML = `<div class="version-title">${src.name}</div><div class="lesson-grid"></div>`;
+            const grid = div.querySelector('.lesson-grid');
             src.lessons.forEach(l => {
                 const card = document.createElement('div');
-                card.className = `lesson-card ${type === 'trans' ? 'trans-logic' : 'normal-logic'}`;
-                card.innerHTML = l.title;
+                card.className = `lesson-card ${isManageMode?'manage-mode':''} ${type==='trans'?'trans-logic':'normal-logic'}`;
+                card.innerHTML = `
+                    <div>${l.title}</div>
+                    <div class="card-badges">
+                        ${type==='normal' ? `<span class="badge ${l.hasWords?'has-data':''}">單字</span><span class="badge ${l.hasText?'has-data':''}">課文</span>` : '<span class="badge is-trans">翻譯</span>'}
+                    </div>
+                    <button class="manage-btn ${activeShelfId==='all'?'add':'remove'}" onclick="handleManage('${src.name}', ${l.lesson}, event)">${activeShelfId==='all'?'+':'-'}</button>
+                `;
+                card.onclick = () => !isManageMode && (card.classList.toggle('selected'), updateUI());
                 card.dataset.source = src.name; card.dataset.lesson = l.lesson;
-                card.onclick = () => { card.classList.toggle('selected'); updateUI(); };
                 grid.appendChild(card);
             });
-            return group;
+            return div;
         }
 
         function updateUI() {
-            const normalSelected = document.querySelectorAll('.normal-logic.selected');
-            const transSelected = document.querySelectorAll('.trans-logic.selected');
-            
-            const nCnt = normalSelected.length;
-            const tCnt = transSelected.length;
+            const nSel = document.querySelectorAll('.normal-logic.selected').length;
+            const tSel = document.querySelectorAll('.trans-logic.selected').length;
+            document.getElementById('btn-words').disabled = !nSel;
+            document.getElementById('btn-textbook').disabled = !nSel;
+            document.getElementById('btn-quiz').disabled = !nSel;
 
-            // 按鈕狀態控制
-            document.getElementById('btn-words').disabled = !nCnt;
-            document.getElementById('btn-textbook').disabled = !nCnt;
-            document.getElementById('btn-quiz').disabled = !nCnt;
-
-            // 核心切換邏輯：若選擇了翻譯，隱藏提取，顯示翻譯
-            if (tCnt > 0) {
+            if (tSel > 0) {
                 document.getElementById('btn-recall').style.display = 'none';
                 document.getElementById('btn-translation').style.display = 'flex';
             } else {
                 document.getElementById('btn-recall').style.display = 'flex';
-                document.getElementById('btn-recall').disabled = !nCnt;
+                document.getElementById('btn-recall').disabled = !nSel;
                 document.getElementById('btn-translation').style.display = 'none';
             }
         }
 
+        // --- 書架功能邏輯 ---
+        function switchShelf(id) { activeShelfId = id; renderTabs(); renderLessons(); updateUI(); }
+        function toggleManage() { isManageMode = document.getElementById('manage-toggle').checked; renderTabs(); renderLessons(); }
+        function addNewShelf() { const n = prompt('書架名稱:'); if(n) { shelves.push({id:'s_'+Date.now(), name:n, courses:[]}); saveShelves(); renderTabs(); } }
+        function manageShelf(id, e) {
+            e.stopPropagation(); const s = shelves.find(x=>x.id===id);
+            const n = prompt('修改名稱 (留空刪除):', s.name);
+            if(n===null) return; if(n==='') shelves=shelves.filter(x=>x.id!==id); else s.name=n;
+            saveShelves(); renderTabs(); renderLessons();
+        }
+        function handleManage(src, les, e) {
+            e.stopPropagation();
+            if(activeShelfId === 'all') {
+                const list = shelves.map((s,i)=>`${i+1}. ${s.name}`).join('\n');
+                const idx = parseInt(prompt('加入到哪個書架？\n'+list)) - 1;
+                if(shelves[idx]) {
+                    if(!shelves[idx].courses.some(c=>c.source===src && c.lesson===les)) {
+                        shelves[idx].courses.push({source:src, lesson:les}); saveShelves(); alert('已加入');
+                    }
+                }
+            } else {
+                const s = shelves.find(x=>x.id===activeShelfId);
+                s.courses = s.courses.filter(c=>!(c.source===src && c.lesson===les));
+                saveShelves(); renderLessons();
+            }
+        }
+
         function goTo(page) {
-            const isT = (page === 'translation');
+            const isT = page === 'translation';
             const sel = document.querySelectorAll(`.selected.${isT?'trans-logic':'normal-logic'}`);
             const data = Array.from(sel).map(c => ({ source: c.dataset.source, lesson: parseInt(c.dataset.lesson) }));
             localStorage.setItem(isT ? 'sel_trans_lessons' : 'sel_lessons', JSON.stringify(data));
             window.location.href = page + '.html';
         }
+
+        document.getElementById('manage-toggle').onchange = toggleManage;
         init();
     </script>
 </body>

@@ -86,10 +86,10 @@ document.addEventListener('DOMContentLoaded', () => {
         
         let scopeText = `版本: ${source}`;
         if (lesson !== '選擇課別...') {
-            scopeText += ` > 課別: ${lesson}`;
+            scopeText += ` | 課別: ${lesson}`;
         }
         if (word !== '選擇單字...') {
-            scopeText += ` > 單字: ${word}`;
+            scopeText += ` | 單字: ${word}`;
         }
         scopeHiddenInput.value = scopeText;
     }

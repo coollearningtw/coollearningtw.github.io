@@ -4,7 +4,7 @@
 <body>
 <script>
     // 只有允許的來源可以存取資料（請換成你的網站 B 網址）
-    const ALLOWED_ORIGIN = "nextsteptw.github.io";
+    const ALLOWED_ORIGIN = "https://nextsteptw.github.io";
 
     window.addEventListener("message", (event) => {
         if (event.origin !== ALLOWED_ORIGIN) return;

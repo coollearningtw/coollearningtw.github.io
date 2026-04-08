@@ -1661,6 +1661,232 @@
               "chinese": "消逝；死去"
             }
           ]
+        },
+        {
+          "lesson": 4,
+          "title": "第四課",
+          "vocabulary": [
+            {
+              "word": "female",
+              "pos": "adj.",
+              "chinese": "女性的"
+            },
+            {
+              "word": "female",
+              "pos": "n. [C]",
+              "chinese": "女性"
+            },
+            {
+              "word": "region",
+              "pos": "n. [C]",
+              "chinese": "地區"
+            },
+            {
+              "word": "regional",
+              "pos": "adj.",
+              "chinese": "地區的"
+            },
+            {
+              "word": "forbid",
+              "pos": "vt.",
+              "chinese": "禁止"
+            },
+            {
+              "word": "continue",
+              "pos": "vt.",
+              "chinese": "繼續"
+            },
+            {
+              "word": "continuous",
+              "pos": "adj.",
+              "chinese": "持續不斷的"
+            },
+            {
+              "word": "education",
+              "pos": "n. [U]",
+              "chinese": "教育"
+            },
+            {
+              "word": "educational",
+              "pos": "adj.",
+              "chinese": "教育的"
+            },
+            {
+              "word": "educate",
+              "pos": "vt.",
+              "chinese": "教育"
+            },
+            {
+              "word": "principal",
+              "pos": "n. [C]",
+              "chinese": "校長"
+            },
+            {
+              "word": "principal",
+              "pos": "adj.",
+              "chinese": "主要的"
+            },
+            {
+              "word": "equal",
+              "pos": "adj.",
+              "chinese": "相等的；同樣的"
+            },
+            {
+              "word": "equal",
+              "pos": "vt.",
+              "chinese": "等於"
+            },
+            {
+              "word": "equality",
+              "pos": "n. [U]",
+              "chinese": "平等"
+            },
+            {
+              "word": "control",
+              "pos": "vt.",
+              "chinese": "控制"
+            },
+            {
+              "word": "control",
+              "pos": "n. [U]",
+              "chinese": "控制"
+            },
+            {
+              "word": "annoy",
+              "pos": "vt.",
+              "chinese": "惱怒；使人生氣"
+            },
+            {
+              "word": "threaten",
+              "pos": "vt.",
+              "chinese": "威脅；恐嚇"
+            },
+            {
+              "word": "threat",
+              "pos": "n. [C]",
+              "chinese": "威脅；恐嚇"
+            },
+            {
+              "word": "surgery",
+              "pos": "n. [U]",
+              "chinese": "外科手術"
+            },
+            {
+              "word": "recover",
+              "pos": "vi.",
+              "chinese": "康復"
+            },
+            {
+              "word": "recovery",
+              "pos": "n. [C]",
+              "chinese": "恢復；復甦"
+            },
+            {
+              "word": "sign",
+              "pos": "vt.",
+              "chinese": "簽名；簽署"
+            },
+            {
+              "word": "persuade",
+              "pos": "vt.",
+              "chinese": "說服；勸說"
+            },
+            {
+              "word": "persuasion",
+              "pos": "n. [U]",
+              "chinese": "說服；勸說"
+            },
+            {
+              "word": "persuasive",
+              "pos": "adj.",
+              "chinese": "有說服力的"
+            },
+            {
+              "word": "adopt",
+              "pos": "vt.",
+              "chinese": "採納；採用"
+            },
+            {
+              "word": "adopt",
+              "pos": "vt.",
+              "chinese": "收納；領養"
+            },
+            {
+              "word": "policy",
+              "pos": "n. [C]",
+              "chinese": "政策"
+            },
+            {
+              "word": "ensure",
+              "pos": "vt.",
+              "chinese": "保證；確保"
+            },
+            {
+              "word": "establish",
+              "pos": "vt.",
+              "chinese": "建立；創設"
+            },
+            {
+              "word": "establishment",
+              "pos": "n. [U]",
+              "chinese": "建立；創設"
+            },
+            {
+              "word": "honor",
+              "pos": "n. [C]",
+              "chinese": "榮譽；獎項"
+            },
+            {
+              "word": "honor",
+              "pos": "n. sing.",
+              "chinese": "榮幸"
+            },
+            {
+              "word": "honor",
+              "pos": "vt.",
+              "chinese": "向……致敬；表揚"
+            },
+            {
+              "word": "honorable",
+              "pos": "adj.",
+              "chinese": "值得敬佩的"
+            },
+            {
+              "word": "weapon",
+              "pos": "n. [C]",
+              "chinese": "手段"
+            },
+            {
+              "word": "weapon",
+              "pos": "n. [C]",
+              "chinese": "武器"
+            },
+            {
+              "word": "take notice (of...)",
+              "pos": "phr.",
+              "chinese": "注意；在意"
+            },
+            {
+              "word": "blow up",
+              "pos": "phr.",
+              "chinese": "炸毀"
+            },
+            {
+              "word": "take away",
+              "pos": "phr.",
+              "chinese": "拿走"
+            },
+            {
+              "word": "speak out",
+              "pos": "phr.",
+              "chinese": "發聲；公開發表意見"
+            },
+            {
+              "word": "call for",
+              "pos": "phr.",
+              "chinese": "呼籲"
+            }
+          ]
         }
       ]
     },

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>國文資料庫管理</title>
+    <link rel="stylesheet" href="../styles/style.css">
+    <link rel="stylesheet" href="../styles/header.css">
+    <style>
+        /* 基礎樣式與 Slate 專業配色 */
+        body { padding-bottom: 100px; background-color: #f1f5f9; color: #334155; }
+        
+        .editor-tabs { 
+            display: flex; gap: 5px; margin: 20px 0; background: #e2e8f0; 
+            padding: 4px; border-radius: 8px; width: fit-content;
+        }
+        .tab-btn { 
+            padding: 8px 24px; border: none; background: none; border-radius: 6px; 
+            cursor: pointer; font-weight: 600; color: #64748b; transition: 0.2s; font-size: 0.9rem;
+        }
+        .tab-btn.active { background: #fff; color: #0f172a; border: 1px solid #cbd5e1; }
+        
+        .source-block { background: #fff; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 25px; overflow: hidden; }
+        .accordion-header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: #fff; border-bottom: 1px solid #f1f3f5; }
+        .accordion-header:hover { background: #f8fafc; }
+        
+        .lesson-container { display: none; padding: 10px 15px 20px; background: #f8fafc; }
+        .source-block.expanded > .lesson-container { display: block; }
+        
+        .lesson-block { border: 1px solid #e2e8f0; border-radius: 8px; margin-top: 15px; background: #fff; position: relative; }
+        .lesson-header { padding: 12px 15px; font-weight: 600; border-bottom: 1px solid #f1f3f5; display: flex; justify-content: space-between; align-items: center; background: #fff; }
+        
+        .insert-bar { height: 12px; margin: -6px 0; position: relative; z-index: 10; cursor: pointer; display: flex; align-items: center; justify-content: center; opacity: 0; transition: 0.2s; }
+        .insert-bar:hover { opacity: 1; height: 24px; margin: -12px 0; }
+        .insert-line { height: 1px; background: #94a3b8; flex: 1; }
+        .insert-btn-text { background: #94a3b8; color: #fff; font-size: 11px; padding: 2px 10px; border-radius: 10px; font-weight: bold; margin: 0 10px; }
+
+        .data-item { display: flex; align-items: center; gap: 12px; padding: 10px; border: 1px solid #f1f3f5; border-radius: 6px; background: #fff; }
+
+        .editable-cell { 
+            padding: 8px 10px; border-radius: 4px; cursor: text; min-height: 36px; 
+            border: 1px solid transparent; font-size: 0.95rem; line-height: 1.4; 
+            display: flex; align-items: center;
+        }
+        .editable-cell:hover { background: #f8fafc; border-color: #e2e8f0; }
+        
+        /* 註釋網格排版修正 - 確保文字不會垂直堆疊 */
+        .anno-grid { 
+            display: grid; 
+            grid-template-columns: 50px 140px 1fr; /* 固定編號與詞目寬度 */
+            gap: 10px; 
+            width: 100%; 
+            align-items: center;
+        }
+        .term-cell { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        .cell-id { color: #b91c1c; font-weight: bold; justify-content: center; background: #fef2f2; border: 1px solid #fee2e2; }
+        .cell-note { color: #991b1b; background: #fffaf0; border: 1px dashed #fcd34d; font-size: 0.85rem; margin-top: 5px; }
+        .cell-trans { color: #1e40af; background: #f0f7ff; border: 1px dashed #93c5fd; font-size: 0.9rem; margin-top: 5px; }
+
+        .btn-add-item-bottom { width: 100%; margin-top: 10px; padding: 12px; border: 2px dashed #cbd5e1; background: #f8fafc; color: #64748b; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; }
+
+        .floating-footer { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #e2e8f0; z-index: 1000; }
+        .btn-action { display: flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 6px; border: 1px solid #cbd5e1; background: #fff; cursor: pointer; font-size: 0.85rem; font-weight: 500; color: #475569; }
+        .btn-primary { background: #0f172a; color: #fff; border: none; }
+        
+        .inline-textarea { width: 100%; padding: 8px; border: 1px solid #0f172a; border-radius: 4px; outline: none; font-family: inherit; resize: vertical; background: #fff; }
+        .svg-icon { width: 18px; height: 18px; fill: currentColor; flex-shrink: 0; }
+        .drag-handle { cursor: grab; color: #94a3b8; display: flex; align-items: center; }
+
+        /* Markdown 預覽樣式 */
+        .md-bold { font-weight: bold; color: #1e293b; }
+        .md-highlight { background: #fef08a; padding: 0 2px; border-radius: 2px; }
+        .md-strike { text-decoration: line-through; color: #94a3b8; }
+        .anno-link { color: #2563eb; border-bottom: 1px dashed #93c5fd; }
+        .anno-no { font-size: 0.7rem; color: #ef4444; vertical-align: super; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <a href="chinese.html" class="back-link" style="text-decoration:none;color:inherit;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            </a>
+            <span style="margin-left:10px;font-weight:bold;">國文資料庫管理</span>
+        </div>
+    </header>
+
+    <div class="page-container">
+        <div class="editor-tabs">
+            <button class="tab-btn active" id="tab-annotations" onclick="switchTab('annotations')">註釋編輯</button>
+            <button class="tab-btn" id="tab-content" onclick="switchTab('content')">課文編輯</button>
+        </div>
+        <button class="btn-action btn-primary" style="margin-bottom:20px" onclick="addNewSource()">
+            <svg class="svg-icon" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg> 新增版本
+        </button>
+        <div id="editor-content"></div>
+    </div>
+
+    <div class="floating-footer">
+        <div id="status" style="color:#64748b;font-size:0.85rem">就緒</div>
+        <div style="display:flex;gap:10px">
+            <button class="btn-action" onclick="resetDraft()">還原修改</button>
+            <button class="btn-action btn-primary" onclick="downloadJSON()">下載 JSON</button>
+        </div>
+    </div>
+
+    <script src="../scripts/utils.js"></script>
+    <script>
+        let currentMode = 'annotations', dataStore = { sources: [] }, expandedKeys = new Set();
+        const ICONS = {
+            folder: '<svg class="svg-icon" style="color:#64748b" viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>',
+            file: '<svg class="svg-icon" style="color:#94a3b8" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>',
+            drag: '<svg class="svg-icon" viewBox="0 0 24 24"><path d="M11 18c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm-2-8c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6 4c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>',
+            close: '<svg class="svg-icon" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>',
+            plus: '<svg class="svg-icon" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>'
+        };
+
+        async function init() {
+            const draft = localStorage.getItem('chinese_draft');
+            if(draft) dataStore = JSON.parse(draft);
+            else try { dataStore = await (await fetch('../data/chinese.json')).json(); } catch(e) { dataStore = { sources: [] }; }
+            if(dataStore.sources.length) expandedKeys.add('source-0');
+            render();
+        }
+
+        function switchTab(m) { currentMode = m; document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.id===`tab-${m}`)); render(); }
+
+        function render() {
+            const root = document.getElementById('editor-content'); root.innerHTML = '';
+            dataStore.sources.forEach((src, sIdx) => {
+                const srcKey = `source-${sIdx}`;
+                const srcEl = document.createElement('div'); srcEl.className = `source-block ${expandedKeys.has(srcKey)?'expanded':''}`;
+                srcEl.innerHTML = `<div class="accordion-header" onclick="toggleKey('${srcKey}')"><div style="font-weight:600;display:flex;align-items:center;gap:8px;">${ICONS.folder} ${src.name}</div><div style="display:flex;gap:5px;"><button class="btn-action" style="padding:4px 8px" onclick="event.stopPropagation();editSrc(${sIdx})">改名</button><button class="btn-action" style="padding:4px 8px;color:#ef4444" onclick="event.stopPropagation();delSrc(${sIdx})">刪除</button></div></div>
+                <div class="lesson-container">
+                    ${src.lessons.map((l, lIdx) => {
+                        const lKey = `l-${sIdx}-${lIdx}`;
+                        const items = currentMode==='annotations' ? (l.annotations || []) : (l.content || []);
+                        const label = currentMode === 'annotations' ? '註釋' : '段落';
+                        return `<div class="lesson-block"><div class="lesson-header" onclick="event.stopPropagation();toggleKey('${lKey}')" style="cursor:pointer"><div style="display:flex;align-items:center;gap:10px">${ICONS.file}<div class="editable-cell" style="width:50px;justify-content:center;border:1px solid #e2e8f0" onclick="event.stopPropagation();startEdit(this,${sIdx},${lIdx},-1,'lesson')">${l.lesson}</div><div class="editable-cell" style="font-weight:bold" onclick="event.stopPropagation();startEdit(this,${sIdx},${lIdx},-1,'title')">${l.title}</div></div><button class="btn-action" style="padding:2px 6px;color:#ef4444;border:none" onclick="event.stopPropagation();delLes(${sIdx},${lIdx})">${ICONS.close}</button></div>
+                        <div style="display:${expandedKeys.has(lKey)?'block':'none'};padding:10px;">
+                            ${createInsertBarHtml(sIdx, lIdx, 0)}
+                            ${items.map((item, iIdx) => `<div class="data-item"><div class="drag-handle">${ICONS.drag}</div><div style="flex:1">
+                                ${currentMode==='annotations' ? `<div class="anno-grid"><div class="editable-cell cell-id" onclick="startEdit(this,${sIdx},${lIdx},${iIdx},'id')">${item.id||'0'}</div><div class="editable-cell term-cell" style="font-weight:600" onclick="startEdit(this,${sIdx},${lIdx},${iIdx},'term')">${parseMarkdown(item.term)||(item.term?item.term:'(詞目)')}</div><div class="editable-cell" onclick="startEdit(this,${sIdx},${lIdx},${iIdx},'meaning')">${parseMarkdown(item.meaning)||(item.meaning?item.meaning:'(解釋)')}</div></div>` : 
+                                `<div style="display:flex;flex-direction:column;gap:4px"><div class="editable-cell" onclick="startEdit(this,${sIdx},${lIdx},${iIdx},'text')">${parseMarkdown(item.text)||(item.text?item.text:'(原文段落)')}</div><div class="editable-cell cell-note" onclick="startEdit(this,${sIdx},${lIdx},${iIdx},'note')">${parseMarkdown(item.note)||(item.note?item.note:'(註記)')}</div><div class="editable-cell cell-trans" onclick="startEdit(this,${sIdx},${lIdx},${iIdx},'translation')">${parseMarkdown(item.translation)||(item.translation?item.translation:'(翻譯)')}</div></div>`}
+                            </div><button class="btn-action" style="border:none;color:#ef4444" onclick="delItem(${sIdx},${lIdx},${iIdx})">${ICONS.close}</button></div>${createInsertBarHtml(sIdx, lIdx, iIdx + 1)}`).join('')}
+                            <button class="btn-add-item-bottom" onclick="addItem(${sIdx},${lIdx},${items.length})">${ICONS.plus} 新增${label}</button>
+                        </div></div>`;
+                    }).join('')}
+                    <button class="btn-action" style="margin-top:20px;width:100%;justify-content:center;border-style:dashed" onclick="addLes(${sIdx})">${ICONS.plus} 新增課程單元</button>
+                </div>`;
+                root.appendChild(srcEl);
+            });
+        }
+
+        function createInsertBarHtml(sIdx, lIdx, atIndex) { const label = currentMode === 'annotations' ? '註釋' : '段落'; return `<div class="insert-bar" onclick="addItem(${sIdx}, ${lIdx}, ${atIndex})"><div class="insert-line"></div><div class="insert-btn-text">+ 在此插入${label}</div><div class="insert-line"></div></div>`; }
+        function toggleKey(k) { expandedKeys.has(k) ? expandedKeys.delete(k) : expandedKeys.add(k); render(); }
+        
+        function startEdit(el, s, l, i, f) {
+            if(el.querySelector('textarea')) return;
+            const items = i === -1 ? null : (currentMode==='annotations'?dataStore.sources[s].lessons[l].annotations : dataStore.sources[s].lessons[l].content);
+            const rawVal = i === -1 ? dataStore.sources[s].lessons[l][f] : (items[i][f] || '');
+            el.innerHTML = `<textarea class="inline-textarea">${rawVal}</textarea>`;
+            const t = el.querySelector('textarea'); t.focus();
+            t.onblur = () => { if(i===-1) dataStore.sources[s].lessons[l][f]=t.value; else items[i][f]=t.value; sync(); render(); };
+        }
+
+        function sync() { localStorage.setItem('chinese_draft', JSON.stringify(dataStore)); document.getElementById('status').innerText='💾 已自動同步'; }
+        function editSrc(s) { const n=prompt('名稱:', dataStore.sources[s].name); if(n){ dataStore.sources[s].name=n; sync(); render(); }}
+        function delSrc(s) { if(confirm('刪除版本？')){ dataStore.sources.splice(s,1); sync(); render(); }}
+        function addLes(s) { dataStore.sources[s].lessons.push({lesson: dataStore.sources[s].lessons.length+1, title:'新單元', annotations:[], content:[]}); sync(); render(); }
+        function delLes(s, l) { if(confirm('刪除單元？')) { dataStore.sources.splice(l, 1); sync(); render(); } }
+        function addItem(s, l, atIndex) {
+            const lesson = dataStore.sources[s].lessons[l];
+            if (!lesson.annotations) lesson.annotations = [];
+            if (!lesson.content) lesson.content = [];
+            const arr = currentMode === 'annotations' ? lesson.annotations : lesson.content;
+            const newItem = currentMode === 'annotations' ? {id:'0',term:'',meaning:''} : {text:'',note:'',translation:''};
+            arr.splice(atIndex, 0, newItem); sync(); render();
+        }
+        function delItem(s, l, i) { const arr = currentMode === 'annotations' ? dataStore.sources[s].lessons[l].annotations : dataStore.sources[s].lessons[l].content; arr.splice(i,1); sync(); render(); }
+        function addNewSource() { dataStore.sources.push({name:'新版本名稱', lessons:[]}); sync(); render(); }
+        function resetDraft() { if(confirm('還原修改？')){ localStorage.removeItem('chinese_draft'); location.reload(); } }
+        function downloadJSON() { const b = new Blob([JSON.stringify(dataStore,null,2)],{type:'application/json'}); const a = document.createElement('a'); a.href=URL.createObjectURL(b); a.download='chinese.json'; a.click(); }
+        init();
+    </script>
+</body>
+</html>

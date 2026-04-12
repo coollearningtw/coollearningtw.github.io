@@ -115,7 +115,17 @@ body {
     color: #999;
 }
 
-
+/* Markdown 產生的超連結藍色樣式 */
+.md-link {
+    color: var(--primary);
+    text-decoration: underline;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+.md-link:hover {
+    color: #005fa3;
+    text-decoration: underline;
+}
 
 /* 翻譯測驗比對專用樣式 */
 /* --- 柔化版翻譯比對樣式 --- */

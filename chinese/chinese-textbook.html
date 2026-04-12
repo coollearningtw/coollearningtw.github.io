@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>國文科 - 課文閱讀</title>
+    <link rel="stylesheet" href="../styles/style.css">
+    <link rel="stylesheet" href="../styles/header.css">
+    <style>
+        header { display: flex !important; justify-content: space-between !important; align-items: center !important; padding: 10px 15px !important; background: #fff !important; border-bottom: 1px solid #e2e8f0 !important; box-shadow: none !important; }
+        .h-left, .h-right { flex: 1; display: flex; align-items: center; }
+        .h-center { flex: 2; text-align: center; font-weight: bold; font-size: 1.1rem; color: #1e293b; }
+        .h-right { justify-content: flex-end; gap: 8px; }
+
+        .text-row { padding: 25px 20px; margin-bottom: 12px; position: relative; border: 1px solid #e2e8f0; background: #fff; transition: all 0.3s ease; }
+        .note-wrapper { max-height: 0; opacity: 0; overflow: hidden; transition: all 0.3s ease; }
+        .note-wrapper.show { max-height: 100px; opacity: 1; margin-bottom: 8px; }
+        .note-label { display: inline-block; font-size: 0.9rem; color: #b91c1c; font-weight: 600; background: #fef2f2; border: 1px solid #f87171; padding: 2px 12px; border-radius: 50px; }
+        .para-text { font-size: 1.3rem; line-height: 1.8; color: #1e293b; padding-right: 45px; }
+
+        /* 上標編號樣式 */
+        .anno-link { color: #2563eb; cursor: help; position: relative; padding: 0 1px; border-bottom: 1px dashed #93c5fd; }
+        .anno-no { font-size: 0.7rem; color: #ef4444; font-weight: bold; margin-left: 1px; top: -0.5em; position: relative; }
+
+        /* 彈出視窗 */
+        .anno-popup-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.1); backdrop-filter: blur(1px); display: none; align-items: center; justify-content: center; z-index: 2000; }
+        .anno-popup-card { background: #fff; width: 85%; max-width: 320px; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; animation: popScale 0.2s ease-out; }
+        @keyframes popScale { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .pop-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; border-bottom: 1px solid #f1f3f5; padding-bottom: 8px; }
+        .pop-id { background: #ef4444; color: #fff; font-size: 0.75rem; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-weight: bold; }
+        .pop-term { font-size: 1.1rem; font-weight: bold; color: #1e293b; }
+        .pop-meaning { font-size: 1rem; color: #475569; line-height: 1.6; }
+
+        .row-controls { position: absolute; top: 15px; right: 12px; display: flex; flex-direction: column; gap: 10px; }
+        .action-icon { width: 20px; height: 20px; cursor: pointer; opacity: 0.25; }
+        .trans-box { max-height: 0; opacity: 0; overflow: hidden; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; color: #475569; transition: all 0.3s ease; }
+        .trans-box.show { max-height: 500px; opacity: 1; margin-top: 12px; padding: 12px; }
+        .btn-tool { padding: 5px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: #fff; cursor: pointer; font-size: 0.85rem; color: #64748b; display: flex; align-items: center; gap: 4px; }
+        .btn-tool.active { background: #f1f5f9; color: #0f172a; border-color: #94a3b8; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="h-left"><a href="chinese.html" class="back-link"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg></a></div>
+        <div class="h-center">課文閱讀</div>
+        <div class="h-right"><button id="global-note" class="btn-tool">註記</button><button id="global-trans" class="btn-tool">翻譯</button></div>
+    </header>
+
+    <main class="page-container" id="content-root" style="margin-top: 15px;"></main>
+
+    <div id="anno-popup" class="anno-popup-overlay">
+        <div class="anno-popup-card">
+            <div class="pop-head"><div id="pop-id" class="pop-id"></div><div id="pop-term" class="pop-term"></div></div>
+            <div id="pop-meaning" class="pop-meaning"></div>
+        </div>
+    </div>
+
+    <script src="../scripts/utils.js"></script>
+    <script>
+        let currentAnnotations = [];
+        async function init() {
+            const sel = JSON.parse(localStorage.getItem('sel_chinese_lessons') || '[]');
+            const res = await fetch('../data/chinese.json');
+            const data = await res.json();
+            const root = document.getElementById('content-root');
+
+            data.sources.forEach(src => src.lessons.forEach(l => {
+                if (sel.some(s => s.source === src.name && s.lesson === l.lesson)) {
+                    currentAnnotations = currentAnnotations.concat(l.annotations);
+                    l.content.forEach((c) => {
+                        const card = document.createElement('div');
+                        card.className = 'std-card text-row';
+                        card.innerHTML = `
+                            <div class="row-controls">
+                                <svg class="action-icon ${!c.note?'disabled':''}" onclick="toggleRow(this, 'note')" viewBox="0 0 24 24"><path fill="#e11d48" d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2zM7 8h10v2H7V8zm0 7h10v2H7v-2z"/></svg>
+                                <svg class="action-icon ${!c.translation?'disabled':''}" onclick="toggleRow(this, 'trans')" viewBox="0 0 24 24"><path fill="#2563eb" d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0014.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>
+                            </div>
+                            <div class="note-wrapper">${c.note ? `<div class="note-label">${c.note}</div>` : ''}</div>
+                            <div class="para-text">${parseMarkdown(c.text)}</div>
+                            <div class="trans-box">${parseMarkdown(c.translation || '')}</div>
+                        `;
+                        root.appendChild(card);
+                    });
+                }
+            }));
+
+            root.addEventListener('click', (e) => {
+                const link = e.target.closest('.anno-link');
+                if (link) {
+                    const id = link.getAttribute('data-id');
+                    const found = currentAnnotations.find(a => a.id === id);
+                    if(found) {
+                        document.getElementById('pop-id').innerText = found.id;
+                        document.getElementById('pop-term').innerText = found.term;
+                        document.getElementById('pop-meaning').innerText = found.meaning;
+                        document.getElementById('anno-popup').style.display = 'flex';
+                    }
+                }
+            });
+
+            const popup = document.getElementById('anno-popup');
+            popup.onclick = (e) => { if(e.target === popup) popup.style.display = 'none'; };
+
+            document.getElementById('global-note').onclick = function() {
+                const active = this.classList.toggle('active');
+                document.querySelectorAll('.note-wrapper').forEach(el => el.classList.toggle('show', active));
+            };
+            document.getElementById('global-trans').onclick = function() {
+                const active = this.classList.toggle('active');
+                document.querySelectorAll('.trans-box').forEach(el => el.classList.toggle('show', active));
+            };
+        }
+
+        function toggleRow(btn, type) {
+            if(btn.classList.contains('disabled')) return;
+            const card = btn.closest('.text-row');
+            const target = type === 'note' ? card.querySelector('.note-wrapper') : card.querySelector('.trans-box');
+            if(target) target.classList.toggle('show');
+        }
+        init();
+    </script>
+</body>
+</html>

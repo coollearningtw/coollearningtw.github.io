@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: "Noto Sans TC", sans-serif; line-height: 1.7; color: #475569; padding: 30px; margin: 0; }
+        h2 { color: #334155; display: flex; align-items: center; gap: 10px; font-size: 1.5rem; margin-top: 0; }
+        .step-item { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 15px; background: #f0fdf4; padding: 15px; border-radius: 10px; border: 1px solid #dcfce7; }
+        .step-no { background: #22c55e; color: white; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; flex-shrink: 0; margin-top: 3px; }
+        .note { font-size: 0.85rem; color: #94a3b8; border-top: 1px solid #f1f5f9; padding-top: 15px; margin-top: 20px; }
+        svg { width: 24px; height: 24px; fill: #22c55e; }
+    </style>
+</head>
+<body>
+    <h2>
+        <svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>
+        每日簽到系統
+    </h2>
+    <p>簽到功能不僅是紀錄，更是一種自我承諾。透過紀錄連續學習天數，您可以建立強大的成就感。</p>
+    
+    <div class="step-item">
+        <div class="step-no">1</div>
+        <div>每天登入後，在首頁左側找到「每日簽到」區塊。</div>
+    </div>
+    <div class="step-item">
+        <div class="step-no">2</div>
+        <div>點擊「簽到」按鈕，系統將自動累加您的天數。</div>
+    </div>
+    <div class="step-item">
+        <div class="step-no">3</div>
+        <div>如果您今日已簽到，按鈕將變為灰色狀態，避免重複操作。</div>
+    </div>
+
+    <div class="note">
+        系統說明：簽到數據目前儲存在您的本地瀏覽器 (LocalStorage)。請避免在無痕模式下使用，以免天數無法正確儲存。
+    </div>
+</body>
+</html>

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: "Noto Sans TC", sans-serif; line-height: 1.7; color: #475569; padding: 30px; margin: 0; }
+        h2 { color: #334155; display: flex; align-items: center; gap: 10px; font-size: 1.5rem; margin-top: 0; }
+        .tag-row { display: flex; gap: 10px; margin: 20px 0; }
+        .tag { padding: 4px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 500; }
+        .tag-blue { background: #e0f2fe; color: #0369a1; }
+        .tag-red { background: #fee2e2; color: #b91c1c; }
+        .tag-green { background: #f0fdf4; color: #166534; }
+        .info-box { background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; }
+        svg { width: 24px; height: 24px; fill: #ef4444; }
+    </style>
+</head>
+<body>
+    <h2>
+        <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 12h-2v-2h2v2zm0-4h-2V6h2v4z"/></svg>
+        問題回報與建議
+    </h2>
+    <p>若您在學習過程中發現任何錯誤，或有新的功能構想，歡迎隨時透過右下角的懸浮按鈕告知我們。</p>
+    
+    <div class="tag-row">
+        <div class="tag tag-blue">網站功能異常</div>
+        <div class="tag tag-red">教材內容勘誤</div>
+        <div class="tag tag-green">新增功能提案</div>
+    </div>
+
+    <div class="info-box">
+        <strong>勘誤自動化：</strong><br>
+        當您選擇「內容勘誤」時，表單會提供版本與單字選單。這能幫助開發團隊更精準地定位錯誤位置並快速修正，確保每位使用者都能獲得最正確的資訊。
+    </div>
+</body>
+</html>

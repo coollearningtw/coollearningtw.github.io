@@ -1,0 +1,14 @@
+{
+  "教學": [
+    { "title": "首頁介紹", "file": "intro.html" },
+    { "title": "簽到功能", "file": "checkin.html" },
+    { "title": "問題回報", "file": "feedback.html" }
+  ],
+  "關於我們": [
+    { "title": "團隊簡介", "file": "about.html" }
+  ],
+  "網站說明": [
+    { "title": "網站功能", "file": "features.html" },
+    { "title": "常見問題", "file": "faq.html" }
+  ]
+}

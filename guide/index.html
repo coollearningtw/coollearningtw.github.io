@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>酷學習 - 使用指南</title>
+    <link rel="stylesheet" href="../styles/style.css">
+    <link rel="stylesheet" href="../styles/header.css">
+    <style>
+        /* Header 樣式：比照首頁，中間文字置中 */
+        header {
+            display: flex; align-items: center; justify-content: space-between;
+            max-width: 980px; margin: 10px auto 18px; padding: 12px 18px;
+            border: 2px solid rgb(156, 176, 202); border-radius: 14px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            backdrop-filter: blur(6px); background-color: rgba(195, 221, 255, 0.7);
+            position: sticky; top: 10px; z-index: 1200;
+        }
+        .header-left { display: flex; align-items: center; gap: 12px; flex: 1; }
+        .guide-title { 
+            font-size: 1.25rem; font-weight: bold; color: var(--primary, #0b76d1); 
+            flex: 2; text-align: center; letter-spacing: 1px;
+        }
+        .header-right { flex: 1; display: flex; justify-content: flex-end; }
+
+        .drawer-btn { display: none; background: none; border: none; cursor: pointer; color: var(--primary); }
+        .home-link { 
+            color: var(--primary); text-decoration: none; font-weight: 600; 
+            padding: 6px 12px; border-radius: 8px; font-size: 1rem;
+        }
+        .home-link:hover { background: rgba(11, 118, 209, 0.08); }
+
+        .guide-layout {
+            display: flex; max-width: 980px; margin: 20px auto 40px;
+            background: #fff; border-radius: 16px; min-height: 600px;
+            box-shadow: var(--shadow); overflow: hidden; position: relative;
+        }
+
+        /* --- 修正後的樹狀目錄線條 --- */
+        .guide-sidebar { width: 260px; background: #f8fafc; border-right: 1px solid #e2e8f0; padding: 32px 12px 32px 0; }
+        .guide-sidebar h2 { font-size: 1rem; color: #64748b; margin: 0 0 12px 32px; font-weight: 700; }
+        
+        .guide-menu { 
+            list-style: none; padding: 0 0 0 48px; margin: 0 0 25px 0; 
+            position: relative; 
+        }
+
+        /* 垂直主幹導航線 */
+        .guide-menu::before {
+            content: ''; position: absolute; left: 30px; top: 0; bottom: 18px;
+            width: 2px; background: #cbd5e1;
+        }
+
+        .guide-menu li { position: relative; margin-bottom: 4px; }
+
+        /* 分支圓角線條 */
+        .guide-menu li::before {
+            content: "";
+            position: absolute;
+            top: -12px;       /* 從上方跨越下來 */
+            left: -18px;      /* 連接到主幹 */
+            width: 16px;
+            height: 36px;     /* 高度需剛好到達文字中間 */
+            border-left: 2px solid #b1c4db;
+            border-bottom: 2px solid #b1c4db;
+            border-bottom-left-radius: 10px; /* 達成圓角分支 */
+            pointer-events: none;
+        }
+
+        .guide-menu a {
+            color: #475569; text-decoration: none; display: block;
+            padding: 8px 12px; border-radius: 6px; font-size: 0.95rem; 
+            transition: all 0.2s; position: relative;
+        }
+        .guide-menu a.active { background: var(--primary); color: #fff; font-weight: 600; box-shadow: 0 4px 12px rgba(11,118,209,0.2); }
+        .guide-menu a:hover:not(.active) { background: #f1f5f9; color: #1e293b; }
+
+        .guide-content { flex: 1; }
+        .guide-content iframe { border: none; width: 100%; height: 100%; min-height: 600px; }
+        .drawer-mask { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.2); z-index: 1400; }
+
+        @media (max-width: 900px) {
+            header { width: calc(100% - 24px); margin: 10px 12px; }
+            .logo-text { display: none; }
+            .drawer-btn { display: flex; }
+            .guide-sidebar { position: fixed; left: 0; top: 0; bottom: 0; z-index: 1500; transform: translateX(-100%); width: 280px; }
+            .guide-sidebar.open { transform: translateX(0); }
+            .drawer-mask.show { display: block; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-left">
+            <button class="drawer-btn" id="drawerBtn">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+            </button>
+            <a href="../index.html" style="display: flex; align-items: center; gap: 8px; text-decoration: none;">
+                <img src="../images/logo.png" alt="Logo" height="36">
+                <img src="../images/logo_text.png" class="logo-text" alt="酷學習" height="28">
+            </a>
+        </div>
+        <div class="guide-title">使用指南</div>
+        <div class="header-right"><a href="../index.html" class="home-link">回首頁</a></div>
+    </header>
+
+    <div class="guide-layout">
+        <div class="drawer-mask" id="drawerMask"></div>
+        <nav class="guide-sidebar" id="guideSidebar"></nav>
+        <main class="guide-content"><iframe id="guideFrame" src="intro.html"></iframe></main>
+    </div>
+
+    <script>
+        fetch('toc.json').then(r => r.json()).then(toc => {
+            const sidebar = document.getElementById('guideSidebar');
+            let html = '';
+            Object.entries(toc).forEach(([section, items]) => {
+                html += `<h2>${section}</h2><ul class="guide-menu">`;
+                items.forEach(item => {
+                    html += `<li><a href="#" data-file="${item.file}">${item.title}</a></li>`;
+                });
+                html += '</ul>';
+            });
+            sidebar.innerHTML = html;
+            sidebar.querySelectorAll('a[data-file]').forEach(a => {
+                a.addEventListener('click', function(e){
+                    e.preventDefault();
+                    document.getElementById('guideFrame').src = this.dataset.file;
+                    sidebar.querySelectorAll('a').forEach(x=>x.classList.remove('active'));
+                    this.classList.add('active');
+                    if(window.innerWidth <= 900) closeDrawer();
+                });
+            });
+            const firstA = sidebar.querySelector('a'); if(firstA) firstA.click();
+        });
+
+        const sidebar = document.getElementById('guideSidebar');
+        const mask = document.getElementById('drawerMask');
+        function openDrawer() { sidebar.classList.add('open'); mask.classList.add('show'); }
+        function closeDrawer() { sidebar.classList.remove('open'); mask.classList.remove('show'); }
+        document.getElementById('drawerBtn').onclick = openDrawer;
+        mask.onclick = closeDrawer;
+        window.onresize = () => { if(window.innerWidth > 900) closeDrawer(); };
+    </script>
+</body>
+</html>

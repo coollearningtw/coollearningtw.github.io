@@ -27,19 +27,19 @@
             align-items: flex-start;
         }
 
-        /* 左側簽到區 - 覆蓋原本置中樣式 */
+        /* 左側簽到區 */
         .checkin-section {
             flex: 1;
             min-width: 300px;
-            margin: 0; /* 移除原本的 margin */
+            margin: 0;
             padding: 0;
-            display: block; /* 移除 flex center */
+            display: block;
         }
         .checkin-card {
             width: 100%;
             max-width: 100%;
             margin: 0;
-            aspect-ratio: auto; /* 解除強制正方形 */
+            aspect-ratio: auto;
             min-height: 320px;
         }
 
@@ -73,14 +73,8 @@
             overflow: hidden;
         }
 
-        /* 上方兩個：寬度各 50% 扣除間距 */
-        .subject-card.top-row {
-            width: calc(50% - 8px);
-        }
-        /* 下方三個：寬度各 33.33% 扣除間距 */
-        .subject-card.bottom-row {
-            width: calc(33.333% - 10px);
-        }
+        .subject-card.top-row { width: calc(50% - 8px); }
+        .subject-card.bottom-row { width: calc(33.333% - 10px); }
 
         .subject-card:hover {
             transform: translateY(-5px);
@@ -99,7 +93,6 @@
             color: var(--primary);
         }
 
-        /* 手機版變成單欄 */
         @media (max-width: 768px) {
             .subject-card.top-row, .subject-card.bottom-row {
                 width: 100%;
@@ -111,14 +104,14 @@
     <header>
         <div class="logo">
             <img src="images/logo.png" alt="Logo" height="50px">
-            <span>酷學習</span>
+            <img src="images/logo_text.png" alt="知識酷字標" height="40">
         </div>
         <div class="links">
+            <a href="guide/index.html" class="guide-link" style="font-weight:bold; color:var(--primary,#0b76d1); margin-left:18px;">使用指南</a>
         </div>
     </header>
 
     <div class="main-layout">
-        <!-- 左側：簽到 -->
         <section class="checkin-section">
             <div class="checkin-card">
                 <div class="checkin-left">
@@ -132,10 +125,8 @@
             </div>
         </section>
 
-        <!-- 右側：科目選單 -->
         <section class="subjects-section">
             <div class="subject-grid">
-                <!-- 上排 (2個) -->
                 <a href="chinese/chinese.html" class="subject-card top-row">
                     <div class="subject-icon">
                         <svg viewBox="0 0 24 24" fill="#e74c3c"><path d="M3 3v17a1 1 0 001 1h17v-2H5V3H3m15.25 6.75c.41-.41.41-1.09 0-1.5l-1.5-1.5c-.41-.41-1.09-.41-1.5 0l-8.25 8.25V18h2.25l8.25-8.25m-8.5 5l-3 3 3 3h10v-6h-10z"/></svg>
@@ -145,16 +136,13 @@
                 
                 <a href="#" class="subject-card top-row" style="pointer-events:none; opacity:0.6;">
                     <div class="subject-icon">
-                        <!-- 數學: 運算符號 -->
                         <svg viewBox="0 0 24 24" fill="#f1c40f"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2m-7 3c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1m4 12h-2v-2h2v2m0-4h-2v-2h2v2m-4 4H8v-2h2v2m0-4H8v-2h2v2m-2-4h2v2H8V10m6-2h-2V6h2v2z"/></svg>
                     </div>
                     <span class="subject-name">數學</span>
                 </a>
 
-                <!-- 下排 (3個) -->
                 <a href="english/english.html" class="subject-card bottom-row">
                     <div class="subject-icon">
-                        <!-- 英文: A -->
                         <svg viewBox="0 0 24 24" fill="#0b76d1"><path d="M11.5 4L6 20h2.2l1.1-4h5.4l1.1 4H18L12.5 4h-1M10 13l2-6 2 6h-4z"/></svg>
                     </div>
                     <span class="subject-name">English</span>
@@ -162,7 +150,6 @@
 
                 <a href="#" class="subject-card bottom-row" style="pointer-events:none; opacity:0.6;">
                     <div class="subject-icon">
-                        <!-- 自然: 燒杯 -->
                         <svg viewBox="0 0 24 24" fill="#2ecc71"><path d="M20.8 18.4L15 5.86V4h1v-2H8v2h1v1.86L3.2 18.4A3.28 3.28 0 006 22h12a3.28 3.28 0 002.8-3.6zM18.5 19l-3.3-5H8.8l-3.3 5H18.5z"/></svg>
                     </div>
                     <span class="subject-name">自然</span>
@@ -170,30 +157,33 @@
 
                 <a href="#" class="subject-card bottom-row" style="pointer-events:none; opacity:0.6;">
                     <div class="subject-icon">
-                        <!-- 社會: 地球 -->
                         <svg viewBox="0 0 24 24" fill="#9b59b6"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2m-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
                     </div>
                     <span class="subject-name">社會</span>
                 </a>
             </div>
         </section>
-        
     </div>
-        <button id="feedback-fab" title="問題回報與建議">&#9993;</button>
 
-    <!-- 2. 表單視窗 (Modal) -->
+    <!-- 懸浮回報按鈕 -->
+    <button id="feedback-fab" title="問題回報與建議">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+    </button>
+
     <div id="feedback-modal-overlay" class="feedback-overlay">
         <div id="feedback-modal-card" class="feedback-card">
-            
-            <!-- 標題與關閉按鈕 -->
             <div class="feedback-header">
                 <h3>問題回報 & 內容建議</h3>
-                <button id="feedback-close-btn" class="feedback-close">&times;</button>
+                <button id="feedback-close-btn" class="feedback-close" style="color:#555">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
             </div>
-
-            <!-- 表單內容 -->
             <form id="feedback-form">
-                <!-- 回報類型 -->
                 <div class="form-group">
                     <label for="feedback-type">回報類型 <span class="required">*</span></label>
                     <select id="feedback-type" name="entry.499601865" required>
@@ -203,8 +193,6 @@
                         <option value="內容建議 (新增題庫、新功能等)">內容建議 (新增題庫、新功能等)</option>
                     </select>
                 </div>
-
-                <!-- 內容勘誤的聯動選單 (預設隱藏) -->
                 <div id="cascading-dropdowns" class="form-group-wrapper" style="display: none;">
                     <p class="form-group-label">勘誤範圍 (選填)</p>
                     <div class="dropdown-row">
@@ -213,33 +201,24 @@
                         <select id="feedback-word" name="word" disabled><option>選擇單字...</option></select>
                     </div>
                 </div>
-
-                <!-- 詳細說明 -->
                 <div class="form-group">
                     <label for="feedback-details">詳細說明 <span class="required">*</span></label>
                     <textarea id="feedback-details" name="entry.608420595" rows="5" placeholder="請盡可能詳細地描述您遇到的問題或建議..." required style="resize: none;"></textarea>
                 </div>
-
-                <!-- 隱藏欄位，用於合併勘誤範圍資訊 -->
                 <input type="hidden" id="feedback-scope-hidden" name="entry.539772390" value="N/A">
-
-                <!-- 提交按鈕 -->
                 <div class="feedback-footer">
                     <button type="submit" id="feedback-submit-btn" class="btn">送出回報</button>
                 </div>
             </form>
-
-            <!-- 提交成功訊息 -->
             <div id="feedback-success-msg" class="feedback-success" style="display: none;">
-                <h4>&#10004; 感謝您的回報！</h4>
+                <h4>✔ 感謝您的回報！</h4>
                 <p>我們已收到您的訊息，將會盡快處理。</p>
                 <button id="feedback-close-success-btn" class="btn">關閉</button>
             </div>
         </div>
     </div>
-    <script src="scripts/header.js"></script>
+
     <script>
-        // 保留原有的簽到邏輯
         (function(){
             const totalDaysEl = document.getElementById('totalDays');
             const msgEl = document.getElementById('checkinMsg');

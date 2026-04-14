@@ -8,22 +8,26 @@
     <link rel="stylesheet" href="../styles/header.css">
     <style>
         .list-container { max-width: 800px; margin: 20px auto; padding: 0 15px; }
-        .anno-item { padding: 18px 20px; margin-bottom: 12px; cursor: pointer; display: flex; align-items: flex-start; gap: 15px; border: 1px solid #e2e8f0; box-shadow: none; background: #fff; }
+        .anno-item { padding: 18px 20px; margin-bottom: 12px; cursor: pointer; display: flex; align-items: flex-start; gap: 15px; border: 1px solid #e2e8f0; background: #fff; }
         .id-badge { background: #ef4444; color: #fff; font-size: 0.8rem; min-width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; margin-top: 2px; }
         .content-side { flex: 1; }
         .term { font-size: 1.25rem; font-weight: bold; color: #1e293b; margin-bottom: 5px; }
         .meaning { font-size: 1.05rem; color: #475569; display: none; border-top: 1px solid #f1f3f5; padding-top: 10px; margin-top: 5px; line-height: 1.6; }
         .meaning.show { display: block; }
-        header { justify-content: space-between; border-bottom: 1px solid #e2e8f0; box-shadow: none; background: #fff; }
-        .btn-tool { padding: 5px 15px; border-radius: 6px; border: 1px solid #cbd5e1; background: #fff; cursor: pointer; font-weight: bold; font-size: 0.85rem; color: #64748b; }
-        .btn-tool.active { background: #f1f5f9; color: #0f172a; }
     </style>
 </head>
 <body>
     <header>
-        <div class="logo"><a href="chinese.html" class="back-link"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg></a></div>
-        <div style="font-weight:bold">註釋背誦</div>
-        <button id="toggle-all" class="btn-tool">顯示解釋</button>
+        <div class="logo">
+            <a href="chinese.html" class="back-link">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            </a>
+            <img src="../images/logo.png" alt="Logo" height="40">
+            <span style="font-weight:bold; color:var(--primary);">註釋背誦</span>
+        </div>
+        <div class="header-right">
+            <button id="toggle-all" class="btn-tool-text">顯示解釋</button>
+        </div>
     </header>
     <div class="page-container"><div id="anno-list" class="list-container"></div></div>
     <script>
@@ -32,19 +36,12 @@
             const res = await fetch('../data/chinese.json');
             const data = await res.json();
             const root = document.getElementById('anno-list');
-
             data.sources.forEach(src => src.lessons.forEach(l => {
-                if (sel.some(s => s.source === src.name && s.lesson === l.lesson)) {
+                if (sel.some(s => s.source === src.name && s.lesson == l.lesson)) {
                     l.annotations.forEach(a => {
                         const el = document.createElement('div');
                         el.className = 'std-card anno-item';
-                        el.innerHTML = `
-                            <div class="id-badge">${a.id}</div>
-                            <div class="content-side">
-                                <div class="term">${a.term}</div>
-                                <div class="meaning">${a.meaning}</div>
-                            </div>
-                        `;
+                        el.innerHTML = `<div class="id-badge">${a.id}</div><div class="content-side"><div class="term">${a.term}</div><div class="meaning">${a.meaning}</div></div>`;
                         el.onclick = () => el.querySelector('.meaning').classList.toggle('show');
                         root.appendChild(el);
                     });

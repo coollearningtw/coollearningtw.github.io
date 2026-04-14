@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>英文資料庫管理系統</title>
+    <title>英文資料庫管理</title>
     <link rel="stylesheet" href="../styles/style.css">
     <link rel="stylesheet" href="../styles/header.css">
     <style>
@@ -12,7 +12,6 @@
         .tab-btn.active { background: #fff; color: #0f172a; border: 1px solid #cbd5e1; }
         .source-block { background: #fff; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 25px; overflow: hidden; }
         .accordion-header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: #fff; border-bottom: 1px solid #f1f3f5; }
-        .accordion-header:hover { background: #f8fafc; }
         .lesson-container { display: none; padding: 10px 15px 20px; background: #f8fafc; }
         .source-block.expanded > .lesson-container { display: block; }
         .lesson-block { border: 1px solid #e2e8f0; border-radius: 8px; margin-top: 15px; background: #fff; position: relative; }
@@ -34,20 +33,41 @@
         .inline-textarea { width: 100%; padding: 8px; border: 1px solid #0f172a; border-radius: 4px; outline: none; font-family: inherit; resize: vertical; background: #fff; }
         .svg-icon { width: 18px; height: 18px; fill: currentColor; }
         .drag-handle { cursor: grab; color: #94a3b8; padding-top: 8px; }
-        /* Markdown 預覽樣式 */
-        .md-bold { font-weight: bold; color: #1e293b; }
-        .md-highlight { background: #fef08a; padding: 0 2px; border-radius: 2px; }
-        .md-strike { text-decoration: line-through; color: #94a3b8; }
+        .back-link { display: flex; align-items: center; text-decoration: none; color: var(--primary) !important; margin-right: 10px; }
     </style>
 </head>
 <body>
-    <header><div class="logo"><a href="english.html" class="back-link" style="text-decoration:none;color:inherit;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg></a><span style="margin-left:10px;font-weight:bold;">英文資料庫管理</span></div></header>
+    <header>
+        <div class="logo">
+            <a href="english.html" class="back-link">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            </a>
+            <img src="../images/logo.png" alt="Logo" height="40">
+            <span style="font-weight:bold; color:var(--primary);">英文資料庫管理</span>
+        </div>
+    </header>
+
     <div class="page-container">
-        <div class="editor-tabs"><button class="tab-btn active" id="tab-words" onclick="switchTab('words')">單字庫 (Words)</button><button class="tab-btn" id="tab-textbook" onclick="switchTab('textbook')">課文庫 (Textbook)</button></div>
-        <button class="btn-action btn-primary" style="margin-bottom:20px" onclick="addNewSource()"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg> 新增版本</button>
+        <div class="editor-tabs">
+            <button class="tab-btn active" id="tab-words" onclick="switchTab('words')">單字庫 (Words)</button>
+            <button class="tab-btn" id="tab-textbook" onclick="switchTab('textbook')">課文庫 (Textbook)</button>
+        </div>
+        <button class="btn-action btn-primary" style="margin-bottom:20px" onclick="addNewSource()">
+            <svg class="svg-icon" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg> 新增版本
+        </button>
         <div id="editor-content"></div>
     </div>
-    <div class="floating-footer"><div id="status" style="color:#64748b;font-size:0.85rem">就緒</div><div style="display:flex;gap:10px"><button class="btn-action" onclick="resetDraft()">重置暫存</button><button class="btn-action btn-primary" onclick="downloadJSON()">下載 JSON</button></div></div>
+
+    <div class="floating-footer">
+        <div id="status" style="color:#64748b;font-size:0.85rem">就緒</div>
+        <div style="display:flex;gap:10px">
+            <button class="btn-action" onclick="resetDraft()">重置暫存</button>
+            <button class="btn-action btn-primary" onclick="downloadJSON()">
+                <svg class="svg-icon" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg> 下載 JSON
+            </button>
+        </div>
+    </div>
+
     <script src="../scripts/utils.js"></script>
     <script>
         let currentMode = 'words', dataStore = { words: { sources: [] }, textbook: { sources: [] } }, expandedKeys = new Set();
@@ -58,6 +78,7 @@
             close: '<svg class="svg-icon" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>',
             plus: '<svg class="svg-icon" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>'
         };
+
         async function init() {
             const draftW = localStorage.getItem('english_words_draft'), draftT = localStorage.getItem('english_textbook_draft');
             dataStore.words = draftW ? JSON.parse(draftW) : await (await fetch('../data/english.json')).json();
@@ -65,7 +86,9 @@
             if (dataStore.words.sources.length) expandedKeys.add('source-0');
             render();
         }
+
         function switchTab(m) { currentMode = m; document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.id===`tab-${m}`)); render(); }
+
         function render() {
             const root = document.getElementById('editor-content'); root.innerHTML = '';
             const db = currentMode === 'words' ? dataStore.words : dataStore.textbook;
@@ -83,7 +106,7 @@
                             ${createInsertBarHtml(sIdx, lIdx, 0)}
                             ${items.map((item, iIdx) => `<div class="data-item"><div class="drag-handle">${ICONS.drag}</div><div style="flex:1">
                                 ${currentMode === 'words' ? `<div style="display:grid;grid-template-columns:180px 80px 1fr;gap:10px"><div class="editable-cell" style="font-weight:bold" onclick="startEdit(this,${sIdx},${lIdx},${iIdx},'word')">${parseMarkdown(item.word)||item.word}</div><div class="editable-cell cell-pos" onclick="startEdit(this,${sIdx},${lIdx},${iIdx},'pos')">${item.pos||'(Pos)'}</div><div class="editable-cell" onclick="startEdit(this,${sIdx},${lIdx},${iIdx},'chinese')">${parseMarkdown(item.chinese)||item.chinese}</div></div>` : 
-                                `<div style="display:flex;flex-direction:column;gap:4px"><div class="editable-cell" onclick="startEdit(this,${sIdx},${lIdx},${iIdx},'en')">${parseMarkdown(item.en)||item.en}</div><div class="editable-cell cell-trans" onclick="startEdit(this,${sIdx},${lIdx},${iIdx},'ch')">${parseMarkdown(item.ch)||item.ch}</div></div>`}
+                                `<div style="display:flex; flex-direction:column; gap:4px"><div class="editable-cell" onclick="startEdit(this,${sIdx},${lIdx},${iIdx},'en')">${parseMarkdown(item.en)||item.en}</div><div class="editable-cell cell-trans" onclick="startEdit(this,${sIdx},${lIdx},${iIdx},'ch')">${parseMarkdown(item.ch)||item.ch}</div></div>`}
                             </div><button class="btn-action" style="border:none;color:#ef4444" onclick="delItem(${sIdx},${lIdx},${iIdx})">${ICONS.close}</button></div>${createInsertBarHtml(sIdx, lIdx, iIdx + 1)}`).join('')}
                             <button class="btn-add-item-bottom" onclick="addItem(${sIdx},${lIdx},${items.length})">${ICONS.plus} 新增${label}</button>
                         </div></div>`;
@@ -107,14 +130,24 @@
                 sync(); render(); 
             };
         }
-        function sync() { localStorage.setItem('english_words_draft', JSON.stringify(dataStore.words)); localStorage.setItem('english_textbook_draft', JSON.stringify(dataStore.textbook)); document.getElementById('status').innerText='💾 已自動同步'; }
+        function sync() { 
+            localStorage.setItem('english_words_draft', JSON.stringify(dataStore.words)); 
+            localStorage.setItem('english_textbook_draft', JSON.stringify(dataStore.textbook)); 
+            document.getElementById('status').innerHTML = '<svg class="svg-icon" viewBox="0 0 24 24" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg> 已自動暫存'; 
+        }
         function editSrc(s) { const db=currentMode==='words'?dataStore.words:dataStore.textbook; const n=prompt('名稱:', db.sources[s].name); if(n){ db.sources[s].name=n; sync(); render(); }}
         function delSrc(s) { const db=currentMode==='words'?dataStore.words:dataStore.textbook; if(confirm('刪除版本？')){ db.sources.splice(s,1); sync(); render(); }}
         function addLes(s) { const db=currentMode==='words'?dataStore.words:dataStore.textbook; db.sources[s].lessons.push({lesson: db.sources[s].lessons.length+1, title:'New Lesson', vocabulary:[], sentences:[]}); sync(); render(); }
         function delLes(s, l) { const db=currentMode==='words'?dataStore.words:dataStore.textbook; if(confirm('刪除單元？')) { db.sources[s].lessons.splice(l, 1); sync(); render(); } }
         function addItem(s, l, atIndex) {
-            const db=currentMode==='words'?dataStore.words:dataStore.textbook; const arr = currentMode==='words'?db.sources[s].lessons[l].vocabulary : db.sources[s].lessons[l].sentences;
-            arr.splice(atIndex, 0, currentMode==='words'?{word:'',pos:'',chinese:''}:{en:'',ch:''}); sync(); render();
+            const db=currentMode==='words'?dataStore.words:dataStore.textbook; 
+            const arr = currentMode==='words' ? db.sources[s].lessons[l].vocabulary : db.sources[s].lessons[l].sentences;
+            if (!arr) {
+                if (currentMode === 'words') db.sources[s].lessons[l].vocabulary = [];
+                else db.sources[s].lessons[l].sentences = [];
+            }
+            const newItem = currentMode === 'words' ? {word:'',pos:'',chinese:''} : {en:'',ch:''};
+            arr.splice(atIndex, 0, newItem); sync(); render();
         }
         function delItem(s, l, i) { const db=currentMode==='words'?dataStore.words:dataStore.textbook; const arr = currentMode==='words'?db.sources[s].lessons[l].vocabulary:db.sources[s].lessons[l].sentences; arr.splice(i,1); sync(); render(); }
         function addNewSource() { const db=currentMode==='words'?dataStore.words:dataStore.textbook; db.sources.push({name:'New Source', lessons:[]}); sync(); render(); }

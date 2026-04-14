@@ -8,14 +8,7 @@
     <link rel="stylesheet" href="../styles/header.css">
     <style>
         body { padding-bottom: 110px; background-color: #f8fafc; }
-        .back-link { text-decoration: none; color: inherit !important; margin-right: 15px; font-size: 1.5rem; }
-        
-        /* 書架系統樣式 */
-        .shelf-container { 
-            margin-bottom: 20px; padding: 12px; 
-            background: #fff; border-radius: 12px; 
-            border: 1px solid #e2e8f0;
-        }
+        .shelf-container { margin-bottom: 20px; padding: 12px; background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; }
         .shelf-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .switch-label { font-size: 0.9rem; font-weight: 600; color: #475569; }
         .switch { position: relative; display: inline-block; width: 42px; height: 22px; }
@@ -25,62 +18,61 @@
         input:checked + .slider { background-color: #e74c3c; }
         input:checked + .slider:before { transform: translateX(20px); }
         
-        .shelf-tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; }
-        .shelf-tabs::-webkit-scrollbar { display: none; }
-        .shelf-tab { 
-            padding: 7px 16px; border: 1px solid #e2e8f0; border-radius: 20px; 
-            background: #fff; cursor: pointer; white-space: nowrap; font-size: 0.85rem; 
-            color: #64748b; font-weight: 500; transition: all 0.2s;
-        }
+        .shelf-tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; }
+        .shelf-tab { padding: 7px 16px; border: 1px solid #e2e8f0; border-radius: 20px; background: #fff; cursor: pointer; white-space: nowrap; font-size: 0.85rem; color: #64748b; font-weight: 500; transition: all 0.2s; }
         .shelf-tab.active { background: #e74c3c; color: #fff; border-color: #e74c3c; }
 
-        /* 課程卡片佈局 */
         .version-group { margin-bottom: 35px; }
         .version-title { font-size: 1.2rem; font-weight: bold; color: #1e293b; margin-bottom: 15px; padding-left: 12px; border-left: 4px solid #e74c3c; }
         .lesson-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)); gap: 15px; }
         
-        .lesson-card { 
-            background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; 
-            padding: 18px 10px; text-align: center; cursor: pointer; 
-            position: relative; min-height: 100px; display: flex; flex-direction: column; 
-            justify-content: center; transition: all 0.2s ease;
-        }
-        .lesson-card:hover { border-color: #cbd5e1; background: #fdfdfd; }
-        .lesson-card.selected:not(.manage-mode) { 
-            border: 2px solid #e74c3c; background-color: #fffef2f2; color: #b91c1c; 
+        .lesson-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px 10px; text-align: center; cursor: pointer; position: relative; min-height: 110px; display: flex; flex-direction: column; justify-content: center; overflow: visible !important; }
+        .lesson-card.selected:not(.manage-mode) { border: 2px solid #e74c3c; background-color: #fffef2f2; color: #b91c1c; }
+        
+        /* 標題換行優化 */
+        .lesson-title {
+            font-weight: 700;
+            line-height: 1.4; /* 設定行高，讓多行不擁擠 */
+            margin-bottom: 6px;
+            word-break: break-all; /* 確保長標題能正確斷行 */
+            color: inherit;
         }
 
-        /* 狀態標籤修正 */
-        .card-badges { display: flex; gap: 4px; justify-content: center; margin-top: 8px; }
-        .badge { 
-            font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; 
-            background: #f1f5f9; color: #94a3b8; font-weight: 600; 
-        }
-        /* 當有資料時的顏色 */
-        .badge.has-anno { background: #fee2e2; color: #b91c1c; } /* 註釋亮紅色 */
-        .badge.has-content { background: #e0f2fe; color: #0369a1; } /* 課文亮藍色 */
+        .lesson-card.empty:not(.manage-mode) { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
+        .lesson-card.empty:not(.manage-mode):hover { transform: none; box-shadow: none; border-color: #e2e8f0; }
 
-        /* 管理模式按鈕 */
-        .manage-btn { 
-            position: absolute; top: -8px; right: -8px; width: 28px; height: 28px; 
-            border-radius: 50%; border: none; color: #fff; 
-            display: none; align-items: center; justify-content: center; 
-            cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.1); font-weight: bold;
-        }
-        .lesson-card.manage-mode .manage-btn { display: flex; }
-        .manage-btn.add { background: #2ecc71; }
-        .manage-btn.remove { background: #e74c3c; }
+        .card-badges { display: flex; gap: 4px; justify-content: center; margin-top: 4px; }
+        .badge { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; background: #f1f5f9; color: #94a3b8; font-weight: 600; }
+        .badge.has-anno { background: #fee2e2; color: #b91c1c; }
+        .badge.has-content { background: #e0f2fe; color: #0369a1; }
 
         .nav-item-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+        .nav-item-btn:disabled:hover { background: transparent !important; color: #64748b !important; }
+
+        .manage-btn { 
+            position: absolute; top: -10px; right: -10px; width: 28px; height: 28px; 
+            border-radius: 50%; border: none; color: #fff; 
+            display: none; align-items: center; justify-content: center; 
+            cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.2); z-index: 100;
+        }
+        .lesson-card.manage-mode .manage-btn { display: flex; pointer-events: auto; }
+        .manage-btn svg { width: 16px; height: 16px; stroke: currentColor; stroke-width: 3.5; fill: none; }
+        .manage-btn.add { background: #2ecc71; }
+        .manage-btn.remove { background: #e74c3c; }
     </style>
 </head>
 <body>
     <header>
-        <div class="logo"><a href="../index.html" class="back-link"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg></a> 國文科選課</div>
+        <div class="logo">
+            <a href="../index.html" class="back-link">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            </a>
+            <img src="../images/logo.png" alt="Logo" height="40">
+            <span style="font-weight:bold; color:var(--primary);">國文科選課</span>
+        </div>
     </header>
 
     <div class="page-container">
-        <!-- 書架管理 -->
         <div class="shelf-container">
             <div class="shelf-controls">
                 <span class="switch-label">管理國文書架</span>
@@ -88,120 +80,85 @@
             </div>
             <div id="shelf-tabs" class="shelf-tabs"></div>
         </div>
-
         <div id="lessons-root"></div>
     </div>
 
-    <!-- 底部功能導航 -->
     <div class="bottom-nav-fixed">
         <div class="bottom-nav-content">
-            <button class="nav-item-btn" id="btn-anno" onclick="goTo('annotations')" disabled>
-                <svg viewBox="0 0 24 24"><path d="M3 13h12v-2H3v2zm0 4h12v-2H3v2zm0-8h12V7H3v2zm14 4h4v-2h-4v2zm0 4h4v-2h-4v2zM17 7v2h4V7h-4z"/></svg>
-                <span>註釋</span>
-            </button>
-            <button class="nav-item-btn" id="btn-textbook" onclick="goTo('chinese-textbook')" disabled>
-                <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
-                <span>課文</span>
-            </button>
+            <button class="nav-item-btn" id="btn-anno" onclick="goTo('annotations')" disabled><svg viewBox="0 0 24 24"><path d="M3 13h12v-2H3v2zm0 4h12v-2H3v2zm0-8h12V7H3v2zm14 4h4v-2h-4v2zm0 4h4v-2h-4v2zM17 7v2h4V7h-4z"/></svg><span>註釋</span></button>
+            <button class="nav-item-btn" id="btn-textbook" onclick="goTo('chinese-textbook')" disabled><svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg><span>課文</span></button>
         </div>
     </div>
 
     <script>
         let chineseData = [], shelves = [], activeShelfId = 'all', isManageMode = false;
-
         async function init() {
             try {
-                const res = await fetch('../data/chinese.json');
-                const data = await res.json();
-                chineseData = data.sources;
-                shelves = JSON.parse(localStorage.getItem('chinese_shelves') || '[]');
-                renderTabs(); 
-                renderLessons();
-            } catch (e) {
-                console.error("資料載入失敗", e);
-            }
+                const res = await fetch('../data/chinese.json'); const data = await res.json();
+                chineseData = data.sources; shelves = JSON.parse(localStorage.getItem('chinese_shelves') || '[]');
+                renderTabs(); renderLessons();
+            } catch (e) { console.error("資料載入失敗", e); }
         }
-
         function renderTabs() {
             const root = document.getElementById('shelf-tabs');
             root.innerHTML = `<div class="shelf-tab ${activeShelfId==='all'?'active':''}" onclick="switchShelf('all')">全部課程</div>`;
-            
             shelves.forEach(s => {
                 const tab = document.createElement('div');
                 tab.className = `shelf-tab ${activeShelfId===s.id?'active':''}`;
-                tab.innerHTML = s.name + (isManageMode ? ' ✎' : '');
+                const editIcon = ` <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-left:4px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`;
+                tab.innerHTML = s.name + (isManageMode ? editIcon : '');
                 tab.onclick = () => isManageMode ? editShelf(s) : switchShelf(s.id);
                 root.appendChild(tab);
             });
-
             const add = document.createElement('div');
-            add.className = 'shelf-tab';
-            add.style.color = '#e74c3c';
-            add.innerText = '+ 新增書架';
+            add.className = 'shelf-tab'; add.style.color = '#e74c3c'; add.innerText = '+ 新增書架';
             add.onclick = () => {
                 const n = prompt('書架名稱:');
                 if(n) { shelves.push({id:'s_'+Date.now(), name:n, courses:[]}); save(); renderTabs(); }
             };
             root.appendChild(add);
         }
-
         function renderLessons() {
-            const root = document.getElementById('lessons-root');
-            root.innerHTML = '';
+            const root = document.getElementById('lessons-root'); root.innerHTML = '';
             const shelf = shelves.find(s => s.id === activeShelfId);
-
             chineseData.forEach(src => {
-                // 過濾該版本下屬於當前書架的課別
-                const lessons = activeShelfId === 'all' ? src.lessons : src.lessons.filter(l => 
-                    shelf.courses.some(c => c.source === src.name && c.lesson === l.lesson)
-                );
-
+                const lessons = activeShelfId === 'all' ? src.lessons : src.lessons.filter(l => shelf.courses.some(c => c.source === src.name && c.lesson === l.lesson));
                 if (lessons.length === 0 && activeShelfId !== 'all') return;
-                
-                const group = document.createElement('div');
-                group.className = 'version-group';
+                const group = document.createElement('div'); group.className = 'version-group';
                 group.innerHTML = `<div class="version-title">${src.name}</div><div class="lesson-grid"></div>`;
                 const grid = group.querySelector('.lesson-grid');
-
                 lessons.forEach(l => {
-                    // --- 核心修正：檢查資料是否存在 ---
                     const hasAnno = l.annotations && l.annotations.length > 0;
                     const hasContent = l.content && l.content.length > 0;
+                    
+                    const card = document.createElement('div'); 
+                    card.className = `lesson-card std-card ${isManageMode?'manage-mode':''} ${(!hasAnno && !hasContent) ? 'empty' : ''}`;
+                    
+                    card.dataset.hasAnno = hasAnno;
+                    card.dataset.hasContent = hasContent;
+                    card.dataset.source = src.name; card.dataset.lesson = l.lesson;
 
-                    const card = document.createElement('div');
-                    card.className = `lesson-card std-card ${isManageMode?'manage-mode':''}`;
+                    const btnIcon = activeShelfId==='all' ? 
+                        '<svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>' : 
+                        '<svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line></svg>';
+                    
+                    // 使用 .lesson-title 包裹標題，支援自動換行
                     card.innerHTML = `
-                        <div style="font-weight:700">${l.title}</div>
+                        <div class="lesson-title">${l.title}</div>
                         <div class="card-badges">
                             <span class="badge ${hasAnno ? 'has-anno' : ''}">註釋</span>
                             <span class="badge ${hasContent ? 'has-content' : ''}">課文</span>
                         </div>
-                        <button class="manage-btn ${activeShelfId==='all'?'add':'remove'}" onclick="handleManage('${src.name}', ${l.lesson}, event)">
-                            ${activeShelfId==='all'?'+':'-'}
-                        </button>
+                        <button class="manage-btn ${activeShelfId==='all'?'add':'remove'}" onclick="handleManage('${src.name}', ${l.lesson}, event)">${btnIcon}</button>
                     `;
-                    card.onclick = () => {
-                        if(!isManageMode) {
-                            card.classList.toggle('selected');
-                            updateUI();
-                        }
-                    };
-                    card.dataset.source = src.name;
-                    card.dataset.lesson = l.lesson;
+                    card.onclick = () => { if(!isManageMode) { card.classList.toggle('selected'); updateUI(); } };
                     grid.appendChild(card);
                 });
                 root.appendChild(group);
             });
             updateUI();
         }
-
-        function switchShelf(id) {
-            activeShelfId = id;
-            document.querySelectorAll('.lesson-card.selected').forEach(c => c.classList.remove('selected'));
-            renderTabs();
-            renderLessons();
-        }
-
+        function switchShelf(id) { activeShelfId = id; renderTabs(); renderLessons(); }
         function handleManage(src, les, e) {
             e.stopPropagation();
             if (activeShelfId === 'all') {
@@ -219,38 +176,32 @@
                 save(); renderLessons();
             }
         }
-
         function updateUI() {
-            const selCount = document.querySelectorAll('.lesson-card.selected').length;
-            document.getElementById('btn-anno').disabled = selCount === 0;
-            document.getElementById('btn-textbook').disabled = selCount === 0;
-        }
+            const selectedCards = document.querySelectorAll('.lesson-card.selected');
+            let canAnno = false, canContent = false;
+            
+            selectedCards.forEach(c => {
+                if(c.dataset.hasAnno === 'true') canAnno = true;
+                if(c.dataset.hasContent === 'true') canContent = true;
+            });
 
+            document.getElementById('btn-anno').disabled = !canAnno;
+            document.getElementById('btn-textbook').disabled = !canContent;
+        }
         function save() { localStorage.setItem('chinese_shelves', JSON.stringify(shelves)); }
-        
         function editShelf(s) {
             const n = prompt('修改名稱 (留空則刪除書架):', s.name);
             if(n === '') { shelves = shelves.filter(x => x.id !== s.id); activeShelfId = 'all'; }
             else if(n) { s.name = n; }
             save(); renderTabs(); renderLessons();
         }
-
-        document.getElementById('manage-toggle').onchange = (e) => {
-            isManageMode = e.target.checked;
-            renderTabs();
-            renderLessons();
-        };
-
+        document.getElementById('manage-toggle').onchange = (e) => { isManageMode = e.target.checked; renderTabs(); renderLessons(); };
         function goTo(page) {
             const selectedCards = document.querySelectorAll('.lesson-card.selected');
-            const data = Array.from(selectedCards).map(c => ({
-                source: c.dataset.source,
-                lesson: parseInt(c.dataset.lesson)
-            }));
+            const data = Array.from(selectedCards).map(c => ({ source: c.dataset.source, lesson: parseInt(c.dataset.lesson) }));
             localStorage.setItem('sel_chinese_lessons', JSON.stringify(data));
             window.location.href = page + '.html';
         }
-
         init();
     </script>
 </body>

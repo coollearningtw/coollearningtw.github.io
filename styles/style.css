@@ -168,3 +168,15 @@ body {
     text-align: left;
     box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
 }
+
+.md-underline {
+    text-decoration: underline;
+    text-underline-position: under;
+    display: inline;
+    padding: 0;
+    margin: 0;
+    line-height: inherit;
+    font-size: inherit;
+    letter-spacing: 0;
+    vertical-align: baseline;
+}

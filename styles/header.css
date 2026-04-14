@@ -1,37 +1,86 @@
-header{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  max-width:var(--max-width);
-  margin:0 auto 18px;
-  margin-top: 10px;
-  padding:12px 18px;
-  border: 2px solid rgb(156, 176, 202);
-  border-radius:calc(var(--radius) - 2px);
-  box-shadow: var(--shadow);
-  backdrop-filter: blur(6px);
-  background-color: rgba(195, 221, 255, 0.7);
+header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: var(--max-width, 980px);
+    margin: 10px auto 18px;
+    padding: 10px 18px;
+    border: 2px solid rgb(156, 176, 202);
+    border-radius: 14px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    backdrop-filter: blur(6px);
+    background-color: rgba(195, 221, 255, 0.7);
+    position: sticky;
+    top: 10px;
+    z-index: 2000;
 }
 
-.logo{
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 10px; /* 圖標與字標之間的間距 */
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
-/* 若 header.js 生成的是 .logo-link 包裹圖片，確保也套用 */
-.logo-link { display:inline-flex; align-items:center; gap:10px; text-decoration:none; }
-.logo-link img{ max-height:36px; height:auto; }
-
-.links a{
-  color:var(--primary);
-  text-decoration:none;
-  margin-left:12px;
-  font-weight:600;
-  font-size: 18px;
-  padding:6px 10px;
-  border-radius:8px;
+.logo img {
+    height: 36px; /* 依照 index.html 比例微調 */
+    width: auto;
 }
-.links a:hover{ background:rgba(11,118,209,0.08); }
+
+.back-link {
+    display: flex;
+    align-items: center;
+    color: var(--primary, #0b76d1) !important;
+    text-decoration: none;
+}
+
+.header-title-area {
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: var(--primary, #0b76d1);
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* 頂部功能圖標專用樣式 (無邊框透明背景) */
+.btn-tool-icon {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--primary, #0b76d1);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px;
+    font-weight: bold;
+    font-size: 0.9rem;
+    transition: opacity 0.2s;
+}
+
+.btn-tool-icon:hover { opacity: 0.7; }
+.btn-tool-icon svg { width: 22px; height: 22px; }
+
+/* 原本分頁用的文字按鈕樣式 (註記、翻譯) */
+.btn-tool-text {
+    padding: 5px 12px;
+    border-radius: 6px;
+    border: 1px solid rgba(156, 176, 202, 0.6);
+    background: #fff;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: #64748b;
+    font-weight: bold;
+}
+.btn-tool-text.active {
+    background: var(--primary, #0b76d1);
+    color: #fff;
+    border-color: var(--primary, #0b76d1);
+}
+
+@media (max-width: 600px) {
+    header { margin: 10px 12px; padding: 8px 12px; }
+    .logo img { height: 30px; }
+}

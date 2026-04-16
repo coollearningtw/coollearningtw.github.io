@@ -55,3 +55,11 @@ function stripMarkdown(text) {
       .replace(/~~(.*?)~~/g, '$1')
       .replace(/__(.*?)__/g, '$1');
 }
+
+// 監測網路狀態變化
+window.addEventListener('offline', () => {
+    // 當網路斷開時，直接導向離線頁面
+    window.location.href = '/offline.html'; // 請確保路徑正確，如果是子目錄請調整
+});
+
+// 如果在離線頁面中恢復連線，自動跳回 (這部分你已經寫在 offline.html 裡了)

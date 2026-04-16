@@ -1,0 +1,21 @@
+{
+  "name": "酷學習 - 線上學習平台",
+  "short_name": "酷學習",
+  "description": "一個結合互動與趣味的線上學習平台",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f6fbff",
+  "theme_color": "#0b76d1",
+  "icons": [
+    {
+      "src": "images/logo2400x.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "images/logo2400x.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

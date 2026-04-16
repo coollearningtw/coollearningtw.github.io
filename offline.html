@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>網路連線中斷 - 酷學習</title>
+    <style>
+        body {
+            margin: 0; display: flex; flex-direction: column; align-items: center;
+            justify-content: center; height: 100vh; background-color: #f6fbff;
+            font-family: "Noto Sans TC", sans-serif; color: #334155; text-align: center;
+        }
+        .icon { width: 100px; height: 100px; color: #0b76d1; margin-bottom: 25px; }
+        h1 { font-size: 1.5rem; margin: 0 0 10px 0; }
+        p { font-size: 1rem; color: #64748b; max-width: 280px; line-height: 1.6; margin-bottom: 30px; }
+        .btn {
+            padding: 12px 35px; background: #0b76d1; color: white;
+            border-radius: 50px; text-decoration: none; font-weight: bold;
+            border: none; cursor: pointer; font-size: 1rem;
+        }
+        .btn:hover { background: #0a6ac4; }
+    </style>
+</head>
+<body>
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 12.55a10.94 10.94 0 0 1 5.17-2.39M10.71 5.05A16 16 0 0 1 22.58 9M1.42 9a15.91 15.91 0 0 1 4.7-2.88M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01" />
+    </svg>
+    <h1>網路連線已中斷</h1>
+    <p>酷學習需要網路連線才能運作，請檢查您的網路設定後再試一次。</p>
+    
+    <button onclick="window.location.href='https://coollearningtw.github.io/index.html'"class="btn">重新嘗試連線</button>
+
+    <script>
+        // 如果恢復連線，自動跳轉回首頁
+        window.addEventListener('online', () => {
+            window.location.href = 'https://coollearningtw.github.io/index.html';
+        });
+    </script>
+</body>
+</html>

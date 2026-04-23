@@ -33,7 +33,7 @@
         let isAllShown = false;
         (async () => {
             const sel = JSON.parse(localStorage.getItem('sel_trans_lessons') || '[]');
-            const res = await fetch('../data/english-translation.json');
+            const res = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/english-translation.json');
             const data = await res.json();
             const root = document.getElementById('list-root');
 

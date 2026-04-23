@@ -107,7 +107,7 @@
         async function init() {
             const draft = localStorage.getItem('chinese_draft');
             if(draft) dataStore = JSON.parse(draft);
-            else try { dataStore = await (await fetch('../data/chinese.json')).json(); } catch(e) { dataStore = { sources: [] }; }
+            else try { dataStore = await (await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/chinese.json')).json(); } catch(e) { dataStore = { sources: [] }; }
             if(dataStore.sources.length) expandedKeys.add('source-0');
             render();
         }

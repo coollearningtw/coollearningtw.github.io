@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>公告管理後台 - 酷學習</title>
+    <!-- 引用現有樣式 -->
+    <link rel="stylesheet" href="../styles/style.css">
+    <link rel="stylesheet" href="../styles/header.css">
+    <link rel="stylesheet" href="../styles/announcement.css">
+    <style>
+        /* 管理後台專屬佈局 */
+        body { 
+            background-color: #f1f5f9; 
+            height: 100vh; 
+            overflow: hidden; 
+            display: flex; 
+            flex-direction: column; 
+            margin: 0;
+        }
+        header { 
+            flex-shrink: 0; 
+            margin: 0 !important; 
+            border-radius: 0 !important; 
+            width: 100% !important; 
+            max-width: none !important; 
+            background-color: #fff !important;
+            border-bottom: 1px solid #e2e8f0 !important;
+        }
+        
+        .admin-layout {
+            display: grid;
+            grid-template-columns: 300px 1fr 400px;
+            flex: 1;
+            overflow: hidden;
+            gap: 1px;
+            background: #e2e8f0;
+        }
+
+        /* 左側清單 */
+        .sidebar { background: #fff; display: flex; flex-direction: column; overflow-y: auto; }
+        .sidebar-header { 
+            padding: 20px; 
+            border-bottom: 1px solid #e2e8f0; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            background: #f8fafc;
+        }
+        .anno-item { 
+            padding: 15px 20px; 
+            border-bottom: 1px solid #f1f5f9; 
+            cursor: pointer; 
+            transition: 0.2s;
+            display: flex; 
+            flex-direction: column; 
+            gap: 4px;
+        }
+        .anno-item:hover { background: #f8fafc; }
+        .anno-item.active { background: var(--primary-light); border-left: 4px solid var(--primary); }
+        .anno-item .t { font-weight: bold; font-size: 0.95rem; color: #1e293b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .anno-item .d { font-size: 0.8rem; color: #64748b; }
+
+        /* 中間編輯區 */
+        .editor-main { background: #fff; overflow-y: auto; padding: 40px; }
+        .form-section { max-width: 800px; margin: 0 auto; }
+        .form-group { margin-bottom: 24px; }
+        .form-group label { display: block; font-weight: 700; margin-bottom: 8px; color: #475569; font-size: 0.9rem; }
+        
+        input[type="text"], input[type="date"], textarea {
+            width: 100%; 
+            padding: 12px 16px; 
+            border: 1px solid #cbd5e1; 
+            border-radius: 8px; 
+            font-size: 1rem; 
+            transition: border-color 0.2s, box-shadow 0.2s;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+        textarea { 
+            height: 120px; 
+            resize: vertical; /* 禁止左右拖動，僅允許上下調整 */
+            line-height: 1.6;
+        }
+        input:focus, textarea:focus { 
+            outline: none; 
+            border-color: var(--primary); 
+            box-shadow: 0 0 0 3px var(--primary-light); 
+        }
+        
+        .block-item { 
+            background: #f8fafc; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 12px; 
+            padding: 24px; 
+            margin-bottom: 24px; 
+            position: relative; 
+        }
+        .block-ctrl { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+
+        /* 右側預覽 */
+        .preview-panel { background: #f1f5f9; display: flex; flex-direction: column; align-items: center; padding: 40px 20px; overflow-y: auto; }
+        .phone-mockup {
+            width: 360px; 
+            height: 640px; 
+            border: 12px solid #1e293b; 
+            border-radius: 40px;
+            background: #fff; 
+            overflow: hidden; 
+            position: relative; 
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); 
+            flex-shrink: 0;
+        }
+        /* 預覽區內部限制，防止左右晃動 */
+        .phone-mockup .anno-card { width: 100%; height: 100%; position: relative; animation: none; box-shadow: none; border-radius: 0; }
+        .phone-mockup #anno-content-wrapper { 
+            overflow-y: auto; 
+            overflow-x: hidden !important; 
+            width: 100%;
+            height: 100%;
+            cursor: default; 
+            word-break: break-word;
+        }
+        .phone-mockup #anno-content-wrapper.expanded::after { display: none; }
+        .anno-text { word-break: break-word; white-space: pre-wrap; }
+        .anno-img { max-width: 100%; height: auto; display: block; }
+
+        /* 功能按鈕 */
+        .btn { padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; font-size: 0.9rem; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-primary { background: var(--primary); color: #fff; }
+        .btn-primary:hover { background: #0961ad; }
+        .btn-danger { background: #fee2e2; color: #ef4444; }
+        .btn-danger:hover { background: #fecaca; }
+        .btn-outline { border: 1px solid #cbd5e1; background: #fff; color: #64748b; }
+        .btn-outline:hover { background: #f8fafc; border-color: #94a3b8; }
+        
+        /* JSON 彈窗 */
+        #json-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.8); display: none; align-items: center; justify-content: center; z-index: 3000;
+            backdrop-filter: blur(4px);
+        }
+        .json-box { background: #fff; padding: 30px; border-radius: 16px; width: 90%; max-width: 800px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
+        textarea#json-output { height: 400px; font-family: 'Fira Code', monospace; background: #0f172a; color: #38bdf8; font-size: 0.85rem; border: none; }
+
+        .status-tag { font-size: 0.75rem; padding: 2px 8px; border-radius: 4px; background: #f1f5f9; color: #64748b; font-weight: normal; }
+        #save-status { font-size: 0.85rem; color: #10b981; margin-right: 15px; opacity: 0; transition: opacity 0.3s; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <a href="../index.html" class="back-link">⬅</a>
+            <span style="font-weight:bold; color:var(--primary);">公告系統管理台</span>
+        </div>
+        <div class="header-right">
+            <span id="save-status">● 已自動存檔</span>
+            <button class="btn btn-outline" onclick="resetDraft()">重置（載入 GitHub 原始檔）</button>
+            <button class="btn btn-primary" onclick="showJSON()">產生 JSON 代碼</button>
+        </div>
+    </header>
+
+    <div class="admin-layout">
+        <!-- 左側：清單 -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <strong>公告清單</strong>
+                <button class="btn btn-primary" style="padding: 6px 12px;" onclick="createNewAnnouncement()">+ 新增</button>
+            </div>
+            <div id="anno-list"></div>
+        </div>
+
+        <!-- 中間：編輯 -->
+        <div class="editor-main">
+            <div id="editor-form" class="form-section">
+                <!-- JS 動態填入 -->
+                <div style="text-align:center; color:#94a3b8; margin-top:100px;">
+                    <h3>歡迎使用公告編輯器</h3>
+                    <p>請從左側選擇現有公告，或點擊「新增」開始編寫。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右側：預覽 -->
+        <div class="preview-panel">
+            <div class="phone-mockup">
+                <div class="anno-card">
+                    <div id="anno-content-wrapper" class="expanded"></div>
+                </div>
+            </div>
+            <p style="margin-top:20px; color:#64748b; font-size:0.9rem;">手機版即時預覽</p>
+        </div>
+    </div>
+
+    <!-- JSON 彈窗 -->
+    <div id="json-modal">
+        <div class="json-box">
+            <h3 style="margin-top:0;">複製 JSON 到 GitHub</h3>
+            <p style="color:#64748b; font-size:0.9rem;">請全選下方代碼並覆蓋你的 <code>announcements.json</code> 檔案內容。</p>
+            <textarea id="json-output" readonly></textarea>
+            <div style="margin-top:20px; text-align:right; display:flex; justify-content: space-between; align-items:center;">
+                <span style="color: #0b76d1; font-size:0.9rem;">提示：Ctrl+A 可全選</span>
+                <button class="btn btn-outline" onclick="document.getElementById('json-modal').style.display='none'">關閉視窗</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../scripts/utils.js"></script>
+    <script>
+        let allAnnouncements = [];
+        let currentIndex = -1;
+        const STORAGE_KEY = 'cool_learning_anno_draft';
+        const JSON_PATH = 'https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/announcements.json';
+
+        // 1. 初始化：優先讀取暫存，若無則抓取 GitHub
+        async function init() {
+            const draft = localStorage.getItem(STORAGE_KEY);
+            if (draft) {
+                allAnnouncements = JSON.parse(draft);
+                renderList();
+                if (allAnnouncements.length > 0) selectAnno(0);
+                showStatus();
+            } else {
+                fetchOriginal();
+            }
+        }
+
+        async function fetchOriginal() {
+            try {
+                const r = await fetch(JSON_PATH + '?t=' + Date.now());
+                const data = await r.json();
+                allAnnouncements = data.announcements || [];
+                renderList();
+                if (allAnnouncements.length > 0) selectAnno(0);
+            } catch (e) {
+                console.error("無法載入原始檔案", e);
+            }
+        }
+
+        // 2. 自動存檔與狀態顯示
+        function autoSave() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(allAnnouncements));
+            showStatus();
+        }
+
+        function showStatus() {
+            const status = document.getElementById('save-status');
+            status.style.opacity = '1';
+            setTimeout(() => { status.style.opacity = '0'; }, 2000);
+        }
+
+        function resetDraft() {
+            if (confirm("確定要重置嗎？這將會清除所有未產出的暫存修改，並重新從 GitHub 載入。")) {
+                localStorage.removeItem(STORAGE_KEY);
+                location.reload();
+            }
+        }
+
+        // 3. 渲染左側清單
+        function renderList() {
+            const listEl = document.getElementById('anno-list');
+            listEl.innerHTML = allAnnouncements.map((a, index) => `
+                <div class="anno-item ${currentIndex === index ? 'active' : ''}" onclick="selectAnno(${index})">
+                    <span class="t">${a.title || '(無標題)'}</span>
+                    <span class="d">${a.date || '未設定日期'}</span>
+                </div>
+            `).join('');
+        }
+
+        // 4. 選擇公告進行編輯
+        function selectAnno(index) {
+            currentIndex = index;
+            renderList();
+            const anno = allAnnouncements[index];
+            const formEl = document.getElementById('editor-form');
+            
+            formEl.innerHTML = `
+                <div class="form-group">
+                    <label>公告標題</label>
+                    <input type="text" id="edit-title" value="${anno.title || ''}" oninput="syncData()">
+                </div>
+                <div class="form-group">
+                    <label>發布日期</label>
+                    <input type="date" id="edit-date" value="${anno.date || ''}" oninput="syncData()">
+                </div>
+                <div class="form-group">
+                    <label>封面圖片網址 (Cover URL)</label>
+                    <input type="text" id="edit-cover" value="${anno.cover || ''}" oninput="syncData()" placeholder="https://...">
+                </div>
+                
+                <div id="blocks-area"></div>
+                
+                <button class="btn btn-outline" style="width:100%; margin-bottom:40px; border-style: dashed;" onclick="addBlock()">+ 新增內文區塊</button>
+                
+                <div style="border-top:1px solid #e2e8f0; padding-top:30px; margin-top:50px;">
+                    <button class="btn btn-danger" onclick="deleteCurrent()">刪除此則公告</button>
+                </div>
+            `;
+
+            const blocksArea = document.getElementById('blocks-area');
+            if (anno.blocks) {
+                anno.blocks.forEach((b, bi) => addBlockUI(b, bi));
+            }
+            updatePreview();
+        }
+
+        // 5. 同步資料 (從 UI 到 記憶體)
+        function syncData() {
+            if (currentIndex === -1) return;
+            const anno = allAnnouncements[currentIndex];
+            anno.title = document.getElementById('edit-title').value;
+            anno.date = document.getElementById('edit-date').value;
+            anno.cover = document.getElementById('edit-cover').value;
+            
+            anno.blocks = [];
+            document.querySelectorAll('.block-item').forEach(el => {
+                anno.blocks.push({
+                    subtitle: el.querySelector('.b-sub').value,
+                    text: el.querySelector('.b-txt').value,
+                    image: el.querySelector('.b-img').value
+                });
+            });
+
+            // 更新清單顯示
+            const items = document.querySelectorAll('.anno-item');
+            if (items[currentIndex]) {
+                items[currentIndex].querySelector('.t').innerText = anno.title || '(無標題)';
+                items[currentIndex].querySelector('.d').innerText = anno.date || '未設定日期';
+            }
+
+            updatePreview();
+            autoSave();
+        }
+
+        // 6. 區塊 UI 管理
+        function addBlockUI(data = {subtitle:'', text:'', image:''}) {
+            const area = document.getElementById('blocks-area');
+            const div = document.createElement('div');
+            div.className = 'block-item';
+            div.innerHTML = `
+                <div class="block-ctrl">
+                    <strong>內容區塊</strong>
+                    <button class="btn-danger" style="border:none; padding:4px 10px; font-size:0.8rem; border-radius:4px;" onclick="this.parentElement.parentElement.remove(); syncData();">移除</button>
+                </div>
+                <div class="form-group">
+                    <label>子標題 (選填)</label>
+                    <input type="text" class="b-sub" value="${data.subtitle || ''}" oninput="syncData()">
+                </div>
+                <div class="form-group">
+                    <label>文字內容</label>
+                    <textarea class="b-txt" oninput="syncData()" placeholder="支援一般文字換行...">${data.text || ''}</textarea>
+                </div>
+                <div class="form-group">
+                    <label>區塊圖片網址 (選填)</label>
+                    <input type="text" class="b-img" value="${data.image || ''}" oninput="syncData()" placeholder="https://...">
+                </div>
+            `;
+            area.appendChild(div);
+        }
+
+        function addBlock() {
+            addBlockUI();
+            syncData();
+        }
+
+        // 7. 預覽渲染
+        function updatePreview() {
+            const anno = allAnnouncements[currentIndex];
+            const wrapper = document.getElementById('anno-content-wrapper');
+            if (!anno) { wrapper.innerHTML = ''; return; }
+
+            let blocksHtml = '';
+            (anno.blocks || []).forEach(b => {
+                blocksHtml += `
+                    <div class="anno-block">
+                        ${b.subtitle ? `<div class="anno-subtitle">${parseMarkdown(b.subtitle)}</div>` : ''}
+                        ${b.text ? `<div class="anno-text">${parseMarkdown(b.text)}</div>` : ''}
+                        ${b.image ? `<img src="${b.image}" class="anno-img">` : ''}
+                    </div>
+                `;
+            });
+
+            wrapper.innerHTML = `
+                ${anno.cover ? `<img src="${anno.cover}" class="anno-cover">` : ''}
+                <div class="anno-body">
+                    <h2 class="anno-title">${anno.title || '（未輸入標題）'}</h2>
+                    <div class="anno-date">${anno.date || '（日期）'}</div>
+                    ${blocksHtml}
+                </div>
+            `;
+        }
+
+        // 8. 其他功能
+        function createNewAnnouncement() {
+            const newAnno = {
+                title: "新公告",
+                date: new Date().toISOString().split('T')[0],
+                cover: "",
+                blocks: [{ subtitle: "", text: "", image: "" }]
+            };
+            allAnnouncements.unshift(newAnno);
+            selectAnno(0);
+            autoSave();
+        }
+
+        function deleteCurrent() {
+            if (confirm("確定要刪除這則公告嗎？")) {
+                allAnnouncements.splice(currentIndex, 1);
+                currentIndex = -1;
+                document.getElementById('editor-form').innerHTML = `
+                    <div style="text-align:center; color:#94a3b8; margin-top:100px;">
+                        <p>公告已刪除。</p>
+                    </div>`;
+                renderList();
+                updatePreview();
+                autoSave();
+            }
+        }
+
+        function showJSON() {
+            const output = { announcements: allAnnouncements };
+            const jsonStr = JSON.stringify(output, null, 2);
+            document.getElementById('json-output').value = jsonStr;
+            document.getElementById('json-modal').style.display = 'flex';
+        }
+
+        // Markdown 簡單解析 (與 announcement.js 保持同步)
+        function parseMarkdown(text) {
+            if (!text) return '';
+            return text
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/\n/g, '<br>');
+        }
+
+        // 初始化載入
+        init();
+    </script>
+    <script src="scripts/utils.js"></script>
+</body>
+</html>

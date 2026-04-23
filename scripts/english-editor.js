@@ -17,10 +17,10 @@ async function init() {
     const draftText = localStorage.getItem('english_textbook_draft');
 
     if (draftWords) dataStore.words = JSON.parse(draftWords);
-    else dataStore.words = await (await fetch('../data/english.json')).json();
+    else dataStore.words = await (await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/english.json')).json();
 
     if (draftText) dataStore.textbook = JSON.parse(draftText);
-    else dataStore.textbook = await (await fetch('../data/english-textbook.json')).json();
+    else dataStore.textbook = await (await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/english-textbook.json')).json();
 
     if (dataStore.words.sources.length) expandedKeys.add('source-0');
     render();

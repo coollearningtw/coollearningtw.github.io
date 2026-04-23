@@ -1,13 +1,13 @@
 // 獲取單字資料
 async function fetchEnglishData() {
-    const res = await fetch('../data/english.json');
+    const res = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/english.json');
     const json = await res.json();
     return json.sources;
 }
 
 // 獲取課文資料
 async function fetchTextbookData() {
-    const res = await fetch('../data/english-textbook.json');
+    const res = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/english-textbook.json');
     const json = await res.json();
     return json.sources;
 }

@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const JSON_PATH = 'data/announcements.json';
+    const JSON_PATH = 'https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/announcements.json';
     const STORAGE_KEY = 'anno_hide_date'; 
 
     // 1. 檢查是否為「直接進入」(非返回)

@@ -10,5 +10,8 @@
   "網站說明": [
     { "title": "網站功能", "file": "features.html" },
     { "title": "常見問題", "file": "faq.html" }
+  ],
+  "版本紀錄": [
+    { "title": "系統日誌", "file": "https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/changelog.html" }
   ]
 }

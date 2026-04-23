@@ -94,7 +94,7 @@
         let chineseData = [], shelves = [], activeShelfId = 'all', isManageMode = false;
         async function init() {
             try {
-                const res = await fetch('../data/chinese.json'); const data = await res.json();
+                const res = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/chinese.json'); const data = await res.json();
                 chineseData = data.sources; shelves = JSON.parse(localStorage.getItem('chinese_shelves') || '[]');
                 renderTabs(); renderLessons();
             } catch (e) { console.error("資料載入失敗", e); }

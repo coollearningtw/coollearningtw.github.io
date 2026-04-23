@@ -81,8 +81,8 @@
 
         async function init() {
             const draftW = localStorage.getItem('english_words_draft'), draftT = localStorage.getItem('english_textbook_draft');
-            dataStore.words = draftW ? JSON.parse(draftW) : await (await fetch('../data/english.json')).json();
-            dataStore.textbook = draftT ? JSON.parse(draftT) : await (await fetch('../data/english-textbook.json')).json();
+            dataStore.words = draftW ? JSON.parse(draftW) : await (await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/english.json')).json();
+            dataStore.textbook = draftT ? JSON.parse(draftT) : await (await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/english-textbook.json')).json();
             if (dataStore.words.sources.length) expandedKeys.add('source-0');
             render();
         }

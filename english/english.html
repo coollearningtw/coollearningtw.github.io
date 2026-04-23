@@ -94,9 +94,9 @@
         async function init() {
             try {
                 const [wordRes, textRes, transRes] = await Promise.all([
-                    fetch('../data/english.json').then(r => r.json()),
-                    fetch('../data/english-textbook.json').then(r => r.json()),
-                    fetch('../data/english-translation.json').then(r => r.json())
+                    fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/english.json').then(r => r.json()),
+                    fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/english-textbook.json').then(r => r.json()),
+                    fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/english-translation.json').then(r => r.json())
                 ]);
                 
                 mergedData = wordRes.sources.map(src => {

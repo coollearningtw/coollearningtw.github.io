@@ -134,7 +134,7 @@
             const sel = JSON.parse(localStorage.getItem('sel_lessons') || '[]');
             if (!sel.length) { alert('請先選課'); location.href = 'english.html'; return; }
 
-            const res = await fetch('../data/english.json');
+            const res = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/english.json');
             const data = await res.json();
             
             data.sources.forEach(src => {

@@ -1,7 +1,7 @@
 /* --- scripts/english-quiz.js --- */
 
 document.addEventListener('DOMContentLoaded', () => {
-  const DATA_PATH = '../data/english.json';
+  const DATA_PATH = 'https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/english.json';
 
   // --- UI 元素 ---
   const startBtn = document.getElementById('start-btn');

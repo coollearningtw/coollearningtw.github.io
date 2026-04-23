@@ -67,7 +67,7 @@
         let currentAnnotations = [];
         async function init() {
             const sel = JSON.parse(localStorage.getItem('sel_chinese_lessons') || '[]');
-            const res = await fetch('../data/chinese.json');
+            const res = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/chinese.json');
             const data = await res.json();
             const root = document.getElementById('content-root');
 

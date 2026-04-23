@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return englishDataCache;
         }
         try {
-            const response = await fetch('./data/english.json'); // 注意路徑
+            const response = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/english.json'); // 注意路徑
             const data = await response.json();
             englishDataCache = data.sources || [];
             return englishDataCache;

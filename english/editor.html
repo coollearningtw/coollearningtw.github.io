@@ -32,8 +32,19 @@
         .btn-primary { background: #0f172a; color: #fff; border: none; }
         .inline-textarea { width: 100%; padding: 8px; border: 1px solid #0f172a; border-radius: 4px; outline: none; font-family: inherit; resize: vertical; background: #fff; }
         .svg-icon { width: 18px; height: 18px; fill: currentColor; }
-        .drag-handle { cursor: grab; color: #94a3b8; padding-top: 8px; }
         .back-link { display: flex; align-items: center; text-decoration: none; color: var(--primary) !important; margin-right: 10px; }
+
+        /* JSON 彈窗樣式 */
+        #json-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.8); display: none; align-items: center; justify-content: center; z-index: 3000;
+            backdrop-filter: blur(4px);
+        }
+        .json-box { background: #fff; padding: 30px; border-radius: 16px; width: 90%; max-width: 800px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
+        textarea#json-output { 
+            width: 100%; height: 400px; font-family: monospace; font-size: 0.85rem; padding: 15px;
+            background: #0f172a; color: #38bdf8; border: none; border-radius: 8px; resize: none;
+        }
     </style>
 </head>
 <body>
@@ -62,9 +73,22 @@
         <div id="status" style="color:#64748b;font-size:0.85rem">就緒</div>
         <div style="display:flex;gap:10px">
             <button class="btn-action" onclick="resetDraft()">重置暫存</button>
+            <button class="btn-action" onclick="showJSON()">複製 JSON</button>
             <button class="btn-action btn-primary" onclick="downloadJSON()">
                 <svg class="svg-icon" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg> 下載 JSON
             </button>
+        </div>
+    </div>
+
+    <!-- JSON 彈窗 -->
+    <div id="json-modal">
+        <div class="json-box">
+            <h3 style="margin-top:0;">複製 JSON 到 GitHub</h3>
+            <p id="json-tip" style="color:#64748b; font-size:0.9rem;">請覆蓋對應的檔案內容。</p>
+            <textarea id="json-output" readonly></textarea>
+            <div style="margin-top:20px; text-align:right;">
+                <button class="btn btn-outline" onclick="document.getElementById('json-modal').style.display='none'">關閉視窗</button>
+            </div>
         </div>
     </div>
 
@@ -105,8 +129,8 @@
                         <div style="display:${expandedKeys.has(lKey)?'block':'none'};padding:10px;">
                             ${createInsertBarHtml(sIdx, lIdx, 0)}
                             ${items.map((item, iIdx) => `<div class="data-item"><div class="drag-handle">${ICONS.drag}</div><div style="flex:1">
-                                ${currentMode === 'words' ? `<div style="display:grid;grid-template-columns:180px 80px 1fr;gap:10px"><div class="editable-cell" style="font-weight:bold" onclick="startEdit(this,${sIdx},${lIdx},${iIdx},'word')">${parseMarkdown(item.word)||item.word}</div><div class="editable-cell cell-pos" onclick="startEdit(this,${sIdx},${lIdx},${iIdx},'pos')">${item.pos||'(Pos)'}</div><div class="editable-cell" onclick="startEdit(this,${sIdx},${lIdx},${iIdx},'chinese')">${parseMarkdown(item.chinese)||item.chinese}</div></div>` : 
-                                `<div style="display:flex; flex-direction:column; gap:4px"><div class="editable-cell" onclick="startEdit(this,${sIdx},${lIdx},${iIdx},'en')">${parseMarkdown(item.en)||item.en}</div><div class="editable-cell cell-trans" onclick="startEdit(this,${sIdx},${lIdx},${iIdx},'ch')">${parseMarkdown(item.ch)||item.ch}</div></div>`}
+                                ${currentMode === 'words' ? `<div style="display:grid;grid-template-columns:180px 80px 1fr;gap:10px"><div class="editable-cell" style="font-weight:bold" onclick="startEdit(this,${sIdx},${lIdx},${iIdx},'word')">${item.word}</div><div class="editable-cell cell-pos" onclick="startEdit(this,${sIdx},${lIdx},${iIdx},'pos')">${item.pos||'(Pos)'}</div><div class="editable-cell" onclick="startEdit(this,${sIdx},${lIdx},${iIdx},'chinese')">${item.chinese}</div></div>` : 
+                                `<div style="display:flex; flex-direction:column; gap:4px"><div class="editable-cell" onclick="startEdit(this,${sIdx},${lIdx},${iIdx},'en')">${item.en}</div><div class="editable-cell cell-trans" onclick="startEdit(this,${sIdx},${lIdx},${iIdx},'ch')">${item.ch}</div></div>`}
                             </div><button class="btn-action" style="border:none;color:#ef4444" onclick="delItem(${sIdx},${lIdx},${iIdx})">${ICONS.close}</button></div>${createInsertBarHtml(sIdx, lIdx, iIdx + 1)}`).join('')}
                             <button class="btn-add-item-bottom" onclick="addItem(${sIdx},${lIdx},${items.length})">${ICONS.plus} 新增${label}</button>
                         </div></div>`;
@@ -133,7 +157,7 @@
         function sync() { 
             localStorage.setItem('english_words_draft', JSON.stringify(dataStore.words)); 
             localStorage.setItem('english_textbook_draft', JSON.stringify(dataStore.textbook)); 
-            document.getElementById('status').innerHTML = '<svg class="svg-icon" viewBox="0 0 24 24" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg> 已自動暫存'; 
+            document.getElementById('status').innerHTML = '💾 已自動暫存'; 
         }
         function editSrc(s) { const db=currentMode==='words'?dataStore.words:dataStore.textbook; const n=prompt('名稱:', db.sources[s].name); if(n){ db.sources[s].name=n; sync(); render(); }}
         function delSrc(s) { const db=currentMode==='words'?dataStore.words:dataStore.textbook; if(confirm('刪除版本？')){ db.sources.splice(s,1); sync(); render(); }}
@@ -142,16 +166,25 @@
         function addItem(s, l, atIndex) {
             const db=currentMode==='words'?dataStore.words:dataStore.textbook; 
             const arr = currentMode==='words' ? db.sources[s].lessons[l].vocabulary : db.sources[s].lessons[l].sentences;
-            if (!arr) {
-                if (currentMode === 'words') db.sources[s].lessons[l].vocabulary = [];
-                else db.sources[s].lessons[l].sentences = [];
-            }
+            if (!arr) { if (currentMode === 'words') db.sources[s].lessons[l].vocabulary = []; else db.sources[s].lessons[l].sentences = []; }
             const newItem = currentMode === 'words' ? {word:'',pos:'',chinese:''} : {en:'',ch:''};
             arr.splice(atIndex, 0, newItem); sync(); render();
         }
         function delItem(s, l, i) { const db=currentMode==='words'?dataStore.words:dataStore.textbook; const arr = currentMode==='words'?db.sources[s].lessons[l].vocabulary:db.sources[s].lessons[l].sentences; arr.splice(i,1); sync(); render(); }
         function addNewSource() { const db=currentMode==='words'?dataStore.words:dataStore.textbook; db.sources.push({name:'New Source', lessons:[]}); sync(); render(); }
         function resetDraft() { if(confirm('還原修改？')){ localStorage.removeItem('english_words_draft'); localStorage.removeItem('english_textbook_draft'); location.reload(); } }
+        
+        // 新增功能：顯示 JSON
+        function showJSON() {
+            const isWords = currentMode === 'words';
+            const targetData = isWords ? dataStore.words : dataStore.textbook;
+            const filename = isWords ? 'english.json' : 'english-textbook.json';
+            
+            document.getElementById('json-tip').innerText = `請覆蓋你的 ${filename} 檔案內容。`;
+            document.getElementById('json-output').value = JSON.stringify(targetData, null, 2);
+            document.getElementById('json-modal').style.display = 'flex';
+        }
+
         function downloadJSON() { const db=currentMode==='words'?dataStore.words:dataStore.textbook; const filename=currentMode==='words'?'english.json':'english-textbook.json'; const b = new Blob([JSON.stringify(db,null,2)],{type:'application/json'}); const a = document.createElement('a'); a.href=URL.createObjectURL(b); a.download=filename; a.click(); }
         init();
     </script>

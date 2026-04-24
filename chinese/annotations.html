@@ -17,72 +17,59 @@
     </style>
 </head>
 <body>
-<header>
-    <div class="logo">
-        <a href="chinese.html" class="back-link">←</a>
-        <img src="../images/logo.png" height="40">
-        <span style="font-weight:bold;">註釋背誦</span>
-    </div>
-    <div class="header-right">
-        <button id="toggle-all" class="btn-tool-text">顯示解釋</button>
-    </div>
-</header>
+    <header>
+        <div class="logo">
+            <a href="chinese.html" class="back-link">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            </a>
+            <img src="../images/logo.png" alt="Logo" height="40">
+            <span style="font-weight:bold; color:var(--primary);">註釋背誦</span>
+        </div>
+        <div class="header-right">
+            <button id="toggle-all" class="btn-tool-text">顯示解釋</button>
+        </div>
+    </header>
+    <div class="page-container"><div id="anno-list" class="list-container"></div></div>
+    <script>
+        async function init() {
+            try {
+                // 強制讀取並確保為陣列
+                const sel = JSON.parse(localStorage.getItem('sel_chinese_lessons') || '[]');
+                const root = document.getElementById('anno-list');
 
-<div class="page-container">
-    <div id="anno-list" class="list-container"></div>
-</div>
+                if (sel.length === 0) {
+                    root.innerHTML = '<div style="text-align:center; padding:40px; color:#94a3b8;">未選擇課程，請回選課頁面點擊課本。</div>';
+                    return;
+                }
 
-<script>
-async function init() {
-    const sel = JSON.parse(localStorage.getItem('sel_chinese_lessons') || '[]');
-    const root = document.getElementById('anno-list');
+                const res = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/chinese.json');
+                const data = await res.json();
+                
+                data.sources.forEach(src => src.lessons.forEach(l => {
+                    // 使用 String 強制轉型比對，避免數字與字串不匹配問題
+                    const isSelected = sel.some(s => String(s.source) === String(src.name) && String(s.lesson) === String(l.lesson));
+                    
+                    if (isSelected && l.annotations) {
+                        l.annotations.forEach(a => {
+                            const el = document.createElement('div');
+                            el.className = 'std-card anno-item';
+                            el.innerHTML = `<div class="id-badge">${a.id}</div><div class="content-side"><div class="term">${a.term}</div><div class="meaning">${a.meaning}</div></div>`;
+                            el.onclick = () => el.querySelector('.meaning').classList.toggle('show');
+                            root.appendChild(el);
+                        });
+                    }
+                }));
 
-    if (sel.length === 0) {
-        root.innerHTML = '<div style="text-align:center;color:red;">請先選課</div>';
-        return;
-    }
-
-    let data;
-
-    try {
-        const res = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/chinese.json');
-        if (!res.ok) throw new Error("HTTP " + res.status);
-
-        const text = await res.text();
-        if (text.startsWith('<')) throw new Error("Not JSON");
-
-        data = JSON.parse(text);
-
-    } catch (e) {
-        console.error(e);
-        root.innerHTML = '<div style="text-align:center;color:red;">資料載入失敗</div>';
-        return;
-    }
-
-    data.sources.forEach(src => src.lessons.forEach(l => {
-        if (sel.some(s => s.source === src.name && s.lesson == l.lesson)) {
-            (l.annotations || []).forEach(a => {
-                const el = document.createElement('div');
-                el.className = 'std-card anno-item';
-                el.innerHTML = `
-                    <div class="id-badge">${a.id}</div>
-                    <div class="content-side">
-                        <div class="term">${a.term}</div>
-                        <div class="meaning">${a.meaning}</div>
-                    </div>
-                `;
-                el.onclick = () => el.querySelector('.meaning').classList.toggle('show');
-                root.appendChild(el);
-            });
+                document.getElementById('toggle-all').onclick = function() {
+                    const active = this.classList.toggle('active');
+                    this.innerText = active ? "隱藏解釋" : "顯示解釋";
+                    document.querySelectorAll('.meaning').forEach(m => m.classList.toggle('show', active));
+                };
+            } catch (e) {
+                console.error("資料載入錯誤:", e);
+            }
         }
-    }));
-
-    document.getElementById('toggle-all').onclick = function() {
-        const active = this.classList.toggle('active');
-        document.querySelectorAll('.meaning').forEach(m => m.classList.toggle('show', active));
-    };
-}
-init();
-</script>
+        init();
+    </script>
 </body>
 </html>

@@ -7,20 +7,24 @@
     <link rel="stylesheet" href="../styles/style.css">
     <link rel="stylesheet" href="../styles/header.css">
     <style>
-        .section-header { margin: 25px 0 10px 5px; padding-left: 10px; border-left: 4px solid var(--primary); font-size: 1.1rem; font-weight: bold; color: #475569; }
-        
-        /* 段落上方工具列 */
-        .local-toolbar { 
+        /* 頁面置頂工具列 (僅顯示一個) */
+        .page-top-toolbar { 
             display: flex; 
             align-items: center; 
             gap: 12px; 
             padding: 15px 20px; 
-            border-bottom: 1px solid #f1f5f9; 
-            background: #fafafa; 
+            background: #fff; 
+            border-bottom: 1px solid #e2e8f0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            margin-bottom: 15px;
         }
-        .toolbar-label { font-size: 0.85rem; color: #64748b; font-weight: bold; }
-        .font-btn-group { display: flex; gap: 5px; }
+        .toolbar-label { font-size: 0.9rem; color: #64748b; font-weight: bold; }
+        .font-btn-group { display: flex; gap: 8px; }
 
+        .section-header { margin: 25px 0 10px 5px; padding-left: 10px; border-left: 4px solid var(--primary); font-size: 1.1rem; font-weight: bold; color: #475569; }
+        
         .sentence-item { 
             padding: 20px; 
             display: flex; 
@@ -30,29 +34,31 @@
         }
         .sentence-item:not(:last-child) { border-bottom: 1px solid #f1f5f9; }
 
-        /* 左側：文字內容 */
         .content-area { flex: 1; }
         
-        /* 右側：按鈕區 */
+        /* 右側按鈕區 */
         .side-controls { 
             display: flex; 
             flex-direction: column; 
             gap: 12px; 
-            width: 32px; 
+            width: 35px; 
             flex-shrink: 0; 
             align-items: center;
             padding-top: 5px;
         }
 
         .note-wrapper { max-height: 0; opacity: 0; overflow: hidden; transition: all 0.3s ease; display: flex; flex-wrap: wrap; gap: 8px; }
-        .note-wrapper.show { max-height: 300px; opacity: 1; margin-bottom: 12px; }
+        .note-wrapper.show { max-height: 500px; opacity: 1; margin-bottom: 12px; }
         .note-label { display: inline-block; font-size: 0.85rem; color: #b91c1c; font-weight: 600; background: #fef2f2; border: 1px solid #f87171; padding: 2px 12px; border-radius: 50px; }
         
-        /* 字體大小定義 */
-        .para-text.font-s { font-size: 1rem; }
-        .para-text.font-m { font-size: 1.25rem; }
-        .para-text.font-l { font-size: 1.5rem; }
+        /* 字體大小定義：原文與翻譯一同縮放 */
+        .para-text.font-s, .trans-box.font-s { font-size: 1rem; }
+        .para-text.font-m, .trans-box.font-m { font-size: 1.25rem; }
+        .para-text.font-l, .trans-box.font-l { font-size: 1.5rem; }
+        
         .para-text { line-height: 1.8; color: #1e293b; transition: font-size 0.2s ease; }
+        .trans-box { max-height: 0; opacity: 0; overflow: hidden; background: #f8fafc; border-radius: 6px; color: #64748b; transition: all 0.3s ease; line-height: 1.6; }
+        .trans-box.show { max-height: 2000px; opacity: 1; margin-top: 12px; padding: 12px; border: 1px solid #e2e8f0; }
         
         .anno-link { color: #2563eb; cursor: help; position: relative; padding: 0 1px; border-bottom: 1px dashed #93c5fd; }
         .anno-no { font-size: 0.7rem; color: #ef4444; font-weight: bold; margin-left: 1px; top: -0.5em; position: relative; }
@@ -64,15 +70,11 @@
         .action-icon:hover { opacity: 1; }
         .action-icon.disabled { opacity: 0.05; cursor: default; }
         
-        .trans-box { max-height: 0; opacity: 0; overflow: hidden; background: #f8fafc; border-radius: 6px; color: #64748b; transition: all 0.3s ease; font-size: 1.05rem; line-height: 1.6; }
-        .trans-box.show { max-height: 1000px; opacity: 1; margin-top: 12px; padding: 12px; border: 1px solid #e2e8f0; }
-        
         .btn-tool { padding: 6px 12px; border-radius: 8px; border: 1px solid #cbd5e1; background: #fff; cursor: pointer; font-size: 0.85rem; color: #64748b; font-weight: bold; }
         .btn-tool.active { background: var(--primary); color: #fff; border-color: var(--primary); }
         
-        /* 專門給字體選擇的小按鈕樣式 */
-        .btn-font { padding: 4px 10px; font-size: 0.8rem; border: 1px solid #cbd5e1; background: #fff; border-radius: 5px; cursor: pointer; color: #64748b; }
-        .btn-font.active { background: #64748b; color: #fff; border-color: #64748b; }
+        .btn-font { padding: 6px 15px; font-size: 0.85rem; border: 1px solid #cbd5e1; background: #fff; border-radius: 6px; cursor: pointer; color: #64748b; font-weight: bold; }
+        .btn-font.active { background: var(--primary); color: #fff; border-color: var(--primary); }
     </style>
 </head>
 <body>
@@ -89,6 +91,15 @@
             <button id="global-trans" class="btn-tool">全翻譯</button>
         </div>
     </header>
+
+    <div class="page-top-toolbar">
+        <span class="toolbar-label">文字大小</span>
+        <div class="font-btn-group">
+            <button class="btn-font" onclick="applyFontSize(0)">小</button>
+            <button class="btn-font" onclick="applyFontSize(1)">中</button>
+            <button class="btn-font" onclick="applyFontSize(2)">大</button>
+        </div>
+    </div>
 
     <main class="page-container" id="content-root"></main>
 
@@ -108,11 +119,13 @@
         function applyFontSize(idx) {
             currentFontIdx = idx;
             const level = fontLevels[currentFontIdx];
-            document.querySelectorAll('.para-text').forEach(el => {
+            
+            // 同時作用於原文與翻譯區塊
+            document.querySelectorAll('.para-text, .trans-box').forEach(el => {
                 fontLevels.forEach(cls => el.classList.remove(cls));
                 el.classList.add(level);
             });
-            // 更新按鈕樣式
+            
             document.querySelectorAll('.btn-font').forEach((btn, i) => {
                 btn.classList.toggle('active', i === idx);
             });
@@ -126,6 +139,7 @@
             const root = document.getElementById('content-root');
 
             data.sources.forEach(src => src.lessons.forEach(l => {
+                // 修正 String 比對問題
                 if (sel.some(s => String(s.source) === String(src.name) && String(s.lesson) === String(l.lesson))) {
                     currentAnnotations = currentAnnotations.concat(l.annotations || []);
                     
@@ -144,20 +158,6 @@
                         if (!currentCardBody) {
                             const card = document.createElement('div'); 
                             card.className = 'std-card';
-                            
-                            // 插入字體工具列 (僅在卡片最上方顯示一次)
-                            const toolbar = document.createElement('div');
-                            toolbar.className = 'local-toolbar';
-                            toolbar.innerHTML = `
-                                <span class="toolbar-label">文字大小：</span>
-                                <div class="font-btn-group">
-                                    <button class="btn-font" onclick="applyFontSize(0)">小</button>
-                                    <button class="btn-font" onclick="applyFontSize(1)">中</button>
-                                    <button class="btn-font" onclick="applyFontSize(2)">大</button>
-                                </div>
-                            `;
-                            card.appendChild(toolbar);
-                            
                             root.appendChild(card); 
                             currentCardBody = card;
                         }
@@ -183,10 +183,9 @@
                 }
             }));
 
-            // 初始化設定
+            // 初始化套用字體
             applyFontSize(currentFontIdx);
 
-            // 全局控制按鈕邏輯
             document.getElementById('global-note').onclick = function() {
                 const active = this.classList.toggle('active');
                 document.querySelectorAll('.note-wrapper').forEach(el => el.classList.toggle('show', active));
@@ -196,7 +195,6 @@
                 document.querySelectorAll('.trans-box').forEach(el => el.classList.toggle('show', active));
             };
 
-            // 彈出註釋處理
             root.addEventListener('click', (e) => {
                 const link = e.target.closest('.anno-link');
                 if (link) {

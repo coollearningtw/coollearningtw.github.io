@@ -88,10 +88,12 @@
                         fetch(url)
                           .then(r => r.text())
                           .then(html => {
-                              frame.srcdoc = html;
+                              frame.removeAttribute('src');   // 清掉 src
+                              frame.srcdoc = html;            // 用 srcdoc 顯示 raw
                           });
                     } else {
-                        frame.src = url;
+                        frame.removeAttribute('srcdoc');      // 清掉 srcdoc
+                        frame.src = url;                      // 用 src 載入正常頁面
                     }
 
                     sidebar.querySelectorAll('a').forEach(x=>x.classList.remove('active'));

@@ -9,9 +9,18 @@
     <style>
         .section-header { margin: 25px 0 10px 5px; padding-left: 10px; border-left: 4px solid var(--primary); font-size: 1.1rem; font-weight: bold; color: #475569; }
         
-        /* 工具列：顯示在第一段上方 */
-        .local-toolbar { display: flex; gap: 10px; padding: 15px 20px; border-bottom: 1px solid #f1f5f9; background: #fafafa; }
-        
+        /* 段落上方工具列 */
+        .local-toolbar { 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            padding: 15px 20px; 
+            border-bottom: 1px solid #f1f5f9; 
+            background: #fafafa; 
+        }
+        .toolbar-label { font-size: 0.85rem; color: #64748b; font-weight: bold; }
+        .font-btn-group { display: flex; gap: 5px; }
+
         .sentence-item { 
             padding: 20px; 
             display: flex; 
@@ -24,21 +33,22 @@
         /* 左側：文字內容 */
         .content-area { flex: 1; }
         
-        /* 右側：專屬按鈕區，有效利用右邊空間 */
+        /* 右側：按鈕區 */
         .side-controls { 
             display: flex; 
             flex-direction: column; 
             gap: 12px; 
-            width: 30px; 
+            width: 32px; 
             flex-shrink: 0; 
             align-items: center;
+            padding-top: 5px;
         }
 
         .note-wrapper { max-height: 0; opacity: 0; overflow: hidden; transition: all 0.3s ease; display: flex; flex-wrap: wrap; gap: 8px; }
-        .note-wrapper.show { max-height: 200px; opacity: 1; margin-bottom: 12px; }
+        .note-wrapper.show { max-height: 300px; opacity: 1; margin-bottom: 12px; }
         .note-label { display: inline-block; font-size: 0.85rem; color: #b91c1c; font-weight: 600; background: #fef2f2; border: 1px solid #f87171; padding: 2px 12px; border-radius: 50px; }
         
-        /* 字體大小等級 */
+        /* 字體大小定義 */
         .para-text.font-s { font-size: 1rem; }
         .para-text.font-m { font-size: 1.25rem; }
         .para-text.font-l { font-size: 1.5rem; }
@@ -50,7 +60,7 @@
         .anno-popup-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.1); backdrop-filter: blur(1px); display: none; align-items: center; justify-content: center; z-index: 2000; }
         .anno-popup-card { background: #fff; width: 85%; max-width: 320px; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; }
         
-        .action-icon { width: 22px; height: 22px; cursor: pointer; opacity: 0.4; transition: 0.2s; }
+        .action-icon { width: 22px; height: 22px; cursor: pointer; opacity: 0.3; transition: 0.2s; }
         .action-icon:hover { opacity: 1; }
         .action-icon.disabled { opacity: 0.05; cursor: default; }
         
@@ -59,6 +69,10 @@
         
         .btn-tool { padding: 6px 12px; border-radius: 8px; border: 1px solid #cbd5e1; background: #fff; cursor: pointer; font-size: 0.85rem; color: #64748b; font-weight: bold; }
         .btn-tool.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+        
+        /* 專門給字體選擇的小按鈕樣式 */
+        .btn-font { padding: 4px 10px; font-size: 0.8rem; border: 1px solid #cbd5e1; background: #fff; border-radius: 5px; cursor: pointer; color: #64748b; }
+        .btn-font.active { background: #64748b; color: #fff; border-color: #64748b; }
     </style>
 </head>
 <body>
@@ -69,6 +83,10 @@
             </a>
             <img src="../images/logo.png" alt="Logo" height="40">
             <span style="font-weight:bold; color:var(--primary);">課文閱讀</span>
+        </div>
+        <div class="header-right">
+            <button id="global-note" class="btn-tool">全註記</button>
+            <button id="global-trans" class="btn-tool">全翻譯</button>
         </div>
     </header>
 
@@ -87,11 +105,16 @@
         const fontLevels = ['font-s', 'font-m', 'font-l'];
         let currentFontIdx = localStorage.getItem('lesson_font_idx') ? parseInt(localStorage.getItem('lesson_font_idx')) : 1;
 
-        function applyFontSize() {
+        function applyFontSize(idx) {
+            currentFontIdx = idx;
             const level = fontLevels[currentFontIdx];
             document.querySelectorAll('.para-text').forEach(el => {
                 fontLevels.forEach(cls => el.classList.remove(cls));
                 el.classList.add(level);
+            });
+            // 更新按鈕樣式
+            document.querySelectorAll('.btn-font').forEach((btn, i) => {
+                btn.classList.toggle('active', i === idx);
             });
             localStorage.setItem('lesson_font_idx', currentFontIdx);
         }
@@ -103,13 +126,12 @@
             const root = document.getElementById('content-root');
 
             data.sources.forEach(src => src.lessons.forEach(l => {
-                // 強制 String 比對，修復顯示錯誤
                 if (sel.some(s => String(s.source) === String(src.name) && String(s.lesson) === String(l.lesson))) {
                     currentAnnotations = currentAnnotations.concat(l.annotations || []);
                     
                     let currentSectionName = null, currentCardBody = null;
 
-                    l.content.forEach((c, idx) => {
+                    l.content.forEach((c) => {
                         if (c.sectionName && c.sectionName !== currentSectionName) {
                             currentSectionName = c.sectionName;
                             const secHeader = document.createElement('div');
@@ -123,13 +145,16 @@
                             const card = document.createElement('div'); 
                             card.className = 'std-card';
                             
-                            // 第一個卡片加入工具列
+                            // 插入字體工具列 (僅在卡片最上方顯示一次)
                             const toolbar = document.createElement('div');
                             toolbar.className = 'local-toolbar';
                             toolbar.innerHTML = `
-                                <button class="btn-tool" onclick="changeFontSize()">字A</button>
-                                <button class="btn-tool" onclick="toggleAll('note', this)">全註記</button>
-                                <button class="btn-tool" onclick="toggleAll('trans', this)">全翻譯</button>
+                                <span class="toolbar-label">文字大小：</span>
+                                <div class="font-btn-group">
+                                    <button class="btn-font" onclick="applyFontSize(0)">小</button>
+                                    <button class="btn-font" onclick="applyFontSize(1)">中</button>
+                                    <button class="btn-font" onclick="applyFontSize(2)">大</button>
+                                </div>
                             `;
                             card.appendChild(toolbar);
                             
@@ -158,8 +183,20 @@
                 }
             }));
 
-            applyFontSize();
+            // 初始化設定
+            applyFontSize(currentFontIdx);
 
+            // 全局控制按鈕邏輯
+            document.getElementById('global-note').onclick = function() {
+                const active = this.classList.toggle('active');
+                document.querySelectorAll('.note-wrapper').forEach(el => el.classList.toggle('show', active));
+            };
+            document.getElementById('global-trans').onclick = function() {
+                const active = this.classList.toggle('active');
+                document.querySelectorAll('.trans-box').forEach(el => el.classList.toggle('show', active));
+            };
+
+            // 彈出註釋處理
             root.addEventListener('click', (e) => {
                 const link = e.target.closest('.anno-link');
                 if (link) {
@@ -175,18 +212,6 @@
 
             const popup = document.getElementById('anno-popup');
             popup.onclick = (e) => { if(e.target === popup) popup.style.display = 'none'; };
-        }
-
-        // 功能函式
-        function changeFontSize() {
-            currentFontIdx = (currentFontIdx + 1) % fontLevels.length;
-            applyFontSize();
-        }
-
-        function toggleAll(type, btn) {
-            const active = btn.classList.toggle('active');
-            const selector = type === 'note' ? '.note-wrapper' : '.trans-box';
-            document.querySelectorAll(selector).forEach(el => el.classList.toggle('show', active));
         }
 
         function toggleRow(btn, type) {

@@ -1,118 +1,154 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>國文科 - 課文閱讀</title>
-
-<link rel="stylesheet" href="../styles/style.css">
-<link rel="stylesheet" href="../styles/header.css">
-
-<style>
-/* 原樣式保留 */
-.section-header { margin: 25px 0 10px 5px; padding-left: 10px; border-left: 4px solid var(--primary); font-size: 1.1rem; font-weight: bold; }
-.sentence-item { padding: 20px; position: relative; }
-.note-wrapper { max-height: 0; opacity: 0; overflow: hidden; transition: 0.3s; }
-.note-wrapper.show { max-height: 200px; opacity: 1; }
-.trans-box { max-height: 0; opacity: 0; overflow: hidden; transition: 0.3s; }
-.trans-box.show { max-height: 1000px; opacity: 1; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>國文科 - 課文閱讀</title>
+    <link rel="stylesheet" href="../styles/style.css">
+    <link rel="stylesheet" href="../styles/header.css">
+    <style>
+        .section-header { margin: 25px 0 10px 5px; padding-left: 10px; border-left: 4px solid var(--primary); font-size: 1.1rem; font-weight: bold; color: #475569; }
+        .sentence-item { padding: 20px; position: relative; }
+        .sentence-item:not(:last-child) { border-bottom: 1px solid #f1f5f9; }
+        .note-wrapper { max-height: 0; opacity: 0; overflow: hidden; transition: all 0.3s ease; display: flex; flex-wrap: wrap; gap: 8px; }
+        .note-wrapper.show { max-height: 200px; opacity: 1; margin-bottom: 12px; }
+        .note-label { display: inline-block; font-size: 0.85rem; color: #b91c1c; font-weight: 600; background: #fef2f2; border: 1px solid #f87171; padding: 2px 12px; border-radius: 50px; }
+        .para-text { font-size: 1.25rem; line-height: 1.8; color: #1e293b; padding-right: 50px; }
+        .anno-link { color: #2563eb; cursor: help; position: relative; padding: 0 1px; border-bottom: 1px dashed #93c5fd; }
+        .anno-no { font-size: 0.7rem; color: #ef4444; font-weight: bold; margin-left: 1px; top: -0.5em; position: relative; }
+        .anno-popup-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.1); backdrop-filter: blur(1px); display: none; align-items: center; justify-content: center; z-index: 2000; }
+        .anno-popup-card { background: #fff; width: 85%; max-width: 320px; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; }
+        .row-controls { position: absolute; top: 20px; right: 15px; display: flex; flex-direction: column; gap: 12px; }
+        .action-icon { width: 20px; height: 20px; cursor: pointer; opacity: 0.3; transition: opacity 0.2s; }
+        .action-icon:hover { opacity: 1; }
+        .action-icon.disabled { opacity: 0.05; cursor: default; }
+        .trans-box { max-height: 0; opacity: 0; overflow: hidden; background: #f8fafc; border-radius: 6px; color: #64748b; transition: all 0.3s ease; font-size: 1.05rem; line-height: 1.6; }
+        .trans-box.show { max-height: 1000px; opacity: 1; margin-top: 12px; padding: 12px; border: 1px solid #e2e8f0; }
+        .btn-tool { padding: 6px 12px; border-radius: 8px; border: 1px solid #cbd5e1; background: #fff; cursor: pointer; font-size: 0.85rem; color: #64748b; font-weight: bold; }
+        .btn-tool.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    </style>
 </head>
-
 <body>
-<header>
-    <div class="logo">
-        <a href="chinese.html">←</a>
-        <span>課文閱讀</span>
+    <header>
+        <div class="logo">
+            <a href="chinese.html" class="back-link">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            </a>
+            <img src="../images/logo.png" alt="Logo" height="40">
+            <span style="font-weight:bold; color:var(--primary);">課文閱讀</span>
+        </div>
+        <div class="header-right">
+            <button id="global-note" class="btn-tool">註記</button>
+            <button id="global-trans" class="btn-tool">翻譯</button>
+        </div>
+    </header>
+
+    <main class="page-container" id="content-root"></main>
+
+    <div id="anno-popup" class="anno-popup-overlay">
+        <div class="anno-popup-card">
+            <div id="pop-term" style="font-weight:bold; font-size:1.1rem; margin-bottom:10px; color:var(--primary);"></div>
+            <div id="pop-meaning" style="line-height:1.6; color:#475569;"></div>
+        </div>
     </div>
-    <div class="header-right">
-        <button id="global-note">註記</button>
-        <button id="global-trans">翻譯</button>
-    </div>
-</header>
 
-<main id="content-root"></main>
-
-<div id="anno-popup" style="display:none;">
-    <div id="pop-term"></div>
-    <div id="pop-meaning"></div>
-</div>
-
-<script src="../scripts/utils.js"></script>
-<script>
-let currentAnnotations = [];
-
-async function init() {
-    const sel = JSON.parse(localStorage.getItem('sel_chinese_lessons') || '[]');
-    const root = document.getElementById('content-root');
-
-    if (sel.length === 0) {
-        root.innerHTML = '<div style="text-align:center;color:red;">請先選課</div>';
-        return;
-    }
-
-    let data;
-
-    try {
-        const res = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/chinese.json');
-        if (!res.ok) throw new Error();
-
-        const text = await res.text();
-        if (text.startsWith('<')) throw new Error();
-
-        data = JSON.parse(text);
-
-    } catch (e) {
-        root.innerHTML = '<div style="text-align:center;color:red;">資料載入失敗</div>';
-        return;
-    }
-
-    data.sources.forEach(src => src.lessons.forEach(l => {
-        if (sel.some(s => s.source === src.name && s.lesson == l.lesson)) {
-
-            currentAnnotations = currentAnnotations.concat(l.annotations || []);
-
-            (l.content || []).forEach(c => {
-                const item = document.createElement('div');
-                item.className = 'sentence-item';
-
-                item.innerHTML = `
-                    <div class="note-wrapper">${c.note || ''}</div>
-                    <div class="para-text">${parseMarkdown(c.text || '')}</div>
-                    <div class="trans-box">${parseMarkdown(c.translation || '')}</div>
-                `;
-
-                root.appendChild(item);
-            });
+    <script>
+        // 內建 Markdown 解析函式
+        function parseMarkdown(text) {
+            if (!text) return "";
+            return text
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\[(.*?)\]\{(.*?)\}/g, '<span class="anno-link" data-id="$2">$1<span class="anno-no">$2</span></span>');
         }
-    }));
 
-    // ✅ 修正 id 型別問題
-    root.addEventListener('click', (e) => {
-        const link = e.target.closest('.anno-link');
-        if (link) {
-            const id = link.getAttribute('data-id');
-            const found = currentAnnotations.find(a => String(a.id) === id);
-            if (found) {
-                document.getElementById('pop-term').innerText = found.term;
-                document.getElementById('pop-meaning').innerText = found.meaning;
-                document.getElementById('anno-popup').style.display = 'block';
+        let currentAnnotations = [];
+
+        async function init() {
+            try {
+                const sel = JSON.parse(localStorage.getItem('sel_chinese_lessons') || '[]');
+                const res = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/chinese.json');
+                const data = await res.json();
+                const root = document.getElementById('content-root');
+
+                data.sources.forEach(src => src.lessons.forEach(l => {
+                    // 型別容錯比對
+                    const isSelected = sel.some(s => String(s.source) === String(src.name) && String(s.lesson) === String(l.lesson));
+                    
+                    if (isSelected) {
+                        currentAnnotations = currentAnnotations.concat(l.annotations || []);
+                        let currentSectionName = null, currentCardBody = null;
+
+                        l.content.forEach((c) => {
+                            if (c.sectionName && c.sectionName !== currentSectionName) {
+                                currentSectionName = c.sectionName;
+                                const secHeader = document.createElement('div');
+                                secHeader.className = 'section-header';
+                                secHeader.innerText = currentSectionName;
+                                root.appendChild(secHeader);
+                                currentCardBody = null; // 強制換節時重新建立卡片
+                            }
+                            
+                            if (!currentCardBody) {
+                                const card = document.createElement('div'); card.className = 'std-card';
+                                root.appendChild(card); currentCardBody = card;
+                            }
+
+                            const notesArray = Array.isArray(c.note) ? c.note : (c.note ? c.note.split('\n') : []);
+                            const notesHtml = notesArray.filter(n => n.trim()!=='').map(n => `<div class="note-label">${n}</div>`).join('');
+
+                            const item = document.createElement('div');
+                            item.className = 'sentence-item';
+                            item.innerHTML = `
+                                <div class="row-controls">
+                                    <svg class="action-icon ${notesArray.length===0?'disabled':''}" onclick="toggleRow(this, 'note')" viewBox="0 0 24 24"><path fill="#e11d48" d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2zM7 8h10v2H7V8zm0 7h10v2H7v-2z"/></svg>
+                                    <svg class="action-icon ${!c.translation?'disabled':''}" onclick="toggleRow(this, 'trans')" viewBox="0 0 24 24"><path fill="#2563eb" d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0014.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>
+                                </div>
+                                <div class="note-wrapper">${notesHtml}</div>
+                                <div class="para-text">${parseMarkdown(c.text)}</div>
+                                <div class="trans-box">${parseMarkdown(c.translation || '')}</div>
+                            `;
+                            currentCardBody.appendChild(item);
+                        });
+                    }
+                }));
+
+                // 註釋連結處理邏輯
+                root.addEventListener('click', (e) => {
+                    const link = e.target.closest('.anno-link');
+                    if (link) {
+                        const id = String(link.getAttribute('data-id'));
+                        const found = currentAnnotations.find(a => String(a.id) === id);
+                        if(found) {
+                            document.getElementById('pop-term').innerText = found.term;
+                            document.getElementById('pop-meaning').innerText = found.meaning;
+                            document.getElementById('anno-popup').style.display = 'flex';
+                        }
+                    }
+                });
+
+                const popup = document.getElementById('anno-popup');
+                popup.onclick = (e) => { if(e.target === popup) popup.style.display = 'none'; };
+
+                document.getElementById('global-note').onclick = function() {
+                    const active = this.classList.toggle('active');
+                    document.querySelectorAll('.note-wrapper').forEach(el => el.classList.toggle('show', active));
+                };
+                document.getElementById('global-trans').onclick = function() {
+                    const active = this.classList.toggle('active');
+                    document.querySelectorAll('.trans-box').forEach(el => el.classList.toggle('show', active));
+                };
+            } catch (err) {
+                console.error("初始化失敗:", err);
             }
         }
-    });
 
-    document.getElementById('global-note').onclick = function() {
-        const active = this.classList.toggle('active');
-        document.querySelectorAll('.note-wrapper').forEach(el => el.classList.toggle('show', active));
-    };
-
-    document.getElementById('global-trans').onclick = function() {
-        const active = this.classList.toggle('active');
-        document.querySelectorAll('.trans-box').forEach(el => el.classList.toggle('show', active));
-    };
-}
-
-init();
-</script>
+        function toggleRow(btn, type) {
+            if(btn.classList.contains('disabled')) return;
+            const item = btn.closest('.sentence-item');
+            const target = type === 'note' ? item.querySelector('.note-wrapper') : item.querySelector('.trans-box');
+            if(target) target.classList.toggle('show');
+        }
+        init();
+    </script>
 </body>
 </html>

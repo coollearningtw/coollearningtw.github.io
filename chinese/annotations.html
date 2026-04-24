@@ -29,25 +29,35 @@
             <button id="toggle-all" class="btn-tool-text">顯示解釋</button>
         </div>
     </header>
-    <div class="page-container"><div id="anno-list" class="list-container"></div></div>
+    <div class="page-container"><div id=\"anno-list\" class=\"list-container\"></div></div>
+    
+    <script src="../scripts/utils.js"></script>
     <script>
         async function init() {
             const sel = JSON.parse(localStorage.getItem('sel_chinese_lessons') || '[]');
             const res = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/chinese.json');
             const data = await res.json();
             const root = document.getElementById('anno-list');
+            
             data.sources.forEach(src => src.lessons.forEach(l => {
-                // 修改處：確保比對時雙方都是字串
+                // 統一轉型比對
                 if (sel.some(s => String(s.source) === String(src.name) && String(s.lesson) === String(l.lesson))) {
                     l.annotations.forEach(a => {
                         const el = document.createElement('div');
                         el.className = 'std-card anno-item';
-                        el.innerHTML = `<div class="id-badge">${a.id}</div><div class="content-side"><div class="term">${a.term}</div><div class="meaning">${a.meaning}</div></div>`;
+                        // 修改處：meaning 使用 parseMarkdown 處理
+                        el.innerHTML = `
+                            <div class="id-badge">${a.id}</div>
+                            <div class="content-side">
+                                <div class="term">${a.term}</div>
+                                <div class="meaning">${parseMarkdown(a.meaning || '')}</div>
+                            </div>`;
                         el.onclick = () => el.querySelector('.meaning').classList.toggle('show');
                         root.appendChild(el);
                     });
                 }
             }));
+            
             document.getElementById('toggle-all').onclick = function() {
                 const active = this.classList.toggle('active');
                 this.innerText = active ? "隱藏解釋" : "顯示解釋";

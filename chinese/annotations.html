@@ -1,58 +1,89 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>國文科 - 註釋背誦</title>
-    <link rel="stylesheet" href="../styles/style.css">
-    <link rel="stylesheet" href="../styles/header.css">
-    <style>
-        .list-container { max-width: 800px; margin: 20px auto; padding: 0 15px; }
-        .anno-item { padding: 18px 20px; margin-bottom: 12px; cursor: pointer; display: flex; align-items: flex-start; gap: 15px; border: 1px solid #e2e8f0; background: #fff; }
-        .id-badge { background: #ef4444; color: #fff; font-size: 0.8rem; min-width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; margin-top: 2px; }
-        .content-side { flex: 1; }
-        .term { font-size: 1.25rem; font-weight: bold; color: #1e293b; margin-bottom: 5px; }
-        .meaning { font-size: 1.05rem; color: #475569; display: none; border-top: 1px solid #f1f3f5; padding-top: 10px; margin-top: 5px; line-height: 1.6; }
-        .meaning.show { display: block; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>註釋背誦</title>
+
+<style>
+body { font-family: sans-serif; background:#f8fafc; }
+.anno-item { padding:15px; border:1px solid #ddd; margin:10px; background:#fff; cursor:pointer; }
+.term { font-weight:bold; font-size:18px; }
+.meaning { display:none; margin-top:8px; color:#555; }
+.meaning.show { display:block; }
+.error { color:red; text-align:center; margin-top:20px; }
+</style>
 </head>
+
 <body>
-    <header>
-        <div class="logo">
-            <a href="chinese.html" class="back-link">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-            </a>
-            <img src="../images/logo.png" alt="Logo" height="40">
-            <span style="font-weight:bold; color:var(--primary);">註釋背誦</span>
-        </div>
-        <div class="header-right">
-            <button id="toggle-all" class="btn-tool-text">顯示解釋</button>
-        </div>
-    </header>
-    <div class="page-container"><div id="anno-list" class="list-container"></div></div>
-    <script>
-        async function init() {
-            const sel = JSON.parse(localStorage.getItem('sel_chinese_lessons') || '[]');
-            const res = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/chinese.json');
-            const data = await res.json();
-            const root = document.getElementById('anno-list');
-            data.sources.forEach(src => src.lessons.forEach(l => {
+<h2 style="text-align:center;">註釋</h2>
+<button id="toggle-all">顯示全部</button>
+<div id="anno-list"></div>
+
+<script>
+const URL = "https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/chinese.json";
+
+async function init() {
+    const root = document.getElementById("anno-list");
+
+    const sel = JSON.parse(localStorage.getItem("sel_chinese_lessons") || "[]");
+    console.log("選課:", sel);
+
+    if (sel.length === 0) {
+        root.innerHTML = "<div class='error'>⚠️ 請先回選課頁選擇課程</div>";
+        return;
+    }
+
+    try {
+        const res = await fetch(URL);
+        if (!res.ok) throw new Error("HTTP錯誤 " + res.status);
+
+        const text = await res.text();
+        console.log("原始資料:", text.slice(0,100));
+
+        const dataRaw = JSON.parse(text);
+        const data = dataRaw.sources || dataRaw;
+
+        let found = false;
+
+        data.forEach(src => {
+            (src.lessons || []).forEach(l => {
                 if (sel.some(s => s.source === src.name && s.lesson == l.lesson)) {
-                    l.annotations.forEach(a => {
-                        const el = document.createElement('div');
-                        el.className = 'std-card anno-item';
-                        el.innerHTML = `<div class="id-badge">${a.id}</div><div class="content-side"><div class="term">${a.term}</div><div class="meaning">${a.meaning}</div></div>`;
-                        el.onclick = () => el.querySelector('.meaning').classList.toggle('show');
+                    (l.annotations || []).forEach(a => {
+                        found = true;
+                        const el = document.createElement("div");
+                        el.className = "anno-item";
+                        el.innerHTML = `
+                            <div class="term">${a.term}</div>
+                            <div class="meaning">${a.meaning}</div>
+                        `;
+                        el.onclick = () => {
+                            el.querySelector(".meaning").classList.toggle("show");
+                        };
                         root.appendChild(el);
                     });
                 }
-            }));
-            document.getElementById('toggle-all').onclick = function() {
-                const active = this.classList.toggle('active');
-                document.querySelectorAll('.meaning').forEach(m => m.classList.toggle('show', active));
-            };
+            });
+        });
+
+        if (!found) {
+            root.innerHTML = "<div class='error'>⚠️ 沒有符合的註釋資料</div>";
         }
-        init();
-    </script>
+
+    } catch (e) {
+        console.error(e);
+        root.innerHTML = "<div class='error'>❌ 資料載入失敗</div>";
+    }
+}
+
+document.getElementById("toggle-all").onclick = function() {
+    const show = this.classList.toggle("active");
+    document.querySelectorAll(".meaning").forEach(m => {
+        m.classList.toggle("show", show);
+    });
+};
+
+init();
+</script>
 </body>
 </html>

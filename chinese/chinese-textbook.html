@@ -13,7 +13,14 @@
         .note-wrapper { max-height: 0; opacity: 0; overflow: hidden; transition: all 0.3s ease; display: flex; flex-wrap: wrap; gap: 8px; }
         .note-wrapper.show { max-height: 200px; opacity: 1; margin-bottom: 12px; }
         .note-label { display: inline-block; font-size: 0.85rem; color: #b91c1c; font-weight: 600; background: #fef2f2; border: 1px solid #f87171; padding: 2px 12px; border-radius: 50px; }
-        .para-text { font-size: 1.25rem; line-height: 1.8; color: #1e293b; padding-right: 50px; }
+        
+        /* 字體大小等級定義 */
+        .para-text.font-s { font-size: 1rem; }
+        .para-text.font-m { font-size: 1.25rem; } /* 預設值 */
+        .para-text.font-l { font-size: 1.5rem; }
+        
+        .para-text { line-height: 1.8; color: #1e293b; padding-right: 50px; transition: font-size 0.2s ease; }
+        
         .anno-link { color: #2563eb; cursor: help; position: relative; padding: 0 1px; border-bottom: 1px dashed #93c5fd; }
         .anno-no { font-size: 0.7rem; color: #ef4444; font-weight: bold; margin-left: 1px; top: -0.5em; position: relative; }
         .anno-popup-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.1); backdrop-filter: blur(1px); display: none; align-items: center; justify-content: center; z-index: 2000; }
@@ -38,6 +45,7 @@
             <span style="font-weight:bold; color:var(--primary);">課文閱讀</span>
         </div>
         <div class="header-right">
+            <button id="btn-font-size" class="btn-tool" title="調整字體">字A</button>
             <button id="global-note" class="btn-tool">註記</button>
             <button id="global-trans" class="btn-tool">翻譯</button>
         </div>
@@ -55,6 +63,19 @@
     <script src="../scripts/utils.js"></script>
     <script>
         let currentAnnotations = [];
+        // 字體設定邏輯
+        const fontLevels = ['font-s', 'font-m', 'font-l'];
+        let currentFontIdx = localStorage.getItem('lesson_font_idx') ? parseInt(localStorage.getItem('lesson_font_idx')) : 1; // 預設 1 (中間)
+
+        function applyFontSize() {
+            const level = fontLevels[currentFontIdx];
+            document.querySelectorAll('.para-text').forEach(el => {
+                fontLevels.forEach(cls => el.classList.remove(cls));
+                el.classList.add(level);
+            });
+            localStorage.setItem('lesson_font_idx', currentFontIdx);
+        }
+
         async function init() {
             const sel = JSON.parse(localStorage.getItem('sel_chinese_lessons') || '[]');
             const res = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/chinese.json');
@@ -62,7 +83,6 @@
             const root = document.getElementById('content-root');
 
             data.sources.forEach(src => src.lessons.forEach(l => {
-                // 修改處：確保比對時雙方都是字串
                 if (sel.some(s => String(s.source) === String(src.name) && String(s.lesson) === String(l.lesson))) {
                     currentAnnotations = currentAnnotations.concat(l.annotations);
                     let currentSectionName = null, currentCardBody = null;
@@ -84,10 +104,7 @@
                             root.appendChild(card); currentCardBody = card;
                         }
 
-                        let notesArray = [];
-                        if (Array.isArray(c.note)) notesArray = c.note;
-                        else if (c.note) notesArray = c.note.split('\n');
-
+                        let notesArray = Array.isArray(c.note) ? c.note : (c.note ? c.note.split('\n') : []);
                         const notesHtml = notesArray.filter(n => n.trim()!=='').map(n => `<div class="note-label">${n}</div>`).join('');
 
                         const item = document.createElement('div');
@@ -106,15 +123,17 @@
                 }
             }));
 
+            // 初始化套用字體
+            applyFontSize();
+
             root.addEventListener('click', (e) => {
                 const link = e.target.closest('.anno-link');
                 if (link) {
                     const id = String(link.getAttribute('data-id'));
-                    // 修改處：確保 ID 比對也是字串
                     const found = currentAnnotations.find(a => String(a.id) === id);
                     if(found) {
                         document.getElementById('pop-term').innerText = found.term;
-                        document.getElementById('pop-meaning').innerText = found.meaning;
+                        document.getElementById('pop-meaning').innerHTML = parseMarkdown(found.meaning || '');
                         document.getElementById('anno-popup').style.display = 'flex';
                     }
                 }
@@ -130,6 +149,12 @@
             document.getElementById('global-trans').onclick = function() {
                 const active = this.classList.toggle('active');
                 document.querySelectorAll('.trans-box').forEach(el => el.classList.toggle('show', active));
+            };
+
+            // 字體按鈕點擊事件
+            document.getElementById('btn-font-size').onclick = function() {
+                currentFontIdx = (currentFontIdx + 1) % fontLevels.length;
+                applyFontSize();
             };
         }
 

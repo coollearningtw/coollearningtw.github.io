@@ -3,97 +3,114 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>課文閱讀</title>
+<title>國文科 - 課文閱讀</title>
+
+<link rel="stylesheet" href="../styles/style.css">
+<link rel="stylesheet" href="../styles/header.css">
 
 <style>
-body { font-family:sans-serif; background:#f8fafc; }
-.card { background:#fff; margin:10px; padding:15px; border:1px solid #ddd; }
-.text { font-size:18px; line-height:1.8; }
-.note { color:red; display:none; }
-.note.show { display:block; }
-.trans { color:#555; display:none; margin-top:10px; }
-.trans.show { display:block; }
-.error { color:red; text-align:center; margin-top:20px; }
-.link { color:blue; cursor:pointer; }
+/* 原樣式保留 */
+.section-header { margin: 25px 0 10px 5px; padding-left: 10px; border-left: 4px solid var(--primary); font-size: 1.1rem; font-weight: bold; }
+.sentence-item { padding: 20px; position: relative; }
+.note-wrapper { max-height: 0; opacity: 0; overflow: hidden; transition: 0.3s; }
+.note-wrapper.show { max-height: 200px; opacity: 1; }
+.trans-box { max-height: 0; opacity: 0; overflow: hidden; transition: 0.3s; }
+.trans-box.show { max-height: 1000px; opacity: 1; }
 </style>
 </head>
 
 <body>
-<h2 style="text-align:center;">課文</h2>
-<button id="toggle-note">註記</button>
-<button id="toggle-trans">翻譯</button>
+<header>
+    <div class="logo">
+        <a href="chinese.html">←</a>
+        <span>課文閱讀</span>
+    </div>
+    <div class="header-right">
+        <button id="global-note">註記</button>
+        <button id="global-trans">翻譯</button>
+    </div>
+</header>
 
-<div id="root"></div>
+<main id="content-root"></main>
 
+<div id="anno-popup" style="display:none;">
+    <div id="pop-term"></div>
+    <div id="pop-meaning"></div>
+</div>
+
+<script src="../scripts/utils.js"></script>
 <script>
-const URL = "https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/chinese.json";
-
-let annotations = [];
+let currentAnnotations = [];
 
 async function init() {
-    const root = document.getElementById("root");
-
-    const sel = JSON.parse(localStorage.getItem("sel_chinese_lessons") || "[]");
-    console.log("選課:", sel);
+    const sel = JSON.parse(localStorage.getItem('sel_chinese_lessons') || '[]');
+    const root = document.getElementById('content-root');
 
     if (sel.length === 0) {
-        root.innerHTML = "<div class='error'>⚠️ 請先選課</div>";
+        root.innerHTML = '<div style="text-align:center;color:red;">請先選課</div>';
         return;
     }
 
+    let data;
+
     try {
-        const res = await fetch(URL);
-        if (!res.ok) throw new Error("HTTP錯誤");
+        const res = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/chinese.json');
+        if (!res.ok) throw new Error();
 
-        const dataRaw = await res.json();
-        const data = dataRaw.sources || dataRaw;
+        const text = await res.text();
+        if (text.startsWith('<')) throw new Error();
 
-        let found = false;
-
-        data.forEach(src => {
-            (src.lessons || []).forEach(l => {
-                if (sel.some(s => s.source === src.name && s.lesson == l.lesson)) {
-
-                    annotations = annotations.concat(l.annotations || []);
-
-                    (l.content || []).forEach(c => {
-                        found = true;
-
-                        const div = document.createElement("div");
-                        div.className = "card";
-
-                        div.innerHTML = `
-                            <div class="text">${c.text || ""}</div>
-                            <div class="note">${c.note || ""}</div>
-                            <div class="trans">${c.translation || ""}</div>
-                        `;
-
-                        root.appendChild(div);
-                    });
-                }
-            });
-        });
-
-        if (!found) {
-            root.innerHTML = "<div class='error'>⚠️ 沒有課文資料</div>";
-        }
+        data = JSON.parse(text);
 
     } catch (e) {
-        console.error(e);
-        root.innerHTML = "<div class='error'>❌ 載入失敗</div>";
+        root.innerHTML = '<div style="text-align:center;color:red;">資料載入失敗</div>';
+        return;
     }
+
+    data.sources.forEach(src => src.lessons.forEach(l => {
+        if (sel.some(s => s.source === src.name && s.lesson == l.lesson)) {
+
+            currentAnnotations = currentAnnotations.concat(l.annotations || []);
+
+            (l.content || []).forEach(c => {
+                const item = document.createElement('div');
+                item.className = 'sentence-item';
+
+                item.innerHTML = `
+                    <div class="note-wrapper">${c.note || ''}</div>
+                    <div class="para-text">${parseMarkdown(c.text || '')}</div>
+                    <div class="trans-box">${parseMarkdown(c.translation || '')}</div>
+                `;
+
+                root.appendChild(item);
+            });
+        }
+    }));
+
+    // ✅ 修正 id 型別問題
+    root.addEventListener('click', (e) => {
+        const link = e.target.closest('.anno-link');
+        if (link) {
+            const id = link.getAttribute('data-id');
+            const found = currentAnnotations.find(a => String(a.id) === id);
+            if (found) {
+                document.getElementById('pop-term').innerText = found.term;
+                document.getElementById('pop-meaning').innerText = found.meaning;
+                document.getElementById('anno-popup').style.display = 'block';
+            }
+        }
+    });
+
+    document.getElementById('global-note').onclick = function() {
+        const active = this.classList.toggle('active');
+        document.querySelectorAll('.note-wrapper').forEach(el => el.classList.toggle('show', active));
+    };
+
+    document.getElementById('global-trans').onclick = function() {
+        const active = this.classList.toggle('active');
+        document.querySelectorAll('.trans-box').forEach(el => el.classList.toggle('show', active));
+    };
 }
-
-// 全部顯示
-document.getElementById("toggle-note").onclick = function() {
-    const active = this.classList.toggle("active");
-    document.querySelectorAll(".note").forEach(n => n.classList.toggle("show", active));
-};
-
-document.getElementById("toggle-trans").onclick = function() {
-    const active = this.classList.toggle("active");
-    document.querySelectorAll(".trans").forEach(t => t.classList.toggle("show", active));
-};
 
 init();
 </script>

@@ -14,7 +14,6 @@
         .term { font-size: 1.25rem; font-weight: bold; color: #1e293b; margin-bottom: 5px; }
         .meaning { font-size: 1.05rem; color: #475569; display: none; border-top: 1px solid #f1f3f5; padding-top: 10px; margin-top: 5px; line-height: 1.6; }
         .meaning.show { display: block; }
-        .status-msg { text-align: center; padding: 50px; color: #64748b; font-size: 1.1rem; }
     </style>
 </head>
 <body>
@@ -30,66 +29,25 @@
             <button id="toggle-all" class="btn-tool-text">顯示解釋</button>
         </div>
     </header>
-    <div class="page-container">
-        <div id="anno-list" class="list-container">
-            <div class="status-msg">資料載入中，請稍候...</div>
-        </div>
-    </div>
+    <div class="page-container"><div id="anno-list" class="list-container"></div></div>
     <script>
         async function init() {
+            const sel = JSON.parse(localStorage.getItem('sel_chinese_lessons') || '[]');
+            const res = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/chinese.json');
+            const data = await res.json();
             const root = document.getElementById('anno-list');
-            try {
-                // 1. 檢查選課資料
-                const selData = localStorage.getItem('sel_chinese_lessons');
-                const sel = JSON.parse(selData || '[]');
-                
-                if (sel.length === 0) {
-                    root.innerHTML = '<div class="status-msg">⚠️ 偵測不到選課紀錄。<br>請回到選課頁面「點擊課本卡片」使其變色後再進入。</div>';
-                    return;
-                }
-
-                // 2. 抓取遠端資料
-                const apiUrl = 'https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/chinese.json';
-                const res = await fetch(apiUrl);
-                if (!res.ok) throw new Error(`網路請求失敗: ${res.status}`);
-                
-                const data = await res.json();
-                let hasMatch = false;
-                root.innerHTML = ''; // 清空載入中字樣
-
-                // 3. 渲染邏輯
-                data.sources.forEach(src => {
-                    src.lessons.forEach(l => {
-                        // 關鍵：使用 String() 確保型別一致，避免 1 !== "1"
-                        const isMatch = sel.some(s => String(s.source) === String(src.name) && String(s.lesson) === String(l.lesson));
-                        
-                        if (isMatch && l.annotations) {
-                            hasMatch = true;
-                            l.annotations.forEach(a => {
-                                const el = document.createElement('div');
-                                el.className = 'std-card anno-item';
-                                el.innerHTML = `
-                                    <div class="id-badge">${a.id}</div>
-                                    <div class="content-side">
-                                        <div class="term">${a.term}</div>
-                                        <div class="meaning">${a.meaning}</div>
-                                    </div>`;
-                                el.onclick = () => el.querySelector('.meaning').classList.toggle('show');
-                                root.appendChild(el);
-                            });
-                        }
+            data.sources.forEach(src => src.lessons.forEach(l => {
+                // 修改處：確保比對時雙方都是字串
+                if (sel.some(s => String(s.source) === String(src.name) && String(s.lesson) === String(l.lesson))) {
+                    l.annotations.forEach(a => {
+                        const el = document.createElement('div');
+                        el.className = 'std-card anno-item';
+                        el.innerHTML = `<div class="id-badge">${a.id}</div><div class="content-side"><div class="term">${a.term}</div><div class="meaning">${a.meaning}</div></div>`;
+                        el.onclick = () => el.querySelector('.meaning').classList.toggle('show');
+                        root.appendChild(el);
                     });
-                });
-
-                if (!hasMatch) {
-                    root.innerHTML = '<div class="status-msg">❌ 找不到對應的課文資料。<br>請確認選課頁面選中的課別是否正確。</div>';
                 }
-
-            } catch (error) {
-                console.error(error);
-                root.innerHTML = `<div class="status-msg" style="color:red;">⚠️ 載入出錯：${error.message}<br>請確認您的網路連線或 GitHub 連結是否有效。</div>`;
-            }
-
+            }));
             document.getElementById('toggle-all').onclick = function() {
                 const active = this.classList.toggle('active');
                 this.innerText = active ? "隱藏解釋" : "顯示解釋";

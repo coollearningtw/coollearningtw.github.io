@@ -17,7 +17,7 @@
         .anno-link { color: #2563eb; cursor: help; position: relative; padding: 0 1px; border-bottom: 1px dashed #93c5fd; }
         .anno-no { font-size: 0.7rem; color: #ef4444; font-weight: bold; margin-left: 1px; top: -0.5em; position: relative; }
         .anno-popup-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.1); backdrop-filter: blur(1px); display: none; align-items: center; justify-content: center; z-index: 2000; }
-        .anno-popup-card { background: #fff; width: 85%; max-width: 320px; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
+        .anno-popup-card { background: #fff; width: 85%; max-width: 320px; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; }
         .row-controls { position: absolute; top: 20px; right: 15px; display: flex; flex-direction: column; gap: 12px; }
         .action-icon { width: 20px; height: 20px; cursor: pointer; opacity: 0.3; transition: opacity 0.2s; }
         .action-icon:hover { opacity: 1; }
@@ -26,7 +26,6 @@
         .trans-box.show { max-height: 1000px; opacity: 1; margin-top: 12px; padding: 12px; border: 1px solid #e2e8f0; }
         .btn-tool { padding: 6px 12px; border-radius: 8px; border: 1px solid #cbd5e1; background: #fff; cursor: pointer; font-size: 0.85rem; color: #64748b; font-weight: bold; }
         .btn-tool.active { background: var(--primary); color: #fff; border-color: var(--primary); }
-        .loading { text-align: center; padding: 50px; color: #64748b; }
     </style>
 </head>
 <body>
@@ -44,9 +43,7 @@
         </div>
     </header>
 
-    <main class="page-container" id="content-root">
-        <div class="loading">正在連線至 GitHub 獲取課文...</div>
-    </main>
+    <main class="page-container" id="content-root"></main>
 
     <div id="anno-popup" class="anno-popup-overlay">
         <div class="anno-popup-card">
@@ -55,107 +52,86 @@
         </div>
     </div>
 
+    <script src="../scripts/utils.js"></script>
     <script>
-        function parseMarkdown(text) {
-            if (!text) return "";
-            return text
-                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                .replace(/\[(.*?)\]\{(.*?)\}/g, '<span class="anno-link" data-id="$2">$1<span class="anno-no">$2</span></span>');
-        }
-
         let currentAnnotations = [];
-
         async function init() {
+            const sel = JSON.parse(localStorage.getItem('sel_chinese_lessons') || '[]');
+            const res = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/chinese.json');
+            const data = await res.json();
             const root = document.getElementById('content-root');
-            try {
-                const sel = JSON.parse(localStorage.getItem('sel_chinese_lessons') || '[]');
-                if (sel.length === 0) {
-                    root.innerHTML = '<div class="loading">⚠️ 請先選擇課程並確保卡片已選中。</div>';
-                    return;
-                }
 
-                const res = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/chinese.json');
-                if (!res.ok) throw new Error("GitHub 資料讀取失敗");
-                
-                const data = await res.json();
-                root.innerHTML = ''; 
+            data.sources.forEach(src => src.lessons.forEach(l => {
+                // 修改處：確保比對時雙方都是字串
+                if (sel.some(s => String(s.source) === String(src.name) && String(s.lesson) === String(l.lesson))) {
+                    currentAnnotations = currentAnnotations.concat(l.annotations);
+                    let currentSectionName = null, currentCardBody = null;
 
-                data.sources.forEach(src => {
-                    src.lessons.forEach(l => {
-                        const isMatch = sel.some(s => String(s.source) === String(src.name) && String(s.lesson) === String(l.lesson));
-                        
-                        if (isMatch) {
-                            currentAnnotations = currentAnnotations.concat(l.annotations || []);
-                            let currentSectionName = null;
-                            let currentCardBody = null;
-
-                            l.content.forEach((c) => {
-                                if (c.sectionName && c.sectionName !== currentSectionName) {
-                                    currentSectionName = c.sectionName;
-                                    const h = document.createElement('div');
-                                    h.className = 'section-header';
-                                    h.innerText = currentSectionName;
-                                    root.appendChild(h);
-                                    currentCardBody = null;
-                                }
-                                
-                                if (!currentCardBody) {
-                                    const card = document.createElement('div');
-                                    card.className = 'std-card';
-                                    root.appendChild(card);
-                                    currentCardBody = card;
-                                }
-
-                                const notesArray = Array.isArray(c.note) ? c.note : (c.note ? c.note.split('\n') : []);
-                                const notesHtml = notesArray.filter(n => n.trim()!=='').map(n => `<div class="note-label">${n}</div>`).join('');
-
-                                const item = document.createElement('div');
-                                item.className = 'sentence-item';
-                                item.innerHTML = `
-                                    <div class="row-controls">
-                                        <svg class="action-icon ${notesArray.length===0?'disabled':''}" onclick="toggleRow(this, 'note')" viewBox="0 0 24 24"><path fill="#e11d48" d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2zM7 8h10v2H7V8zm0 7h10v2H7v-2z"/></svg>
-                                        <svg class="action-icon ${!c.translation?'disabled':''}" onclick="toggleRow(this, 'trans')" viewBox="0 0 24 24"><path fill="#2563eb" d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0014.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>
-                                    </div>
-                                    <div class="note-wrapper">${notesHtml}</div>
-                                    <div class="para-text">${parseMarkdown(c.text)}</div>
-                                    <div class="trans-box">${parseMarkdown(c.translation || '')}</div>
-                                `;
-                                currentCardBody.appendChild(item);
-                            });
+                    l.content.forEach((c) => {
+                        if (c.sectionName && c.sectionName !== currentSectionName) {
+                            currentSectionName = c.sectionName;
+                            const secHeader = document.createElement('div');
+                            secHeader.className = 'section-header';
+                            secHeader.innerText = currentSectionName;
+                            root.appendChild(secHeader);
+                            const card = document.createElement('div');
+                            card.className = 'std-card';
+                            root.appendChild(card);
+                            currentCardBody = card;
                         }
+                        if (!currentCardBody) {
+                            const card = document.createElement('div'); card.className = 'std-card';
+                            root.appendChild(card); currentCardBody = card;
+                        }
+
+                        let notesArray = [];
+                        if (Array.isArray(c.note)) notesArray = c.note;
+                        else if (c.note) notesArray = c.note.split('\n');
+
+                        const notesHtml = notesArray.filter(n => n.trim()!=='').map(n => `<div class="note-label">${n}</div>`).join('');
+
+                        const item = document.createElement('div');
+                        item.className = 'sentence-item';
+                        item.innerHTML = `
+                            <div class="row-controls">
+                                <svg class="action-icon ${notesArray.length===0?'disabled':''}" onclick="toggleRow(this, 'note')" viewBox="0 0 24 24"><path fill="#e11d48" d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2zM7 8h10v2H7V8zm0 7h10v2H7v-2z"/></svg>
+                                <svg class="action-icon ${!c.translation?'disabled':''}" onclick="toggleRow(this, 'trans')" viewBox="0 0 24 24"><path fill="#2563eb" d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0014.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>
+                            </div>
+                            <div class="note-wrapper">${notesHtml}</div>
+                            <div class="para-text">${parseMarkdown(c.text)}</div>
+                            <div class="trans-box">${parseMarkdown(c.translation || '')}</div>
+                        `;
+                        currentCardBody.appendChild(item);
                     });
-                });
-
-            } catch (err) {
-                root.innerHTML = `<div class="loading" style="color:red;">錯誤: ${err.message}</div>`;
-            }
-        }
-
-        // 註釋點擊邏輯
-        document.getElementById('content-root').addEventListener('click', (e) => {
-            const link = e.target.closest('.anno-link');
-            if (link) {
-                const id = String(link.getAttribute('data-id'));
-                const found = currentAnnotations.find(a => String(a.id) === id);
-                if(found) {
-                    document.getElementById('pop-term').innerText = found.term;
-                    document.getElementById('pop-meaning').innerText = found.meaning;
-                    document.getElementById('anno-popup').style.display = 'flex';
                 }
-            }
-        });
+            }));
 
-        const popup = document.getElementById('anno-popup');
-        popup.onclick = (e) => { if(e.target === popup) popup.style.display = 'none'; };
+            root.addEventListener('click', (e) => {
+                const link = e.target.closest('.anno-link');
+                if (link) {
+                    const id = String(link.getAttribute('data-id'));
+                    // 修改處：確保 ID 比對也是字串
+                    const found = currentAnnotations.find(a => String(a.id) === id);
+                    if(found) {
+                        document.getElementById('pop-term').innerText = found.term;
+                        document.getElementById('pop-meaning').innerText = found.meaning;
+                        document.getElementById('anno-popup').style.display = 'flex';
+                    }
+                }
+            });
 
-        document.getElementById('global-note').onclick = function() {
-            const active = this.classList.toggle('active');
-            document.querySelectorAll('.note-wrapper').forEach(el => el.classList.toggle('show', active));
-        };
-        document.getElementById('global-trans').onclick = function() {
-            const active = this.classList.toggle('active');
-            document.querySelectorAll('.trans-box').forEach(el => el.classList.toggle('show', active));
-        };
+            const popup = document.getElementById('anno-popup');
+            popup.onclick = (e) => { if(e.target === popup) popup.style.display = 'none'; };
+
+            document.getElementById('global-note').onclick = function() {
+                const active = this.classList.toggle('active');
+                document.querySelectorAll('.note-wrapper').forEach(el => el.classList.toggle('show', active));
+            };
+            document.getElementById('global-trans').onclick = function() {
+                const active = this.classList.toggle('active');
+                document.querySelectorAll('.trans-box').forEach(el => el.classList.toggle('show', active));
+            };
+        }
 
         function toggleRow(btn, type) {
             if(btn.classList.contains('disabled')) return;

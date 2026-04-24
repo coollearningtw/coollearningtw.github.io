@@ -8,29 +8,55 @@
     <link rel="stylesheet" href="../styles/header.css">
     <style>
         .section-header { margin: 25px 0 10px 5px; padding-left: 10px; border-left: 4px solid var(--primary); font-size: 1.1rem; font-weight: bold; color: #475569; }
-        .sentence-item { padding: 20px; position: relative; }
+        
+        /* 工具列：顯示在第一段上方 */
+        .local-toolbar { display: flex; gap: 10px; padding: 15px 20px; border-bottom: 1px solid #f1f5f9; background: #fafafa; }
+        
+        .sentence-item { 
+            padding: 20px; 
+            display: flex; 
+            gap: 15px; 
+            align-items: flex-start;
+            position: relative;
+        }
         .sentence-item:not(:last-child) { border-bottom: 1px solid #f1f5f9; }
+
+        /* 左側：文字內容 */
+        .content-area { flex: 1; }
+        
+        /* 右側：專屬按鈕區，有效利用右邊空間 */
+        .side-controls { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 12px; 
+            width: 30px; 
+            flex-shrink: 0; 
+            align-items: center;
+        }
+
         .note-wrapper { max-height: 0; opacity: 0; overflow: hidden; transition: all 0.3s ease; display: flex; flex-wrap: wrap; gap: 8px; }
         .note-wrapper.show { max-height: 200px; opacity: 1; margin-bottom: 12px; }
         .note-label { display: inline-block; font-size: 0.85rem; color: #b91c1c; font-weight: 600; background: #fef2f2; border: 1px solid #f87171; padding: 2px 12px; border-radius: 50px; }
         
-        /* 字體大小等級定義 */
+        /* 字體大小等級 */
         .para-text.font-s { font-size: 1rem; }
-        .para-text.font-m { font-size: 1.25rem; } /* 預設值 */
+        .para-text.font-m { font-size: 1.25rem; }
         .para-text.font-l { font-size: 1.5rem; }
-        
-        .para-text { line-height: 1.8; color: #1e293b; padding-right: 50px; transition: font-size 0.2s ease; }
+        .para-text { line-height: 1.8; color: #1e293b; transition: font-size 0.2s ease; }
         
         .anno-link { color: #2563eb; cursor: help; position: relative; padding: 0 1px; border-bottom: 1px dashed #93c5fd; }
         .anno-no { font-size: 0.7rem; color: #ef4444; font-weight: bold; margin-left: 1px; top: -0.5em; position: relative; }
+        
         .anno-popup-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.1); backdrop-filter: blur(1px); display: none; align-items: center; justify-content: center; z-index: 2000; }
         .anno-popup-card { background: #fff; width: 85%; max-width: 320px; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; }
-        .row-controls { position: absolute; top: 20px; right: 15px; display: flex; flex-direction: column; gap: 12px; }
-        .action-icon { width: 20px; height: 20px; cursor: pointer; opacity: 0.3; transition: opacity 0.2s; }
+        
+        .action-icon { width: 22px; height: 22px; cursor: pointer; opacity: 0.4; transition: 0.2s; }
         .action-icon:hover { opacity: 1; }
         .action-icon.disabled { opacity: 0.05; cursor: default; }
+        
         .trans-box { max-height: 0; opacity: 0; overflow: hidden; background: #f8fafc; border-radius: 6px; color: #64748b; transition: all 0.3s ease; font-size: 1.05rem; line-height: 1.6; }
         .trans-box.show { max-height: 1000px; opacity: 1; margin-top: 12px; padding: 12px; border: 1px solid #e2e8f0; }
+        
         .btn-tool { padding: 6px 12px; border-radius: 8px; border: 1px solid #cbd5e1; background: #fff; cursor: pointer; font-size: 0.85rem; color: #64748b; font-weight: bold; }
         .btn-tool.active { background: var(--primary); color: #fff; border-color: var(--primary); }
     </style>
@@ -43,11 +69,6 @@
             </a>
             <img src="../images/logo.png" alt="Logo" height="40">
             <span style="font-weight:bold; color:var(--primary);">課文閱讀</span>
-        </div>
-        <div class="header-right">
-            <button id="btn-font-size" class="btn-tool" title="調整字體">字A</button>
-            <button id="global-note" class="btn-tool">註記</button>
-            <button id="global-trans" class="btn-tool">翻譯</button>
         </div>
     </header>
 
@@ -63,9 +84,8 @@
     <script src="../scripts/utils.js"></script>
     <script>
         let currentAnnotations = [];
-        // 字體設定邏輯
         const fontLevels = ['font-s', 'font-m', 'font-l'];
-        let currentFontIdx = localStorage.getItem('lesson_font_idx') ? parseInt(localStorage.getItem('lesson_font_idx')) : 1; // 預設 1 (中間)
+        let currentFontIdx = localStorage.getItem('lesson_font_idx') ? parseInt(localStorage.getItem('lesson_font_idx')) : 1;
 
         function applyFontSize() {
             const level = fontLevels[currentFontIdx];
@@ -83,47 +103,61 @@
             const root = document.getElementById('content-root');
 
             data.sources.forEach(src => src.lessons.forEach(l => {
+                // 強制 String 比對，修復顯示錯誤
                 if (sel.some(s => String(s.source) === String(src.name) && String(s.lesson) === String(l.lesson))) {
-                    currentAnnotations = currentAnnotations.concat(l.annotations);
+                    currentAnnotations = currentAnnotations.concat(l.annotations || []);
+                    
                     let currentSectionName = null, currentCardBody = null;
 
-                    l.content.forEach((c) => {
+                    l.content.forEach((c, idx) => {
                         if (c.sectionName && c.sectionName !== currentSectionName) {
                             currentSectionName = c.sectionName;
                             const secHeader = document.createElement('div');
                             secHeader.className = 'section-header';
                             secHeader.innerText = currentSectionName;
                             root.appendChild(secHeader);
-                            const card = document.createElement('div');
+                            currentCardBody = null; 
+                        }
+                        
+                        if (!currentCardBody) {
+                            const card = document.createElement('div'); 
                             card.className = 'std-card';
-                            root.appendChild(card);
+                            
+                            // 第一個卡片加入工具列
+                            const toolbar = document.createElement('div');
+                            toolbar.className = 'local-toolbar';
+                            toolbar.innerHTML = `
+                                <button class="btn-tool" onclick="changeFontSize()">字A</button>
+                                <button class="btn-tool" onclick="toggleAll('note', this)">全註記</button>
+                                <button class="btn-tool" onclick="toggleAll('trans', this)">全翻譯</button>
+                            `;
+                            card.appendChild(toolbar);
+                            
+                            root.appendChild(card); 
                             currentCardBody = card;
                         }
-                        if (!currentCardBody) {
-                            const card = document.createElement('div'); card.className = 'std-card';
-                            root.appendChild(card); currentCardBody = card;
-                        }
 
-                        let notesArray = Array.isArray(c.note) ? c.note : (c.note ? c.note.split('\n') : []);
+                        const notesArray = Array.isArray(c.note) ? c.note : (c.note ? c.note.split('\n') : []);
                         const notesHtml = notesArray.filter(n => n.trim()!=='').map(n => `<div class="note-label">${n}</div>`).join('');
 
                         const item = document.createElement('div');
                         item.className = 'sentence-item';
                         item.innerHTML = `
-                            <div class="row-controls">
+                            <div class="content-area">
+                                <div class="note-wrapper">${notesHtml}</div>
+                                <div class="para-text">${parseMarkdown(c.text)}</div>
+                                <div class="trans-box">${parseMarkdown(c.translation || '')}</div>
+                            </div>
+                            <div class="side-controls">
                                 <svg class="action-icon ${notesArray.length===0?'disabled':''}" onclick="toggleRow(this, 'note')" viewBox="0 0 24 24"><path fill="#e11d48" d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2zM7 8h10v2H7V8zm0 7h10v2H7v-2z"/></svg>
                                 <svg class="action-icon ${!c.translation?'disabled':''}" onclick="toggleRow(this, 'trans')" viewBox="0 0 24 24"><path fill="#2563eb" d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0014.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>
                             </div>
-                            <div class="note-wrapper">${notesHtml}</div>
-                            <div class="para-text">${parseMarkdown(c.text)}</div>
-                            <div class="trans-box">${parseMarkdown(c.translation || '')}</div>
                         `;
                         currentCardBody.appendChild(item);
                     });
                 }
             }));
 
-            // 初始化套用字體
             applyFontSize();
 
             root.addEventListener('click', (e) => {
@@ -141,21 +175,18 @@
 
             const popup = document.getElementById('anno-popup');
             popup.onclick = (e) => { if(e.target === popup) popup.style.display = 'none'; };
+        }
 
-            document.getElementById('global-note').onclick = function() {
-                const active = this.classList.toggle('active');
-                document.querySelectorAll('.note-wrapper').forEach(el => el.classList.toggle('show', active));
-            };
-            document.getElementById('global-trans').onclick = function() {
-                const active = this.classList.toggle('active');
-                document.querySelectorAll('.trans-box').forEach(el => el.classList.toggle('show', active));
-            };
+        // 功能函式
+        function changeFontSize() {
+            currentFontIdx = (currentFontIdx + 1) % fontLevels.length;
+            applyFontSize();
+        }
 
-            // 字體按鈕點擊事件
-            document.getElementById('btn-font-size').onclick = function() {
-                currentFontIdx = (currentFontIdx + 1) % fontLevels.length;
-                applyFontSize();
-            };
+        function toggleAll(type, btn) {
+            const active = btn.classList.toggle('active');
+            const selector = type === 'note' ? '.note-wrapper' : '.trans-box';
+            document.querySelectorAll(selector).forEach(el => el.classList.toggle('show', active));
         }
 
         function toggleRow(btn, type) {
@@ -164,6 +195,7 @@
             const target = type === 'note' ? item.querySelector('.note-wrapper') : item.querySelector('.trans-box');
             if(target) target.classList.toggle('show');
         }
+
         init();
     </script>
 </body>

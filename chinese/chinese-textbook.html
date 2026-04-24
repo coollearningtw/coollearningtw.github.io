@@ -7,41 +7,44 @@
     <link rel="stylesheet" href="../styles/style.css">
     <link rel="stylesheet" href="../styles/header.css">
     <style>
-        /* 頁面置頂工具列 (僅顯示一個) */
+        /* 頁面置頂工具列 */
         .page-top-toolbar { 
             display: flex; 
             align-items: center; 
             gap: 12px; 
-            padding: 15px 20px; 
+            padding: 10px 20px; 
             background: #fff; 
             border-bottom: 1px solid #e2e8f0;
             position: sticky;
             top: 0;
             z-index: 100;
-            margin-bottom: 15px;
         }
-        .toolbar-label { font-size: 0.9rem; color: #64748b; font-weight: bold; }
-        .font-btn-group { display: flex; gap: 8px; }
+        .toolbar-label { font-size: 0.85rem; color: #64748b; font-weight: bold; }
+        .font-btn-group { display: flex; gap: 5px; }
 
         .section-header { margin: 25px 0 10px 5px; padding-left: 10px; border-left: 4px solid var(--primary); font-size: 1.1rem; font-weight: bold; color: #475569; }
         
         .sentence-item { 
             padding: 20px; 
             display: flex; 
-            gap: 15px; 
+            gap: 10px; /* 縮小間距以利用空間 */
             align-items: flex-start;
             position: relative;
         }
         .sentence-item:not(:last-child) { border-bottom: 1px solid #f1f5f9; }
 
-        .content-area { flex: 1; }
+        /* 內容區域：擴展到最大空間 */
+        .content-area { 
+            flex: 1; 
+            width: 100%;
+        }
         
-        /* 右側按鈕區 */
+        /* 右側按鈕區：更窄且貼邊 */
         .side-controls { 
             display: flex; 
             flex-direction: column; 
-            gap: 12px; 
-            width: 35px; 
+            gap: 15px; 
+            width: 30px; 
             flex-shrink: 0; 
             align-items: center;
             padding-top: 5px;
@@ -51,13 +54,25 @@
         .note-wrapper.show { max-height: 500px; opacity: 1; margin-bottom: 12px; }
         .note-label { display: inline-block; font-size: 0.85rem; color: #b91c1c; font-weight: 600; background: #fef2f2; border: 1px solid #f87171; padding: 2px 12px; border-radius: 50px; }
         
-        /* 字體大小定義：原文與翻譯一同縮放 */
+        /* 字體大小定義 */
         .para-text.font-s, .trans-box.font-s { font-size: 1rem; }
-        .para-text.font-m, .trans-box.font-m { font-size: 1.25rem; }
-        .para-text.font-l, .trans-box.font-l { font-size: 1.5rem; }
+        .para-text.font-m, .trans-box.font-m { font-size: 1.2rem; }
+        .para-text.font-l, .trans-box.font-l { font-size: 1.45rem; }
         
-        .para-text { line-height: 1.8; color: #1e293b; transition: font-size 0.2s ease; }
-        .trans-box { max-height: 0; opacity: 0; overflow: hidden; background: #f8fafc; border-radius: 6px; color: #64748b; transition: all 0.3s ease; line-height: 1.6; }
+        .para-text { 
+            line-height: 1.8; 
+            color: #1e293b; 
+            transition: font-size 0.2s ease;
+            width: 100%; /* 確保原文佔滿可用空間 */
+        }
+        
+        .trans-box { 
+            max-height: 0; opacity: 0; overflow: hidden; 
+            background: #f8fafc; border-radius: 6px; 
+            color: #64748b; transition: all 0.3s ease; 
+            line-height: 1.6; 
+            width: 100%;
+        }
         .trans-box.show { max-height: 2000px; opacity: 1; margin-top: 12px; padding: 12px; border: 1px solid #e2e8f0; }
         
         .anno-link { color: #2563eb; cursor: help; position: relative; padding: 0 1px; border-bottom: 1px dashed #93c5fd; }
@@ -66,14 +81,15 @@
         .anno-popup-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.1); backdrop-filter: blur(1px); display: none; align-items: center; justify-content: center; z-index: 2000; }
         .anno-popup-card { background: #fff; width: 85%; max-width: 320px; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; }
         
-        .action-icon { width: 22px; height: 22px; cursor: pointer; opacity: 0.3; transition: 0.2s; }
+        /* 側邊圖示優化 */
+        .action-icon { width: 20px; height: 20px; cursor: pointer; opacity: 0.25; transition: 0.2s; }
         .action-icon:hover { opacity: 1; }
         .action-icon.disabled { opacity: 0.05; cursor: default; }
         
         .btn-tool { padding: 6px 12px; border-radius: 8px; border: 1px solid #cbd5e1; background: #fff; cursor: pointer; font-size: 0.85rem; color: #64748b; font-weight: bold; }
         .btn-tool.active { background: var(--primary); color: #fff; border-color: var(--primary); }
         
-        .btn-font { padding: 6px 15px; font-size: 0.85rem; border: 1px solid #cbd5e1; background: #fff; border-radius: 6px; cursor: pointer; color: #64748b; font-weight: bold; }
+        .btn-font { padding: 4px 12px; font-size: 0.85rem; border: 1px solid #cbd5e1; background: #fff; border-radius: 6px; cursor: pointer; color: #64748b; font-weight: bold; }
         .btn-font.active { background: var(--primary); color: #fff; border-color: var(--primary); }
     </style>
 </head>
@@ -101,7 +117,7 @@
         </div>
     </div>
 
-    <main class="page-container" id="content-root"></main>
+    <main class="page-container" id="content-root" style="padding-top: 10px;"></main>
 
     <div id="anno-popup" class="anno-popup-overlay">
         <div class="anno-popup-card">
@@ -119,13 +135,10 @@
         function applyFontSize(idx) {
             currentFontIdx = idx;
             const level = fontLevels[currentFontIdx];
-            
-            // 同時作用於原文與翻譯區塊
             document.querySelectorAll('.para-text, .trans-box').forEach(el => {
                 fontLevels.forEach(cls => el.classList.remove(cls));
                 el.classList.add(level);
             });
-            
             document.querySelectorAll('.btn-font').forEach((btn, i) => {
                 btn.classList.toggle('active', i === idx);
             });
@@ -139,10 +152,8 @@
             const root = document.getElementById('content-root');
 
             data.sources.forEach(src => src.lessons.forEach(l => {
-                // 修正 String 比對問題
                 if (sel.some(s => String(s.source) === String(src.name) && String(s.lesson) === String(l.lesson))) {
                     currentAnnotations = currentAnnotations.concat(l.annotations || []);
-                    
                     let currentSectionName = null, currentCardBody = null;
 
                     l.content.forEach((c) => {
@@ -183,7 +194,6 @@
                 }
             }));
 
-            // 初始化套用字體
             applyFontSize(currentFontIdx);
 
             document.getElementById('global-note').onclick = function() {

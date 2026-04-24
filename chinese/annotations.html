@@ -12,8 +12,12 @@
         .id-badge { background: #ef4444; color: #fff; font-size: 0.8rem; min-width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; margin-top: 2px; }
         .content-side { flex: 1; }
         .term { font-size: 1.25rem; font-weight: bold; color: #1e293b; margin-bottom: 5px; }
-        .meaning { font-size: 1.05rem; color: #475569; display: none; border-top: 1px solid #f1f3f5; padding-top: 10px; margin-top: 5px; line-height: 1.6; }
+        /* 預設隱藏解釋，點擊才顯示 */
+        .meaning { font-size: 1.05rem; color: #475569; display: none; border-top: 1px solid #f1f3f5; padding-top: 10px; margin-top: 10px; line-height: 1.6; }
         .meaning.show { display: block; }
+        
+        /* 修正 Markdown 圖片在注釋中的大小 */
+        .meaning img { max-width: 100%; height: auto; border-radius: 4px; display: block; margin: 8px 0; }
     </style>
 </head>
 <body>
@@ -26,44 +30,82 @@
             <span style="font-weight:bold; color:var(--primary);">註釋背誦</span>
         </div>
         <div class="header-right">
-            <button id="toggle-all" class="btn-tool-text">顯示解釋</button>
+            <button id="toggle-all" class="btn-tool-text">顯示所有解釋</button>
         </div>
     </header>
-    <div class="page-container"><div id=\"anno-list\" class=\"list-container\"></div></div>
+
+    <div class="page-container">
+        <div id="anno-list" class="list-container"></div>
+    </div>
     
     <script src="../scripts/utils.js"></script>
     <script>
         async function init() {
-            const sel = JSON.parse(localStorage.getItem('sel_chinese_lessons') || '[]');
-            const res = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/chinese.json');
-            const data = await res.json();
-            const root = document.getElementById('anno-list');
-            
-            data.sources.forEach(src => src.lessons.forEach(l => {
-                // 統一轉型比對
-                if (sel.some(s => String(s.source) === String(src.name) && String(s.lesson) === String(l.lesson))) {
-                    l.annotations.forEach(a => {
-                        const el = document.createElement('div');
-                        el.className = 'std-card anno-item';
-                        // 修改處：meaning 使用 parseMarkdown 處理
-                        el.innerHTML = `
-                            <div class="id-badge">${a.id}</div>
-                            <div class="content-side">
-                                <div class="term">${a.term}</div>
-                                <div class="meaning">${parseMarkdown(a.meaning || '')}</div>
-                            </div>`;
-                        el.onclick = () => el.querySelector('.meaning').classList.toggle('show');
-                        root.appendChild(el);
-                    });
+            try {
+                // 1. 取得使用者選擇的課次
+                const sel = JSON.parse(localStorage.getItem('sel_chinese_lessons') || '[]');
+                if (sel.length === 0) {
+                    document.getElementById('anno-list').innerHTML = '<p style="text-align:center; padding:50px; color:#64748b;">請先選取課次</p>';
+                    return;
                 }
-            }));
-            
-            document.getElementById('toggle-all').onclick = function() {
-                const active = this.classList.toggle('active');
-                this.innerText = active ? "隱藏解釋" : "顯示解釋";
-                document.querySelectorAll('.meaning').forEach(m => m.classList.toggle('show', active));
-            };
+
+                // 2. 獲取 GitHub 資料
+                const res = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/chinese.json');
+                const data = await res.json();
+                const root = document.getElementById('anno-list');
+                root.innerHTML = ''; // 清空讀取中狀態
+
+                // 3. 渲染符合選擇的注釋
+                data.sources.forEach(src => {
+                    src.lessons.forEach(l => {
+                        // 強化比對邏輯：強制轉字串避免類型錯誤 (String vs Number)
+                        const isMatch = sel.some(s => 
+                            String(s.source) === String(src.name) && 
+                            String(s.lesson) === String(l.lesson)
+                        );
+
+                        if (isMatch && l.annotations) {
+                            l.annotations.forEach(a => {
+                                const el = document.createElement('div');
+                                el.className = 'std-card anno-item';
+                                
+                                // 確保 meaning 存在才解析，避免 parseMarkdown 報錯
+                                const rawMeaning = a.meaning || '';
+                                const parsedMeaning = typeof parseMarkdown === 'function' ? parseMarkdown(rawMeaning) : rawMeaning;
+
+                                el.innerHTML = `
+                                    <div class="id-badge">${a.id || ''}</div>
+                                    <div class="content-side">
+                                        <div class="term">${a.term}</div>
+                                        <div class="meaning">${parsedMeaning}</div>
+                                    </div>`;
+                                
+                                // 點擊卡片切換單個解釋顯示
+                                el.onclick = () => {
+                                    const m = el.querySelector('.meaning');
+                                    m.classList.toggle('show');
+                                };
+                                root.appendChild(el);
+                            });
+                        }
+                    });
+                });
+
+                // 4. 全域切換按鈕
+                document.getElementById('toggle-all').onclick = function() {
+                    const active = this.classList.toggle('active');
+                    this.innerText = active ? "隱藏所有解釋" : "顯示所有解釋";
+                    document.querySelectorAll('.meaning').forEach(m => {
+                        m.classList.toggle('show', active);
+                    });
+                };
+
+            } catch (err) {
+                console.error("Initialization failed:", err);
+                document.getElementById('anno-list').innerHTML = `<p style="color:red; text-align:center;">載入失敗: ${err.message}</p>`;
+            }
         }
+        
         init();
     </script>
 </body>

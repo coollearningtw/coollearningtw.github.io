@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>化學實驗室 - 酷學習</title>
+    <link rel="stylesheet" href="../styles/style.css">
+    <link rel="stylesheet" href="../styles/header.css">
+    <style>
+        .tools-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-top: 20px; }
+        .tool-card {
+            background: #fff; border-radius: 16px; padding: 25px;
+            display: flex; align-items: center; gap: 20px; text-decoration: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.04); border: 1px solid #f1f5f9;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .tool-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(231, 76, 60, 0.15); }
+        .tool-icon {
+            width: 60px; height: 60px; border-radius: 14px; background: #fff1f0;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+        .tool-icon svg { width: 32px; height: 32px; fill: #e74c3c; }
+        .tool-info h3 { margin: 0 0 5px 0; color: #1e293b; font-size: 1.2rem; }
+        .tool-info p { margin: 0; color: #64748b; font-size: 0.9rem; line-height: 1.4; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <a href="science.html" class="back-link"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg></a>
+            <img src="../images/logo.png" alt="Logo" height="40">
+            <span style="font-weight:bold; color:#e74c3c;">化學實驗室</span>
+        </div>
+    </header>
+
+    <div class="page-container">
+        <h2 style="color:#334155; margin-bottom: 5px;">化學工具庫</h2>
+        <p style="color:#64748b; margin-top:0;">探索元素、計算質量、平衡反應</p>
+
+        <div class="tools-grid">
+            <a href="periodic-table.html" class="tool-card">
+                <div class="tool-icon">
+                    <svg viewBox="0 0 24 24"><path d="M4 4h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4zM4 10h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4zM4 16h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4z"/></svg>
+                </div>
+                <div class="tool-info">
+                    <h3>互動週期表</h3>
+                    <p>查看118個元素的詳細資訊與動態波耳原子模型。</p>
+                </div>
+            </a>
+
+            <a href="molar-calculator.html" class="tool-card">
+                <div class="tool-icon">
+                    <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5.5 14H12v-1.5h1.5v1.5zm0-2.5H12V13h1.5v1.5zm0-2.5H12v-1.5h1.5V12zm-3 5H9v-1.5h1.5v1.5zm0-2.5H9V13h1.5v1.5zm0-2.5H9v-1.5h1.5V12zM15 9H9V6h6v3z"/></svg>
+                </div>
+                <div class="tool-info">
+                    <h3>莫耳質量計算機</h3>
+                    <p>輸入化學式（如H2O），快速計算總分子量與元素佔比。</p>
+                </div>
+            </a>
+            
+            <!-- 預留未來擴充：反應平衡器 -->
+            <a href="#" class="tool-card" style="opacity:0.5; pointer-events:none;">
+                <div class="tool-icon" style="background:#f1f5f9;"><svg style="fill:#94a3b8;" viewBox="0 0 24 24"><path d="M12 2L2 22h20L12 2zm0 3.8L18.2 19H5.8L12 5.8z"/></svg></div>
+                <div class="tool-info">
+                    <h3>化學反應平衡器 <span style="font-size:0.7rem; background:#cbd5e1; color:#fff; padding:2px 6px; border-radius:4px;">開發中</span></h3>
+                    <p>自動補齊係數，配平複雜的化學反應方程式。</p>
+                </div>
+            </a>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>莫耳質量計算機 - 酷學習</title>
+    <link rel="stylesheet" href="../styles/style.css">
+    <link rel="stylesheet" href="../styles/header.css">
+    <style>
+        .calc-panel { background: #fff; border-radius: 16px; padding: 30px; box-shadow: var(--shadow); max-width: 600px; margin: 0 auto; }
+        .calc-input { 
+            width: 100%; padding: 18px; font-size: 1.6rem; border: 2px solid #e2e8f0; 
+            border-radius: 12px; margin-bottom: 20px; outline: none; font-family: 'Courier New', Courier, monospace; 
+            letter-spacing: 2px; transition: 0.2s; box-sizing: border-box;
+        }
+        .calc-input:focus { border-color: #e74c3c; box-shadow: 0 0 0 4px rgba(231, 76, 60, 0.1); }
+        .mass-result { font-size: 3rem; font-weight: 900; color: #e74c3c; margin: 10px 0; text-align: center; }
+        
+        .breakdown-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .breakdown-table th, .breakdown-table td { padding: 12px 10px; text-align: left; border-bottom: 1px solid #f1f5f9; }
+        .breakdown-table th { color: #64748b; font-size: 0.9rem; font-weight: 600; text-transform: uppercase; }
+        .breakdown-table td { font-size: 1.1rem; color: #1e293b; }
+        .error-msg { color: #e74c3c; text-align: center; font-weight: bold; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <a href="chemistry.html" class="back-link"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg></a>
+            <span style="font-weight:bold; color:#e74c3c;">莫耳質量計算機</span>
+        </div>
+    </header>
+
+    <div class="page-container">
+        <div class="calc-panel">
+            <p style="color:#64748b; margin-top:0;">請輸入化學式（需區分大小寫，例如：H2O, Na2SO4, C6H12O6）</p>
+            <input type="text" id="formula-input" class="calc-input" placeholder="例如: H2SO4" disabled>
+            
+            <div class="mass-result" id="mass-total">0.00 <span style="font-size:1.2rem;color:#64748b">g/mol</span></div>
+            <div id="error-display" class="error-msg"></div>
+
+            <table class="breakdown-table">
+                <thead><tr><th>元素</th><th>數量</th><th>質量貢獻</th><th>佔比</th></tr></thead>
+                <tbody id="breakdown-body">
+                    <!-- JS 生成 -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let elementsData =[];
+
+        async function init() {
+            try {
+                const res = await fetch('elements.json');
+                elementsData = await res.json();
+                const input = document.getElementById('formula-input');
+                input.disabled = false; // 資料載入完畢才開放輸入
+                input.addEventListener('input', calculateMolarMass);
+                input.focus();
+            } catch (err) {
+                document.getElementById('error-display').innerText = "資料庫載入失敗";
+            }
+        }
+
+        function calculateMolarMass() {
+            const input = document.getElementById('formula-input').value.trim();
+            const breakdownBody = document.getElementById('breakdown-body');
+            const totalEl = document.getElementById('mass-total');
+            const errorEl = document.getElementById('error-display');
+            
+            errorEl.innerText = '';
+
+            if (!input) {
+                totalEl.innerHTML = `0.00 <span style="font-size:1.2rem;color:#64748b">g/mol</span>`;
+                breakdownBody.innerHTML = '';
+                return;
+            }
+
+            // 正則：解析大寫字母開頭、後跟小寫字母(可選)、再跟數字(可選)
+            const regex = /([A-Z][a-z]*)(\d*)/g;
+            let match;
+            let totalMass = 0;
+            const composition = {};
+            let hasUnknown = false;
+
+            while ((match = regex.exec(input)) !== null) {
+                const sym = match[1];
+                const count = match[2] === '' ? 1 : parseInt(match[2]);
+                composition[sym] = (composition[sym] || 0) + count;
+            }
+
+            let html = '';
+            
+            for (const sym in composition) {
+                const count = composition[sym];
+                const element = elementsData.find(e => e.sym === sym);
+                
+                if (element) {
+                    totalMass += (element.mass * count);
+                } else {
+                    hasUnknown = true;
+                    html += `<tr><td colspan="4" style="color:#e74c3c">未知或尚未收錄元素: ${sym}</td></tr>`;
+                }
+            }
+
+            if (totalMass > 0 && !hasUnknown) {
+                totalEl.innerHTML = `${totalMass.toFixed(2)} <span style="font-size:1.2rem;color:#64748b">g/mol</span>`;
+                
+                for (const sym in composition) {
+                    const count = composition[sym];
+                    const element = elementsData.find(e => e.sym === sym);
+                    if (element) {
+                        const mass = element.mass * count;
+                        const percent = ((mass / totalMass) * 100).toFixed(1);
+                        html += `
+                            <tr>
+                                <td><strong>${sym}</strong> (${element.name})</td>
+                                <td>${count}</td>
+                                <td>${mass.toFixed(2)}</td>
+                                <td>${percent}%</td>
+                            </tr>
+                        `;
+                    }
+                }
+            } else if (hasUnknown) {
+                totalEl.innerHTML = `錯誤 <span style="font-size:1.2rem;color:#64748b">g/mol</span>`;
+            } else {
+                totalEl.innerHTML = `0.00 <span style="font-size:1.2rem;color:#64748b">g/mol</span>`;
+                errorEl.innerText = '請輸入正確的化學式格式';
+            }
+            
+            breakdownBody.innerHTML = html;
+        }
+
+        init();
+    </script>
+</body>
+</html>

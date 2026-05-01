@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>互動週期表 - 酷學習</title>
+    <link rel="stylesheet" href="../styles/style.css">
+    <link rel="stylesheet" href="../styles/header.css">
+    <style>
+        :root {
+            --pt-bg: #ffffff;
+            --pt-border: #e2e8f0;
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
+        }
+
+        body { background-color: #f8fafc; color: var(--text-dark); }
+        .layout { display: flex; flex-direction: column; gap: 20px; }
+        
+        /* --- 週期表網格容器：寬度改為 100% 並貼合頁面寬度 --- */
+        .pt-wrapper {
+            width: 100%;
+            max-width: var(--max-width, 980px); /* 限制最大寬度與網站一致 */
+            margin: 0 auto;
+            overflow-x: auto; /* 手機版過小時仍可滑動 */
+            -webkit-overflow-scrolling: touch;
+            background: var(--pt-bg); 
+            border-radius: 16px; 
+            padding: 20px 15px; /* 稍微縮小內距以騰出空間 */
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--pt-border);
+            box-sizing: border-box;
+        }
+
+        .pt-grid {
+            display: grid;
+            /* 關鍵修正：使用 1fr 均分寬度，而不是固定 50px */
+            grid-template-columns: repeat(18, 1fr); 
+            grid-template-rows: repeat(10, 60px);
+            gap: 4px;
+            width: 100%; /* 撐滿父容器 */
+            min-width: 850px; /* 確保在大螢幕縮放時格子不會小到文字重疊 */
+            position: relative;
+        }
+
+        /* --- 元素基礎樣式 --- */
+        .element {
+            border-radius: 6px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: flex-start;
+            padding-top: 14px;
+            cursor: pointer; 
+            transition: all 0.2s ease; 
+            position: relative; 
+            border: 1px solid rgba(0,0,0,0.05);
+            background: #f1f5f9; 
+            color: var(--text-dark);
+            height: 60px;
+            box-sizing: border-box;
+        }
+        
+        .element .num { position: absolute; top: 2px; left: 4px; font-size: 0.65rem; opacity: 0.8; font-weight: bold; line-height: 1; }
+        .element .sym { font-size: 1.2rem; font-weight: 800; line-height: 1.1; margin-bottom: 1px; }
+        .element .name { font-size: 0.7rem; font-weight: 600; line-height: 1; }
+
+        .element:hover, .element.active { 
+            transform: scale(1.1); /* 稍微縮小放大倍率，避免在緊湊佈局中擋到隔壁 */
+            z-index: 10; 
+            box-shadow: 0 0 0 3px white, 0 8px 15px rgba(0,0,0,0.15);
+            border-color: rgba(0,0,0,0.1);
+        }
+
+        /* 占位格樣式 */
+        .element.is-placeholder .sym { font-size: 0.9rem; margin-top: 1px; letter-spacing: 0; }
+
+        /* --- 核心互動：變淡過濾 --- */
+        .pt-grid.is-filtering .element { opacity: 0.15; filter: grayscale(0.8); transform: scale(0.95); }
+        
+        .pt-grid.filter-alkali .element.alkali,
+        .pt-grid.filter-alkaline .element.alkaline,
+        .pt-grid.filter-transition .element.transition,
+        .pt-grid.filter-post-transition .element.post-transition,
+        .pt-grid.filter-metalloid .element.metalloid,
+        .pt-grid.filter-nonmetal .element.nonmetal,
+        .pt-grid.filter-halogen .element.halogen,
+        .pt-grid.filter-noblegas .element.noblegas,
+        .pt-grid.filter-lanthanide .element.lanthanide,
+        .pt-grid.filter-actinide .element.actinide {
+            opacity: 1; filter: none; transform: scale(1.05); z-index: 5;
+            box-shadow: 0 0 0 2px white, 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        /* --- 頂部圖例 (Legend) --- */
+        .legend-container {
+            grid-column: 3 / 13; grid-row: 1 / 4;
+            display: flex; flex-wrap: wrap; align-content: center; justify-content: center; gap: 6px;
+            padding: 5px; pointer-events: none;
+        }
+        .legend-item {
+            pointer-events: auto; display: flex; align-items: center; gap: 6px;
+            background: #fff; padding: 4px 10px; border-radius: 50px;
+            cursor: pointer; transition: 0.2s; border: 1px solid var(--pt-border);
+        }
+        .legend-item:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
+        .legend-label { font-size: 0.75rem; color: var(--text-dark); font-weight: 700; }
+        .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+        /* --- 顏色主題 --- */
+        .alkali { background: #fee2e2; color: #991b1b; } 
+        .alkaline { background: #ffedd5; color: #9a3412; } 
+        .transition { background: #fef9c3; color: #854d0e; } 
+        .post-transition { background: #e0f2fe; color: #075985; } 
+        .metalloid { background: #ccfbf1; color: #115e59; } 
+        .nonmetal { background: #dcfce7; color: #166534; } 
+        .halogen { background: #dbeafe; color: #1e40af; } 
+        .noblegas { background: #f3e8ff; color: #6b21a8; } 
+        .lanthanide { background: #fae8ff; color: #86198f; } 
+        .actinide { background: #fce7f3; color: #9d174d; } 
+
+        /* --- 詳情面板 --- */
+        .detail-panel { 
+            background: #fff; border-radius: 20px; padding: 25px; 
+            box-shadow: var(--shadow); display: flex; gap: 30px; 
+            align-items: center; flex-wrap: wrap; margin-bottom: 30px; 
+            border: 1px solid var(--pt-border); 
+            max-width: var(--max-width, 980px);
+            margin: 0 auto 30px;
+            box-sizing: border-box;
+        }
+        .info-box { flex: 1; min-width: 280px; }
+        .info-title { font-size: 2.2rem; font-weight: 900; color: #1d4ed8; margin: 0 0 10px 0; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; }
+        .info-stat { margin: 10px 0; color: var(--text-dark); font-size: 1.1rem; border-bottom: 1px solid #f8fafc; padding-bottom: 5px; }
+        .info-stat strong { display: inline-block; width: 100px; color: var(--text-muted); }
+
+        /* --- 原子模型 --- */
+        .atom-container {
+            width: 250px; height: 250px; position: relative; 
+            background: radial-gradient(circle, #ffffff, #eff6ff);
+            border-radius: 24px; display: flex; align-items: center; justify-content: center; overflow: hidden;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.02), 0 10px 15px -3px rgba(0,0,0,0.05);
+            border: 1px solid var(--pt-border);
+        }
+        .nucleus { width: 44px; height: 44px; background: radial-gradient(circle, #3b82f6, #1d4ed8); border-radius: 50%; z-index: 100; box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); display: flex; align-items: center; justify-content: center; color: white; font-size: 0.95rem; font-weight: bold; }
+        .shell { position: absolute; border: 1.5px solid rgba(59, 130, 246, 0.1); border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none; }
+        .electron-wrapper { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; animation: rotate-ani linear infinite; }
+        .electron { width: 10px; height: 10px; background: #2563eb; border-radius: 50%; position: absolute; box-shadow: 0 0 8px rgba(37, 99, 235, 0.4); }
+        @keyframes rotate-ani { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <a href="chemistry.html" class="back-link"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg></a>
+            <span style="font-weight:bold; color:var(--primary);">互動週期表</span>
+        </div>
+    </header>
+
+    <div class="page-container layout">
+        <div class="pt-wrapper">
+            <div class="pt-grid" id="periodic-table"></div>
+        </div>
+
+        <div class="detail-panel">
+            <div class="atom-container" id="atom-model"></div>
+            <div class="info-box">
+                <h2 class="info-title" id="info-title">請選擇元素</h2>
+                <div class="info-stat"><strong>原子序</strong><span id="info-num">-</span></div>
+                <div class="info-stat"><strong>原子量</strong><span id="info-mass">-</span></div>
+                <div class="info-stat"><strong>電子組態</strong><span id="info-ec">-</span></div>
+                <div class="info-stat"><strong>族別</strong><span id="info-group">-</span></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const groups = [
+            { id: 'alkali', name: '鹼金屬' }, { id: 'alkaline', name: '鹼土金屬' },
+            { id: 'transition', name: '過渡金屬' }, { id: 'post-transition', name: '後過渡金屬' },
+            { id: 'metalloid', name: '類金屬' }, { id: 'nonmetal', name: '非金屬' },
+            { id: 'halogen', name: '鹵素' }, { id: 'noblegas', name: '惰性氣體' },
+            { id: 'lanthanide', name: '鑭系' }, { id: 'actinide', name: '錒系' }
+        ];
+
+        let elementsData = [];
+
+        async function init() {
+            try {
+                const res = await fetch('elements.json');
+                elementsData = await res.json();
+                renderTable();
+                renderLegend();
+                const hydrogen = elementsData.find(e => e.num === 1);
+                if(hydrogen) showDetail(hydrogen);
+            } catch (err) { console.error(err); }
+        }
+
+        function renderLegend() {
+            const grid = document.getElementById('periodic-table');
+            const legendContainer = document.createElement('div');
+            legendContainer.className = 'legend-container';
+            groups.forEach(g => {
+                const item = document.createElement('div');
+                item.className = 'legend-item';
+                item.innerHTML = `<div class="legend-dot ${g.id}"></div><div class="legend-label">${g.name}</div>`;
+                item.onmouseenter = () => { grid.classList.add('is-filtering', `filter-${g.id}`); };
+                item.onmouseleave = () => { grid.classList.remove('is-filtering', `filter-${g.id}`); };
+                legendContainer.appendChild(item);
+            });
+            grid.appendChild(legendContainer);
+        }
+
+        function renderTable() {
+            const grid = document.getElementById('periodic-table');
+            elementsData.forEach(el => {
+                const cell = document.createElement('div');
+                cell.className = `element ${el.group} ${el.isPlaceholder ? 'is-placeholder' : ''}`;
+                cell.id = `el-${el.num}`;
+                cell.style.gridColumn = el.col;
+                cell.style.gridRow = el.period;
+                cell.innerHTML = `<div class="num">${el.num}</div><div class="sym">${el.sym}</div><div class="name">${el.name}</div>`;
+                cell.onclick = () => showDetail(el);
+                grid.appendChild(cell);
+            });
+        }
+
+        function showDetail(el) {
+            document.querySelectorAll('.element').forEach(c => c.classList.remove('active'));
+            const activeCell = document.getElementById(`el-${el.num}`);
+            if(activeCell) activeCell.classList.add('active');
+
+            document.getElementById('info-title').innerText = el.isPlaceholder ? `${el.sym} (${el.name})` : `${el.num} - ${el.sym} ${el.name}`;
+            document.getElementById('info-num').innerText = el.num;
+            document.getElementById('info-mass').innerText = el.isPlaceholder ? "多個值" : el.mass;
+            document.getElementById('info-ec').innerText = el.isPlaceholder ? "見下方列表" : (el.e ? el.e.join(', ') : '-');
+            const gObj = groups.find(g => g.id === el.group);
+            document.getElementById('info-group').innerText = gObj ? gObj.name : el.group;
+
+            const container = document.getElementById('atom-model');
+            container.innerHTML = '';
+            if (el.isPlaceholder) {
+                container.innerHTML = `<div style="color:var(--text-muted); text-align:center; padding:20px;"><h3 style="color:var(--primary); margin-bottom:10px;">${el.sym}</h3><p style="font-size:0.85rem;">由 15 個元素組成的群組。</p></div>`;
+                return;
+            }
+            container.innerHTML = `<div class="nucleus">${el.sym}</div>`;
+            const baseRadius = 60, step = 25; 
+            if(el.e) {
+                el.e.forEach((count, shellIdx) => {
+                    const radius = baseRadius + (shellIdx * step);
+                    const shellCircle = document.createElement('div');
+                    shellCircle.className = 'shell';
+                    shellCircle.style.width = `${radius}px`; shellCircle.style.height = `${radius}px`;
+                    container.appendChild(shellCircle);
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'electron-wrapper';
+                    wrapper.style.animationDuration = `${3 + (shellIdx * 1.5)}s`;
+                    if(shellIdx % 2 === 1) wrapper.style.animationDirection = 'reverse';
+                    const angleStep = 360 / count;
+                    for (let i = 0; i < count; i++) {
+                        const electron = document.createElement('div');
+                        electron.className = 'electron';
+                        const angleRad = (i * angleStep) * (Math.PI / 180);
+                        const x = Math.cos(angleRad) * (radius / 2);
+                        const y = Math.sin(angleRad) * (radius / 2);
+                        electron.style.transform = `translate(${x}px, ${y}px)`;
+                        wrapper.appendChild(electron);
+                    }
+                    container.appendChild(wrapper);
+                });
+            }
+        }
+        init();
+    </script>
+</body>
+</html>

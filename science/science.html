@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自然科學 - 酷學習</title>
+    <link rel="stylesheet" href="../styles/style.css">
+    <link rel="stylesheet" href="../styles/header.css">
+    <style>
+        body {
+            background-color: #f8fafc;
+        }
+
+        /* 頂部藍色標題列 - 匹配截圖樣式 */
+        .science-header {
+            background-color: #dbeafe; 
+            border: 2px solid #bfdbfe;
+            border-radius: 12px;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            max-width: 980px;
+            margin: 10px auto 25px;
+        }
+
+        .science-header .back-btn {
+            color: #1d4ed8;
+            font-size: 1.2rem;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+        }
+
+        .header-title {
+            color: #1d4ed8;
+            font-weight: bold;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* 頁面標題區 */
+        .page-title-area {
+            max-width: 980px;
+            margin: 0 auto 30px;
+            padding: 0 10px;
+        }
+
+        .page-title-area h2 {
+            font-size: 1.6rem;
+            color: #334155;
+            margin-bottom: 5px;
+        }
+
+        .page-title-area p {
+            color: #94a3b8;
+            margin-top: 0;
+            font-size: 0.95rem;
+        }
+
+        /* 關鍵：2x2 強制網格佈局 */
+        .science-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr); /* 大螢幕強制兩欄 */
+            gap: 25px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        /* 卡片基礎樣式 */
+        .sci-card {
+            background: #fff;
+            border-radius: 24px;
+            padding: 45px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.02);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid #f1f5f9;
+            text-align: center;
+        }
+
+        .sci-card:hover:not(.disabled) {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(11, 118, 209, 0.1);
+        }
+
+        .sci-card.disabled {
+            opacity: 0.8;
+            cursor: default;
+            pointer-events: none;
+        }
+
+        /* 圖示圓圈 */
+        .sci-icon-circle {
+            width: 75px;
+            height: 75px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .sci-icon-circle svg {
+            width: 38px;
+            height: 38px;
+            fill: #fff;
+        }
+
+        /* 文字樣式 */
+        .sci-name {
+            font-size: 1.45rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+
+        .sci-desc {
+            font-size: 0.9rem;
+            color: #94a3b8;
+            line-height: 1.5;
+        }
+
+        /* 顏色定義區 */
+        /* 生物 - 葉子綠 */
+        .bio .sci-icon-circle { background-color: #86efac; }
+        .bio .sci-name { color: #22c55e; }
+        
+        /* 化學 - 燒瓶紅 */
+        .chem .sci-icon-circle { background-color: #f87171; }
+        .chem .sci-name { color: #dc2626; }
+
+        /* 物理 - 原子紫 */
+        .phys .sci-icon-circle { background-color: #c084fc; }
+        .phys .sci-name { color: #9333ea; }
+
+        /* 地科 - 地球橘 */
+        .earth .sci-icon-circle { background-color: #fdba74; }
+        .earth .sci-name { color: #ea580c; }
+
+        /* 響應式佈局：手機版切換為單欄 */
+        @media (max-width: 768px) {
+            .science-grid {
+                grid-template-columns: 1fr;
+                padding: 0 20px;
+            }
+            .sci-card {
+                padding: 35px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 頂部藍色標題列 -->
+    <div class="science-header">
+        <a href="../index.html" class="back-btn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        </a>
+        <div class="header-title">
+            <!-- 燈泡 icon -->
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 5px;"><path d="M12 2C8.13 2 5 5.13 5 9C5 11.38 6.19 13.47 8 14.74V17C8 17.55 8.45 18 9 18H15C15.55 18 16 17.55 16 17V14.74C17.81 13.47 19 11.38 19 9C19 5.13 15.87 2 12 2M10 21C10 21.55 10.45 22 11 22H13C13.55 22 14 21.55 14 21V20H10V21Z"/></svg>
+            自然科學
+        </div>
+    </div>
+
+    <div class="page-container">
+        <!-- 標題文字 -->
+        <div class="page-title-area">
+            <h2>選擇探索領域</h2>
+            <p>探索微觀到宏觀的科學世界</p>
+        </div>
+        
+        <!-- 2x2 網格區域 -->
+        <div class="science-grid">
+            
+            <!-- 生物 (葉子圖示) -->
+            <a href="biology.html" class="sci-card bio disabled">
+                <div class="sci-icon-circle">
+                    <svg viewBox="0 0 24 24"><path d="M17,8C8,10 5.9,16.17 3.82,21.34L5.71,22L6.66,19.7C7.14,19.87 7.64,20 8,20C19,20 22,3 22,3C21,5 14,5.25 9,6.25C4,7.25 2,11.5 2,13.5C2,15.5 3.75,17.25 3.75,17.25C7,8 17,8 17,8Z"/></svg>
+                </div>
+                <div class="sci-name">生物 (Biology)</div>
+                <div class="sci-desc">細胞構造、遺傳與生態系統</div>
+            </a>
+
+            <!-- 化學 (已啟用) -->
+            <a href="chemistry.html" class="sci-card chem">
+                <div class="sci-icon-circle">
+                    <svg viewBox="0 0 24 24"><path d="M7 2v2h1v4.56c0 .71-.24 1.4-.64 1.95L3.92 15C3.33 15.82 3 16.85 3 18c0 2.76 2.24 5 5 5h8c2.76 0 5-2.24 5-5 0-1.15-.33-2.18-.92-3l-3.44-4.49c-.4-.55-.64-1.24-.64-1.95V4h1V2H7zm5 11c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2z"/></svg>
+                </div>
+                <div class="sci-name">化學 (Chemistry)</div>
+                <div class="sci-desc">週期表、計算機與原子模型</div>
+            </a>
+
+            <!-- 物理 -->
+            <a href="physics.html" class="sci-card phys disabled">
+                <div class="sci-icon-circle">
+                    <svg viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm0 3.83L19.5 19H4.5L12 5.83zM11 10h2v5h-2v-5zm0 6h2v2h-2v-2z"/></svg>
+                </div>
+                <div class="sci-name">物理 (Physics)</div>
+                <div class="sci-desc">力學、電磁學與公式庫</div>
+            </a>
+
+            <!-- 地科 (地球圖示) -->
+            <a href="earth-science.html" class="sci-card earth disabled">
+                <div class="sci-icon-circle">
+                    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2m-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                </div>
+                <div class="sci-name">地科 (Earth Science)</div>
+                <div class="sci-desc">天文觀測、地質與氣候</div>
+            </a>
+
+        </div>
+    </div>
+
+</body>
+</html>

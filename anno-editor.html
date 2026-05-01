@@ -9,7 +9,28 @@
     <link rel="stylesheet" href="../styles/header.css">
     <link rel="stylesheet" href="../styles/announcement.css">
     <style>
-        /* 管理後台專屬佈局 */
+        /* ========== 新增：隱藏式解鎖遮罩樣式 ========== */
+        #page-lock-mask {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.65); backdrop-filter: blur(25px) saturate(160%);
+            -webkit-backdrop-filter: blur(25px) saturate(160%); z-index: 999999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.6s;
+        }
+        /* 移除 animation: lockBounce 讓圖示不跳動 */
+        .lock-content { text-align: center; user-select: none; } 
+        
+        #lock-icon { width: 100px; height: 100px; cursor: pointer; fill: #0b76d1; margin-bottom: 25px; transition: transform 0.1s; }
+        #lock-icon:active { transform: scale(0.9); }
+        .lock-notice { font-size: 1.25rem; font-weight: 900; color: #334155; letter-spacing: 1px; }
+        
+        /* 鎖定狀態：禁止捲動與內容互動 */
+        body.locked-scrolling { overflow: hidden !important; height: 100vh !important; pointer-events: none; }
+        #page-lock-mask { pointer-events: auto; } 
+        
+        .unlocked-hidden { opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; }
+
+        /* ========== 您原有的管理後台樣式 ========== */
         body { 
             background-color: #f1f5f9; 
             height: 100vh; 
@@ -79,7 +100,7 @@
         }
         textarea { 
             height: 120px; 
-            resize: vertical; /* 禁止左右拖動，僅允許上下調整 */
+            resize: vertical; 
             line-height: 1.6;
         }
         input:focus, textarea:focus { 
@@ -111,7 +132,6 @@
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); 
             flex-shrink: 0;
         }
-        /* 預覽區內部限制，防止左右晃動 */
         .phone-mockup .anno-card { width: 100%; height: 100%; position: relative; animation: none; box-shadow: none; border-radius: 0; }
         .phone-mockup #anno-content-wrapper { 
             overflow-y: auto; 
@@ -141,13 +161,22 @@
             backdrop-filter: blur(4px);
         }
         .json-box { background: #fff; padding: 30px; border-radius: 16px; width: 90%; max-width: 800px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
-        textarea#json-output { height: 400px; font-family: 'Fira Code', monospace; background: #0f172a; color: #38bdf8; font-size: 0.85rem; border: none; }
+        textarea#json-output { height: 400px; font-family: 'Fira Code', monospace; background: #0f172a; color: #38bdf8; font-size: 0.85rem; border: none; padding: 15px; border-radius: 8px; resize: none; }
 
-        .status-tag { font-size: 0.75rem; padding: 2px 8px; border-radius: 4px; background: #f1f5f9; color: #64748b; font-weight: normal; }
         #save-status { font-size: 0.85rem; color: #10b981; margin-right: 15px; opacity: 0; transition: opacity 0.3s; }
     </style>
 </head>
 <body>
+    <!-- 鎖定遮罩 HTML -->
+    <div id="page-lock-mask">
+        <div class="lock-content">
+            <svg id="lock-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm9 14H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/>
+            </svg>
+            <div class="lock-notice">此功能僅提供給部分用戶使用</div>
+        </div>
+    </div>
+
     <header>
         <div class="logo">
             <a href="../index.html" class="back-link">⬅</a>
@@ -207,12 +236,47 @@
 
     <script src="../scripts/utils.js"></script>
     <script>
+        // 解鎖邏輯腳本
+        (function() {
+            const SECRET_KEY = "admin123"; // 修改此處設定密碼
+            const mask = document.getElementById('page-lock-mask');
+            const icon = document.getElementById('lock-icon');
+            let clicks = 0;
+            let timer = null;
+
+            function performUnlock(fast) {
+                if (fast) mask.style.transition = "none";
+                mask.classList.add('unlocked-hidden');
+                document.body.classList.remove('locked-scrolling');
+                sessionStorage.setItem('global_editor_unlocked', 'true');
+            }
+
+            if (sessionStorage.getItem('global_editor_unlocked') === 'true') {
+                performUnlock(true);
+            } else {
+                document.body.classList.add('locked-scrolling');
+            }
+
+            icon.addEventListener('click', (e) => {
+                e.stopPropagation();
+                clicks++;
+                clearTimeout(timer);
+                timer = setTimeout(() => { clicks = 0; }, 400);
+
+                if (clicks === 3) {
+                    const pw = prompt("");
+                    if (pw === SECRET_KEY) performUnlock(false);
+                    clicks = 0;
+                }
+            });
+        })();
+
+        // 公告編輯邏輯
         let allAnnouncements = [];
         let currentIndex = -1;
         const STORAGE_KEY = 'cool_learning_anno_draft';
         const JSON_PATH = 'https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/announcements.json';
 
-        // 1. 初始化：優先讀取暫存，若無則抓取 GitHub
         async function init() {
             const draft = localStorage.getItem(STORAGE_KEY);
             if (draft) {
@@ -237,7 +301,6 @@
             }
         }
 
-        // 2. 自動存檔與狀態顯示
         function autoSave() {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(allAnnouncements));
             showStatus();
@@ -256,7 +319,6 @@
             }
         }
 
-        // 3. 渲染左側清單
         function renderList() {
             const listEl = document.getElementById('anno-list');
             listEl.innerHTML = allAnnouncements.map((a, index) => `
@@ -267,7 +329,6 @@
             `).join('');
         }
 
-        // 4. 選擇公告進行編輯
         function selectAnno(index) {
             currentIndex = index;
             renderList();
@@ -304,7 +365,6 @@
             updatePreview();
         }
 
-        // 5. 同步資料 (從 UI 到 記憶體)
         function syncData() {
             if (currentIndex === -1) return;
             const anno = allAnnouncements[currentIndex];
@@ -321,7 +381,6 @@
                 });
             });
 
-            // 更新清單顯示
             const items = document.querySelectorAll('.anno-item');
             if (items[currentIndex]) {
                 items[currentIndex].querySelector('.t').innerText = anno.title || '(無標題)';
@@ -332,7 +391,6 @@
             autoSave();
         }
 
-        // 6. 區塊 UI 管理
         function addBlockUI(data = {subtitle:'', text:'', image:''}) {
             const area = document.getElementById('blocks-area');
             const div = document.createElement('div');
@@ -358,12 +416,8 @@
             area.appendChild(div);
         }
 
-        function addBlock() {
-            addBlockUI();
-            syncData();
-        }
+        function addBlock() { addBlockUI(); syncData(); }
 
-        // 7. 預覽渲染
         function updatePreview() {
             const anno = allAnnouncements[currentIndex];
             const wrapper = document.getElementById('anno-content-wrapper');
@@ -390,14 +444,8 @@
             `;
         }
 
-        // 8. 其他功能
         function createNewAnnouncement() {
-            const newAnno = {
-                title: "新公告",
-                date: new Date().toISOString().split('T')[0],
-                cover: "",
-                blocks: [{ subtitle: "", text: "", image: "" }]
-            };
+            const newAnno = { title: "新公告", date: new Date().toISOString().split('T')[0], cover: "", blocks: [{ subtitle: "", text: "", image: "" }] };
             allAnnouncements.unshift(newAnno);
             selectAnno(0);
             autoSave();
@@ -424,7 +472,6 @@
             document.getElementById('json-modal').style.display = 'flex';
         }
 
-        // Markdown 簡單解析 (與 announcement.js 保持同步)
         function parseMarkdown(text) {
             if (!text) return '';
             return text
@@ -433,7 +480,6 @@
                 .replace(/\n/g, '<br>');
         }
 
-        // 初始化載入
         init();
     </script>
     <script src="scripts/utils.js"></script>

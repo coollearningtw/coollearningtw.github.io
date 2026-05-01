@@ -6,6 +6,23 @@
     <link rel="stylesheet" href="../styles/style.css">
     <link rel="stylesheet" href="../styles/header.css">
     <style>
+        /* --- 鎖定系統 CSS --- */
+        #page-lock-mask {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.65); backdrop-filter: blur(25px) saturate(160%);
+            -webkit-backdrop-filter: blur(25px) saturate(160%); z-index: 999999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.6s ease, visibility 0.6s;
+        }
+        .lock-content { text-align: center; user-select: none; }
+        #lock-icon { width: 100px; height: 100px; cursor: pointer; fill: #0b76d1; margin-bottom: 25px; transition: transform 0.1s; }
+        #lock-icon:active { transform: scale(0.9); }
+        .lock-notice { font-size: 1.25rem; font-weight: 900; color: #334155; }
+        body.locked-scrolling { overflow: hidden !important; height: 100vh !important; pointer-events: none; }
+        #page-lock-mask { pointer-events: auto; }
+        .unlocked-hidden { opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; }
+
+        /* --- 原有 Editor 樣式 --- */
         body { padding-bottom: 100px; background-color: #f1f5f9; color: #334155; }
         .editor-tabs { display: flex; gap: 5px; margin: 20px 0; background: #e2e8f0; padding: 4px; border-radius: 8px; width: fit-content; }
         .tab-btn { padding: 8px 24px; border: none; background: none; border-radius: 6px; cursor: pointer; font-weight: 600; color: #64748b; transition: 0.2s; font-size: 0.9rem; }
@@ -53,6 +70,16 @@
     </style>
 </head>
 <body>
+    <!-- 鎖定遮罩 -->
+    <div id="page-lock-mask">
+        <div class="lock-content">
+            <svg id="lock-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm9 14H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/>
+            </svg>
+            <div class="lock-notice">此功能僅提供給部分用戶使用</div>
+        </div>
+    </div>
+
     <header>
         <div class="logo">
             <a href="chinese.html" class="back-link">
@@ -96,6 +123,32 @@
 
     <script src="../scripts/utils.js"></script>
     <script>
+        // --- 鎖定邏輯開始 ---
+        (function() {
+            const SECRET_KEY = "admin123"; 
+            const mask = document.getElementById('page-lock-mask');
+            const icon = document.getElementById('lock-icon');
+            let clicks = 0; let timer = null;
+            function unlock(fast) {
+                if(fast) mask.style.transition="none";
+                mask.classList.add('unlocked-hidden');
+                document.body.classList.remove('locked-scrolling');
+                sessionStorage.setItem('global_editor_unlocked', 'true');
+            }
+            if(sessionStorage.getItem('global_editor_unlocked') === 'true') unlock(true);
+            else document.body.classList.add('locked-scrolling');
+            icon.addEventListener('click', () => {
+                clicks++; clearTimeout(timer);
+                timer = setTimeout(() => { clicks = 0; }, 400);
+                if(clicks === 3) {
+                    const pw = prompt("");
+                    if(pw === SECRET_KEY) unlock(false);
+                    clicks = 0;
+                }
+            });
+        })();
+        // --- 鎖定邏輯結束 ---
+
         let currentMode = 'annotations', dataStore = { sources: [] }, expandedKeys = new Set();
         let draggedItemInfo = null; 
 
@@ -208,13 +261,11 @@
         function createInsertBarHtml(sIdx, lIdx, atIndex) { const label = currentMode === 'annotations' ? '註釋' : '段落'; return `<div class="insert-bar" onclick="addItem(${sIdx}, ${lIdx}, ${atIndex})"><div class="insert-line"></div><div class="insert-btn-text">+ 在此插入${label}</div><div class="insert-line"></div></div>`; }
         function toggleKey(k) { expandedKeys.has(k) ? expandedKeys.delete(k) : expandedKeys.add(k); render(); }
         
-        // --- 修復：編輯時關閉拖曳功能 ---
         function startEdit(el, s, l, i, f) {
             if(el.querySelector('textarea')) return;
             const items = i === -1 ? null : (currentMode==='annotations'?dataStore.sources[s].lessons[l].annotations : dataStore.sources[s].lessons[l].content);
             const rawVal = i === -1 ? dataStore.sources[s].lessons[l][f] : (items[i][f] || '');
             
-            // 進入編輯模式時，禁用整列的拖拽，避免選取文字時觸發拖動
             const parentItem = el.closest('.data-item');
             if (parentItem) parentItem.setAttribute('draggable', 'false');
 
@@ -225,7 +276,6 @@
             t.onblur = () => { 
                 if(i===-1) dataStore.sources[s].lessons[l][f]=t.value; 
                 else items[i][f]=t.value; 
-                // render() 會重新繪製 DOM，draggable 會自動恢復，所以此處不需手動設回 true
                 sync(); render(); 
             };
         }

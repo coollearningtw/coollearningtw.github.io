@@ -29,7 +29,6 @@
         header { flex-shrink: 0; margin: 0 !important; border-radius: 0 !important; width: 100% !important; max-width: none !important; background-color: #fff !important; border-bottom: 1px solid #e2e8f0 !important; }
         .admin-layout { display: grid; grid-template-columns: 280px 1fr 480px; flex: 1; overflow: hidden; background: #e2e8f0; gap: 1px; }
         
-        /* 左側清單 */
         .sidebar { background: #fff; display: flex; flex-direction: column; overflow-y: auto; }
         .sidebar-header { padding: 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc; position: sticky; top: 0; z-index: 10; }
         .log-item { padding: 15px 20px; border-bottom: 1px solid #f1f5f9; cursor: pointer; transition: 0.2s; }
@@ -38,8 +37,7 @@
         .log-item .v { font-weight: bold; font-size: 0.95rem; color: #1e293b; }
         .log-item .d { font-size: 0.8rem; color: #64748b; }
 
-        /* 中間編輯 */
-        .editor-main { background: #fff; overflow-y: auto; padding: 30px; padding-bottom: 100px; }
+        .editor-main { background: #fff; overflow-y: auto; padding: 30px; padding-bottom: 120px; }
         .form-group { margin-bottom: 20px; }
         .form-group label { display: block; font-weight: bold; margin-bottom: 8px; color: #475569; font-size: 0.85rem; }
         input, textarea, select { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; font-family: inherit; font-size: 0.95rem; }
@@ -60,14 +58,12 @@
             font-size: 14px; font-weight: bold; user-select: none;
         }
         .drag-handle:active { cursor: grabbing; }
-        .remove-btn { color: #ef4444; cursor: pointer; font-size: 0.75rem; font-weight: bold; transition: 0.2s; }
-        .remove-btn:hover { color: #dc2626; text-decoration: underline; }
+        .remove-btn { color: #ef4444; cursor: pointer; font-size: 0.75rem; font-weight: bold; }
 
-        /* 右側預覽 */
         .preview-panel { background: #f1f5f9; overflow-y: auto; padding: 20px; border-left: 1px solid #e2e8f0; }
         .preview-container { background: #fff; min-height: 100%; border-radius: 8px; padding: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
 
-        /* 模擬樣式 */
+        /* 預覽樣式 */
         .v-item { border-left: 3px solid #0b76d1; padding-left: 25px; margin-bottom: 40px; position: relative; }
         .v-item::before { content: ''; position: absolute; left: -11px; top: 5px; width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 3px solid #0b76d1; }
         .v-head { display: flex; align-items: center; gap: 12px; margin-bottom: 15px; }
@@ -78,9 +74,11 @@
         .v-intro { font-size: 1rem; color: #475569; margin-bottom: 20px; line-height: 1.8; }
         .v-sec-title { font-weight: 800; color: #0f172a; margin: 25px 0 10px; display: flex; align-items: center; gap: 8px; font-size: 1.1rem; }
         .v-sec-title svg { width: 20px; height: 20px; fill: #0b76d1; }
+        
         .v-list { list-style: none; padding: 0; margin: 0; }
         .v-list li { margin-bottom: 12px; padding-left: 18px; position: relative; font-size: 1rem; color: #334155; line-height: 1.7; }
-        .v-list li::before { content: "．"; position: absolute; left: 0; font-weight: bold; }
+        .v-list li.has-dot::before { content: "．"; position: absolute; left: 0; font-weight: bold; }
+        .v-list li.no-dot { list-style: none; }
 
         .highlight { background-color: #fff3cd; padding: 0 4px; border-radius: 4px; color: #1e293b; font-weight: bold; }
         .sub-group { margin-top: 8px; padding-left: 20px; border-left: 1px dashed #cbd5e1; color: #64748b; font-size: 0.95rem; }
@@ -89,7 +87,6 @@
         .json-box { background: #fff; padding: 30px; border-radius: 16px; width: 90%; max-width: 900px; }
         textarea#html-output { height: 500px; font-family: monospace; background: #0f172a; color: #38bdf8; font-size: 0.8rem; padding: 15px; border-radius: 8px; width: 100%; resize: none; }
         
-        #fetch-status { font-size: 0.7rem; color: #0b76d1; margin-left: 10px; font-weight: normal; }
         #save-status { font-size: 0.75rem; color: #10b981; margin-left: 10px; font-weight: bold; opacity: 0; transition: 0.3s; }
 
         /* ========== 下方常用工具列 ========== */
@@ -128,7 +125,7 @@
     <header>
         <div class="logo">
             <a href="index.html" class="back-link">⬅</a>
-            <span style="font-weight:bold; color:var(--primary);">更新日誌管理台 <span id="fetch-status">就緒</span> <span id="save-status">● 已自動存檔</span></span>
+            <span style="font-weight:bold; color:var(--primary);">更新日誌管理台 <span id="save-status">● 已自動存檔</span></span>
         </div>
         <div style="display:flex; gap:10px; align-items:center;">
             <button class="btn-tool-text" onclick="resetDraft()" style="color:#ef4444; border-color:#fecaca;">重置暫存</button>
@@ -158,7 +155,8 @@
 
     <div class="floating-helper">
         <span class="helper-label">快捷複製：</span>
-        <div class="copy-chip" onclick="copyMarker('- ')">清單 -</div>
+        <div class="copy-chip" onclick="copyMarker('- ')">項目點 -</div>
+        <div class="copy-chip" onclick="copyMarker('+ ')">空白項目 +</div>
         <div class="copy-chip" onclick="copyMarker('> ')">副群組 ></div>
         <div class="copy-chip" onclick="copyMarker('**粗體**')">粗體</div>
         <div class="copy-chip" onclick="copyMarker('==螢光筆==')">螢光筆</div>
@@ -184,7 +182,7 @@
     <script>
         let logs = [];
         let currIdx = -1;
-        let draggedSecIdx = null; // 用於章節拖曳
+        let draggedSecIdx = null;
         const GITHUB_URL = "https://raw.githubusercontent.com/coollearningtw/cool-learning-data/main/changelog.html";
         const STORAGE_KEY = 'cool_learning_changelog_draft';
 
@@ -195,6 +193,12 @@
             features: "M12 2l-5.5 9h11L12 2zm0 3.84L13.93 9h-3.87L12 5.84zM17.5 13c-2.49 0-4.5 2.01-4.5 4.5s2.01 4.5 4.5 4.5 4.5-2.01 4.5-4.5-2.01-4.5-4.5-4.5zm0 7c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5zM3 21.5h8v-8H3v8zm2-6h4v4H5v-4z",
             check: "M21 7L9 19l-5.5-5.5 1.41-1.41L9 16.17 19.59 5.59 21 7z"
         };
+
+        // --- 核心工具：切換拖曳狀態 ---
+        function toggleDraggable(el, status) {
+            const box = el.closest('.section-box');
+            if (box) box.setAttribute('draggable', status ? 'true' : 'false');
+        }
 
         // --- 初始化與儲存 ---
         async function init() {
@@ -223,6 +227,11 @@
 
         // --- 拖曳事件處理 ---
         function handleSecDragStart(e, index) {
+            // 如果是在輸入框觸發，攔截並取消拖曳
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+                e.preventDefault();
+                return;
+            }
             draggedSecIdx = index;
             e.target.classList.add('dragging');
             e.dataTransfer.effectAllowed = 'move';
@@ -243,10 +252,8 @@
             e.preventDefault();
             const el = e.target.closest('.section-box');
             if (el) el.classList.remove('drag-over');
-
             if (draggedSecIdx === null || draggedSecIdx === targetIndex) return;
 
-            // 調換陣列位置
             const sections = logs[currIdx].sections;
             const movedItem = sections.splice(draggedSecIdx, 1)[0];
             sections.splice(targetIndex, 0, movedItem);
@@ -262,21 +269,28 @@
             let html = '';
             let currentInLi = false;
 
-            itemsArray.forEach(line => {
+            itemsArray.forEach((line) => {
                 const trimmed = line.trim();
                 if (!trimmed) return;
+
                 if (trimmed.startsWith('- ')) {
                     if (currentInLi) html += '</li>';
-                    html += `<li>${parseLogMarkdown(trimmed.substring(2))}`;
+                    html += `<li class="has-dot">${parseLogMarkdown(trimmed.substring(2))}`;
                     currentInLi = true;
-                } else if (trimmed.startsWith('> ')) {
+                } 
+                else if (trimmed.startsWith('+ ')) {
+                    if (currentInLi) html += '</li>';
+                    html += `<li class="no-dot">${parseLogMarkdown(trimmed.substring(2))}`;
+                    currentInLi = true;
+                }
+                else if (trimmed.startsWith('> ')) {
                     const subContent = `<div class="sub-group">${parseLogMarkdown(trimmed.substring(2))}</div>`;
                     if (currentInLi) html += subContent;
                     else html += `<li>${subContent}</li>`;
-                } else {
-                    const content = `<br>${parseLogMarkdown(trimmed)}`;
-                    if (currentInLi) html += content;
-                    else { html += `<li>${parseLogMarkdown(trimmed)}</li>`; currentInLi = true; }
+                } 
+                else {
+                    if (currentInLi) html += `<br>${parseLogMarkdown(trimmed)}`;
+                    else { html += `<li class="no-dot">${parseLogMarkdown(trimmed)}`; currentInLi = true; }
                 }
             });
             if (currentInLi) html += '</li>';
@@ -292,13 +306,15 @@
         function htmlToMarkdown(html) {
             return html.replace(/<span class="highlight">(.*?)<\/span>/g, '==$1==')
                        .replace(/<strong>(.*?)<\/strong>/g, '**$1**')
-                       .replace(/<br>/g, '\n').replace(/<li>/g, '\n- ').replace(/<\/li>/g, '')
+                       .replace(/<br>/g, '\n')
+                       .replace(/<li class="has-dot">/g, '\n- ')
+                       .replace(/<li class="no-dot">/g, '\n+ ')
+                       .replace(/<li>/g, '\n- ')
+                       .replace(/<\/li>/g, '')
                        .replace(/<div class="sub-group">(.*?)<\/div>/g, '\n> $1').trim();
         }
 
         async function fetchLogs() {
-            const status = document.getElementById('fetch-status');
-            status.innerText = "連線 GitHub...";
             try {
                 const response = await fetch(GITHUB_URL + '?t=' + Date.now());
                 const htmlText = await response.text();
@@ -316,16 +332,16 @@
                         const iconKey = Object.keys(ICONS).find(k => ICONS[k] === iconPath) || "content";
                         const rawLines = Array.from(item.querySelectorAll('.official-list')[si].children).map(node => {
                             let content = node.innerHTML;
+                            let prefix = node.classList.contains('no-dot') ? '+ ' : '- ';
                             if (content.includes('sub-group')) content = content.replace(/<div class="sub-group">(.*?)<\/div>/g, '\n> $1');
-                            return '- ' + content.replace(/<br>/g, '\n');
+                            return prefix + content.replace(/<br>/g, '\n');
                         });
                         return { title: st.innerText.trim(), icon: iconKey, items: rawLines.join('\n').split('\n').filter(l => l.trim()) };
                     });
                     return { v, tag, date, intro, sections };
                 });
-                status.innerText = "就緒";
                 renderList();
-            } catch (err) { status.innerText = "讀取失敗"; }
+            } catch (err) { console.error(err); }
         }
 
         function renderList() {
@@ -344,10 +360,10 @@
             const l = logs[i];
             const form = document.getElementById('editor-form');
             form.innerHTML = `
-                <div class="form-group"><label>版本號</label><input type="text" value="${l.v}" oninput="updateData('v', this.value)"></div>
-                <div class="form-group"><label>發布日期</label><input type="date" value="${l.date}" oninput="updateData('date', this.value)"></div>
-                <div class="form-group"><label>標籤</label><input type="text" value="${l.tag}" oninput="updateData('tag', this.value)"></div>
-                <div class="form-group"><label>描述</label><textarea oninput="updateData('intro', this.value)">${l.intro}</textarea></div>
+                <div class="form-group"><label>版本號</label><input type="text" value="${l.v}" onfocus="toggleDraggable(this, false)" onblur="toggleDraggable(this, true)" oninput="updateData('v', this.value)"></div>
+                <div class="form-group"><label>發布日期</label><input type="date" value="${l.date}" onfocus="toggleDraggable(this, false)" onblur="toggleDraggable(this, true)" oninput="updateData('date', this.value)"></div>
+                <div class="form-group"><label>標籤</label><input type="text" value="${l.tag}" onfocus="toggleDraggable(this, false)" onblur="toggleDraggable(this, true)" oninput="updateData('tag', this.value)"></div>
+                <div class="form-group"><label>描述</label><textarea onfocus="toggleDraggable(this, false)" onblur="toggleDraggable(this, true)" oninput="updateData('intro', this.value)">${l.intro}</textarea></div>
                 <div id="sections-root"></div>
                 <button class="btn-tool-text" onclick="addSection()" style="width:100%; border-style:dashed; margin-bottom:20px">+ 新增章節</button>
                 <div style="border-top:1px solid #eee; padding-top:20px;"><button style="color:red; background:none; border:none; cursor:pointer;" onclick="deleteVersion()">刪除此版本</button></div>
@@ -368,11 +384,11 @@
                      ondragend="this.classList.remove('dragging')">
                     <div class="section-ctrl-bar">
                         <div class="drag-handle">⋮⋮ 章節 #${si + 1}</div>
-                        <span class="remove-btn" onclick="removeSection(${si})">移除章節</span>
+                        <span class="remove-btn" onclick="removeSection(${si})">移除</span>
                     </div>
-                    <div class="form-group"><label>標題</label><input type="text" value="${s.title}" oninput="updateSec(${si}, 'title', this.value)"></div>
+                    <div class="form-group"><label>標題</label><input type="text" value="${s.title}" onfocus="toggleDraggable(this, false)" onblur="toggleDraggable(this, true)" oninput="updateSec(${si}, 'title', this.value)"></div>
                     <div class="form-group"><label>圖示</label>
-                        <select onchange="updateSec(${si}, 'icon', this.value)">
+                        <select onfocus="toggleDraggable(this, false)" onblur="toggleDraggable(this, true)" onchange="updateSec(${si}, 'icon', this.value)">
                             <option value="core" ${s.icon==='core'?'selected':''}>核心 (箭頭)</option>
                             <option value="detail" ${s.icon==='detail'?'selected':''}>說明 (博士帽)</option>
                             <option value="content" ${s.icon==='content'?'selected':''}>內容 (文件)</option>
@@ -381,18 +397,14 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <textarea style="height:150px" placeholder="行首加 - 為項目點，加 > 為副群組" oninput="updateSec(${si}, 'items', this.value)">${s.items.join('\n')}</textarea>
+                        <textarea style="height:150px" placeholder="- 項目點 / + 空白項目 / > 副群組" onfocus="toggleDraggable(this, false)" onblur="toggleDraggable(this, true)" oninput="updateSec(${si}, 'items', this.value)">${s.items.join('\n')}</textarea>
                     </div>
                 </div>
             `).join('');
         }
 
         function updateData(f,v) { logs[currIdx][f]=v; renderList(); updatePreview(); saveDraft(); }
-        function updateSec(si,f,v) { 
-            if(f==='items') logs[currIdx].sections[si][f] = v.split('\n');
-            else logs[currIdx].sections[si][f]=v; 
-            updatePreview(); saveDraft();
-        }
+        function updateSec(si,f,v) { if(f==='items') logs[currIdx].sections[si][f] = v.split('\n'); else logs[currIdx].sections[si][f]=v; updatePreview(); saveDraft(); }
         function addSection() { logs[currIdx].sections.push({ title: "新章節", icon: "content", items: [] }); renderSections(); updatePreview(); saveDraft(); }
         function removeSection(si) { logs[currIdx].sections.splice(si,1); renderSections(); updatePreview(); saveDraft(); }
         function addNewVersion() { logs.unshift({ v: "v1.x.x", date: new Date().toISOString().split('T')[0], tag: "正式發布", intro: "", sections: [] }); selectLog(0); saveDraft(); }
@@ -400,31 +412,20 @@
 
         function updatePreview() {
             const root = document.getElementById('live-preview-root');
-            if (currIdx === -1) { root.innerHTML = '<p style="color:#94a3b8;">選擇版本後預覽</p>'; return; }
+            if (currIdx === -1) { root.innerHTML = '<p>選擇後預覽</p>'; return; }
             const l = logs[currIdx];
-            root.innerHTML = `
-                <div class="v-item">
-                    <div class="v-head"><span class="v-num">${l.v}</span><span class="v-tag">${l.tag}</span><span class="v-date">${l.date}</span></div>
-                    <div class="v-body-box">
-                        <div class="v-intro">${parseLogMarkdown(l.intro)}</div>
-                        ${l.sections.map(s => `
-                            <div class="v-sec-title"><svg viewBox="0 0 24 24"><path d="${ICONS[s.icon]}"/></svg>${s.title}</div>
-                            <ul class="v-list">${processListItems(s.items)}</ul>
-                        `).join('')}
-                    </div>
-                </div>`;
+            root.innerHTML = `<div class="v-item"><div class="v-head"><span class="v-num">${l.v}</span><span class="v-tag">${l.tag}</span><span class="v-date">${l.date}</span></div>
+                <div class="v-body-box"><div class="v-intro">${parseLogMarkdown(l.intro)}</div>
+                ${l.sections.map(s => `<div class="v-sec-title"><svg viewBox="0 0 24 24"><path d="${ICONS[s.icon]}"/></svg>${s.title}</div><ul class="v-list">${processListItems(s.items)}</ul>`).join('')}
+                </div></div>`;
         }
 
         function generateHTML() {
             let itemsHtml = logs.map(l => {
-                let sectionsHtml = l.sections.map(s => `
-            <span class="v-section-title"><svg viewBox="0 0 24 24"><path d="${ICONS[s.icon]}"/></svg>${s.title}</span>
-            <ul class="official-list">${processListItems(s.items)}</ul>`).join('');
-                return `<div class="version-item"><div class="v-header"><span class="v-number">${l.v}</span><span class="tag">${l.tag}</span><span class="v-date">${l.date}</span></div>
-        <div class="v-body"><div class="content-text">${parseLogMarkdown(l.intro)}</div>${sectionsHtml}</div></div>`;
+                let sectionsHtml = l.sections.map(s => `<span class="v-section-title"><svg viewBox="0 0 24 24"><path d="${ICONS[s.icon]}"/></svg>${s.title}</span><ul class="official-list">${processListItems(s.items)}</ul>`).join('');
+                return `<div class="version-item"><div class="v-header"><span class="v-number">${l.v}</span><span class="tag">${l.tag}</span><span class="v-date">${l.date}</span></div><div class="v-body"><div class="content-text">${parseLogMarkdown(l.intro)}</div>${sectionsHtml}</div></div>`;
             }).join('\n');
-
-            const fullHTML = `<!DOCTYPE html><html lang="zh-TW"><head><meta charset="UTF-8"><style>body { font-family: "Noto Sans TC", sans-serif; line-height: 1.8; color: #334155; padding: 30px; margin: 0; background-color: #ffffff; } h2 { color: #0f172a; display: flex; align-items: center; gap: 12px; font-size: 1.5rem; margin-top: 0; border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; font-weight: 900; } h2 svg { width: 28px !important; height: 28px !important; flex-shrink: 0; fill: #0b76d1; } .version-item { position: relative; padding-left: 30px; margin: 30px 0 40px; border-left: 3px solid #0b76d1; } .version-item::before { content: ''; position: absolute; left: -11px; top: 5px; width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 3px solid #0b76d1; } .v-header { display: flex; align-items: center; gap: 12px; margin-bottom: 15px; } .v-number { font-size: 1.6rem; font-weight: 900; color: #0b76d1; } .tag { font-size: 0.8rem; padding: 4px 10px; border-radius: 6px; font-weight: bold; background: #0f172a; color: #fff; letter-spacing: 1px; } .v-date { font-size: 1rem; color: #64748b; font-weight: 500; } .v-body { background: #fdfdfe; padding: 25px 30px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 2px 10px rgba(0,0,0,0.03); } .v-section-title { font-weight: 800; color: #0f172a; margin: 25px 0 10px; display: flex; align-items: center; gap: 8px; font-size: 1.1rem; } .v-section-title svg { width: 20px !important; height: 20px !important; fill: #0b76d1; flex-shrink: 0; } .content-text { font-size: 1rem; color: #475569; white-space: pre-wrap; margin-bottom: 15px; } .highlight { background-color: #fff3cd; padding: 0 4px; border-radius: 4px; color: #1e293b; font-weight: bold; } .official-list { list-style: none; padding: 0; margin: 0; } .official-list li { margin-bottom: 12px; padding-left: 18px; position: relative; } .official-list li::before { content: "．"; position: absolute; left: 0; font-weight: bold; } .sub-group { margin-top: 8px; padding-left: 20px; border-left: 1px dashed #cbd5e1; color: #64748b; } .footer-note { margin-top: 25px; padding-top: 15px; border-top: 1px solid #f1f5f9; font-size: 0.9rem; color: #64748b; }</style></head><body><h2><svg viewBox="0 0 24 24"><path d="M13 3H6c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V9l-7-7zm0 1.5L18.5 10H13V4.5zM6 19.5v-15h6v6h6v9H6z"/></svg>系統更新日誌 (Changelog)</h2>${itemsHtml}<div class="footer-note">※ 詳細功能介紹請點擊使用指南側邊選單查看。<br>※ 內容勘誤或建議請利用系統回報按鈕。</div></body></html>`;
+            const fullHTML = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body { font-family: "Noto Sans TC", sans-serif; line-height: 1.8; color: #334155; padding: 30px; margin: 0; background-color: #ffffff; } h2 { color: #0f172a; display: flex; align-items: center; gap: 12px; font-size: 1.5rem; margin-top: 0; border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; font-weight: 900; } h2 svg { width: 28px !important; height: 28px !important; flex-shrink: 0; fill: #0b76d1; } .version-item { position: relative; padding-left: 30px; margin: 30px 0 40px; border-left: 3px solid #0b76d1; } .version-item::before { content: ''; position: absolute; left: -11px; top: 5px; width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 3px solid #0b76d1; } .v-header { display: flex; align-items: center; gap: 12px; margin-bottom: 15px; } .v-number { font-size: 1.6rem; font-weight: 900; color: #0b76d1; } .tag { font-size: 0.8rem; padding: 4px 10px; border-radius: 6px; font-weight: bold; background: #0f172a; color: #fff; letter-spacing: 1px; } .v-date { font-size: 1rem; color: #64748b; font-weight: 500; } .v-body { background: #fdfdfe; padding: 25px 30px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 2px 10px rgba(0,0,0,0.03); } .v-section-title { font-weight: 800; color: #0f172a; margin: 25px 0 10px; display: flex; align-items: center; gap: 8px; font-size: 1.1rem; } .v-section-title svg { width: 20px !important; height: 20px !important; fill: #0b76d1; flex-shrink: 0; } .content-text { font-size: 1rem; color: #475569; white-space: pre-wrap; margin-bottom: 15px; } .highlight { background-color: #fff3cd; padding: 0 4px; border-radius: 4px; color: #1e293b; font-weight: bold; } .official-list { list-style: none; padding: 0; margin: 0; } .official-list li { margin-bottom: 12px; padding-left: 18px; position: relative; } .official-list li.has-dot::before { content: "．"; position: absolute; left: 0; font-weight: bold; } .sub-group { margin-top: 8px; padding-left: 20px; border-left: 1px dashed #cbd5e1; color: #64748b; } .footer-note { margin-top: 25px; padding-top: 15px; border-top: 1px solid #f1f5f9; font-size: 0.9rem; color: #64748b; }</style></head><body><h2><svg viewBox="0 0 24 24"><path d="M13 3H6c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V9l-7-7zm0 1.5L18.5 10H13V4.5zM6 19.5v-15h6v6h6v9H6z"/></svg>系統更新日誌 (Changelog)</h2>${itemsHtml}<div class="footer-note">※ 詳細功能介紹請點擊使用指南側邊選單查看。<br>※ 內容勘誤或建議請利用系統回報按鈕。</div></body></html>`;
             document.getElementById('html-output').value = fullHTML;
             document.getElementById('json-modal').style.display = 'flex';
         }

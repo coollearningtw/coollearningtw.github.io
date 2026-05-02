@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>國文資料庫管理 - 酷學習</title>
+    <link rel="icon" type="image/png" href="../images/logo-gold.png">
     <link rel="stylesheet" href="../styles/style.css">
     <link rel="stylesheet" href="../styles/header.css">
     <style>
@@ -22,7 +23,7 @@
         #page-lock-mask { pointer-events: auto; }
         .unlocked-hidden { opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; }
 
-        /* --- 原有 Editor 樣式 --- */
+        /* --- Editor 主要樣式 --- */
         body { padding-bottom: 100px; background-color: #f1f5f9; color: #334155; }
         .editor-tabs { display: flex; gap: 5px; margin: 20px 0; background: #e2e8f0; padding: 4px; border-radius: 8px; width: fit-content; }
         .tab-btn { padding: 8px 24px; border: none; background: none; border-radius: 6px; cursor: pointer; font-weight: 600; color: #64748b; transition: 0.2s; font-size: 0.9rem; }
@@ -82,7 +83,7 @@
 
     <header>
         <div class="logo">
-            <a href="chinese.html" class="back-link">
+            <a href="index.html" class="back-link">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
             </a>
             <img src="../images/logo.png" alt="Logo" height="40">
@@ -121,34 +122,12 @@
         </div>
     </div>
 
+    <!-- 引用工具函式 -->
     <script src="../scripts/utils.js"></script>
-    <script>
-        // --- 鎖定邏輯開始 ---
-        (function() {
-            const SECRET_KEY = "admin123"; 
-            const mask = document.getElementById('page-lock-mask');
-            const icon = document.getElementById('lock-icon');
-            let clicks = 0; let timer = null;
-            function unlock(fast) {
-                if(fast) mask.style.transition="none";
-                mask.classList.add('unlocked-hidden');
-                document.body.classList.remove('locked-scrolling');
-                sessionStorage.setItem('global_editor_unlocked', 'true');
-            }
-            if(sessionStorage.getItem('global_editor_unlocked') === 'true') unlock(true);
-            else document.body.classList.add('locked-scrolling');
-            icon.addEventListener('click', () => {
-                clicks++; clearTimeout(timer);
-                timer = setTimeout(() => { clicks = 0; }, 400);
-                if(clicks === 3) {
-                    const pw = prompt("");
-                    if(pw === SECRET_KEY) unlock(false);
-                    clicks = 0;
-                }
-            });
-        })();
-        // --- 鎖定邏輯結束 ---
+    <!-- 引用統一鎖定邏輯 -->
+    <script src="../scripts/admin-lock.js"></script>
 
+    <script>
         let currentMode = 'annotations', dataStore = { sources: [] }, expandedKeys = new Set();
         let draggedItemInfo = null; 
 

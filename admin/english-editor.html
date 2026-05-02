@@ -2,7 +2,8 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>英文資料庫管理</title>
+    <title>英文資料庫管理 - 酷學習</title>
+    <link rel="icon" type="image/png" href="../images/logo-gold.png">
     <link rel="stylesheet" href="../styles/style.css">
     <link rel="stylesheet" href="../styles/header.css">
     <style>
@@ -22,7 +23,7 @@
         #page-lock-mask { pointer-events: auto; }
         .unlocked-hidden { opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; }
 
-        /* --- 原有 Editor 樣式 --- */
+        /* --- Editor 主要樣式 --- */
         body { padding-bottom: 120px; background-color: #f1f5f9; color: #334155; }
         .editor-tabs { display: flex; gap: 5px; margin: 20px 0; background: #e2e8f0; padding: 4px; border-radius: 8px; width: fit-content; }
         .tab-btn { padding: 8px 24px; border: none; background: none; border-radius: 6px; cursor: pointer; font-weight: 600; color: #64748b; transition: 0.2s; font-size: 0.9rem; }
@@ -31,24 +32,78 @@
         .accordion-header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: #fff; border-bottom: 1px solid #f1f3f5; }
         .lesson-container { display: none; padding: 10px 15px 20px; background: #f8fafc; }
         .source-block.expanded > .lesson-container { display: block; }
+        
         .lesson-block { border: 1px solid #e2e8f0; border-radius: 8px; margin-top: 15px; background: #fff; position: relative; }
-        .lesson-header { padding: 12px 15px; font-weight: 600; border-bottom: 1px solid #f1f3f5; display: flex; justify-content: space-between; align-items: center; background: #fff; }
+        
+        /* 標題列佈局優化 */
+        .lesson-header { 
+            padding: 10px 15px; 
+            border-bottom: 1px solid #f1f3f5; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            background: #fff;
+            gap: 15px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .lesson-header:hover { background: #fdfdfd; }
+        .lesson-header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            /* 不再佔滿全寬，讓出空間給點擊事件 */
+        }
+        .cell-lesson-num { 
+            min-width: 40px; 
+            height: 28px;
+            padding: 0 8px !important; 
+            font-weight: bold; 
+            color: #0f172a; 
+            border: 1px solid #e2e8f0; 
+            display: inline-flex; 
+            align-items: center; 
+            justify-content: center;
+            white-space: nowrap;
+            background: #f8fafc;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        .lesson-title-cell {
+            font-weight: 500; /* 取消粗體 */
+            font-size: 1rem;
+            color: #1e293b;
+            min-width: 100px;
+            max-width: 400px; /* 限制最大寬度，避免擋住點擊區域 */
+        }
+
         .insert-bar { height: 12px; margin: -6px 0; position: relative; z-index: 10; cursor: pointer; display: flex; align-items: center; justify-content: center; opacity: 0; transition: 0.2s; }
         .insert-bar:hover { opacity: 1; height: 24px; margin: -12px 0; }
         .insert-line { height: 1px; background: #94a3b8; flex: 1; }
         .insert-btn-text { background: #64748b; color: #fff; font-size: 11px; padding: 2px 10px; border-radius: 10px; font-weight: bold; margin: 0 10px; }
-        .data-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px; border: 1px solid #f1f3f5; border-radius: 6px; background: #fff; }
-        .editable-cell { padding: 8px 10px; border-radius: 4px; cursor: text; min-height: 36px; border: 1px solid transparent; width: 100%; font-size: 0.95rem; line-height: 1.4; }
+        
+        .data-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px; border: 1px solid #f1f3f5; border-radius: 6px; background: #fff; margin-bottom: 5px; }
+        .editable-cell { padding: 8px 10px; border-radius: 4px; cursor: text; min-height: 36px; border: 1px solid transparent; transition: 0.2s; }
         .editable-cell:hover { background: #f8fafc; border-color: #e2e8f0; }
-        .cell-pos { color: #0369a1; background: #f0f9ff; border: 1px solid #e0f2fe; font-size: 0.85rem; font-weight: bold; width: fit-content; border-radius: 4px; }
+        
+        .cell-pos { color: #0369a1; background: #f0f9ff; border: 1px solid #e0f2fe; font-size: 0.85rem; font-weight: bold; width: fit-content; border-radius: 4px; white-space: nowrap; display: flex; align-items: center; justify-content: center; }
         .cell-trans { color: #475569; background: #f8fafc; border: 1px dashed #cbd5e1; font-size: 0.9rem; margin-top: 5px; }
-        .cell-lesson-num { width: 50px; text-align: center; font-weight: bold; color: #0f172a; border: 1px solid #e2e8f0; }
+        
         .btn-add-item-bottom { width: 100%; margin-top: 10px; padding: 12px; border: 2px dashed #cbd5e1; background: #f8fafc; color: #64748b; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .floating-footer { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #e2e8f0; z-index: 1000; }
         .btn-action { display: flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 6px; border: 1px solid #cbd5e1; background: #fff; cursor: pointer; font-size: 0.85rem; font-weight: 500; color: #475569; }
         .btn-primary { background: #0f172a; color: #fff; border: none; }
-        .inline-textarea { width: 100%; padding: 8px; border: 1px solid #0f172a; border-radius: 4px; outline: none; font-family: inherit; resize: vertical; background: #fff; }
-        .svg-icon { width: 18px; height: 18px; fill: currentColor; }
+        
+        /* 編輯器 Input 樣式 */
+        .inline-textarea, .inline-input { width: 100%; padding: 8px; border: 2px solid #0b76d1; border-radius: 4px; outline: none; font-family: inherit; box-sizing: border-box; background: #fff; font-size: 1rem; }
+        .inline-input-title { width: 300px; } /* 限制標題輸入框寬度 */
+        .inline-textarea { resize: vertical; min-height: 80px; }
+        
+        .pos-helper { display: flex; gap: 5px; margin-top: 5px; flex-wrap: wrap; }
+        .pos-btn { font-size: 11px; padding: 2px 8px; border: 1px solid #cbd5e1; background: #fff; border-radius: 4px; cursor: pointer; }
+        .pos-btn:hover { background: #f1f5f9; border-color: #0b76d1; }
+        
+        .svg-icon { width: 18px; height: 18px; fill: currentColor; flex-shrink: 0; }
         .back-link { display: flex; align-items: center; text-decoration: none; color: var(--primary) !important; margin-right: 10px; }
         #json-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.8); display: none; align-items: center; justify-content: center; z-index: 3000; backdrop-filter: blur(4px); }
         .json-box { background: #fff; padding: 30px; border-radius: 16px; width: 90%; max-width: 800px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
@@ -56,7 +111,6 @@
     </style>
 </head>
 <body>
-    <!-- 鎖定遮罩 -->
     <div id="page-lock-mask">
         <div class="lock-content">
             <svg id="lock-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -68,7 +122,7 @@
 
     <header>
         <div class="logo">
-            <a href="english.html" class="back-link">
+            <a href="index.html" class="back-link">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
             </a>
             <img src="../images/logo.png" alt="Logo" height="40">
@@ -110,34 +164,10 @@
     </div>
 
     <script src="../scripts/utils.js"></script>
+    <script src="../scripts/admin-lock.js"></script>
     <script>
-        // --- 鎖定邏輯開始 ---
-        (function() {
-            const SECRET_KEY = "admin123"; 
-            const mask = document.getElementById('page-lock-mask');
-            const icon = document.getElementById('lock-icon');
-            let clicks = 0; let timer = null;
-            function unlock(fast) {
-                if(fast) mask.style.transition="none";
-                mask.classList.add('unlocked-hidden');
-                document.body.classList.remove('locked-scrolling');
-                sessionStorage.setItem('global_editor_unlocked', 'true');
-            }
-            if(sessionStorage.getItem('global_editor_unlocked') === 'true') unlock(true);
-            else document.body.classList.add('locked-scrolling');
-            icon.addEventListener('click', () => {
-                clicks++; clearTimeout(timer);
-                timer = setTimeout(() => { clicks = 0; }, 400);
-                if(clicks === 3) {
-                    const pw = prompt("");
-                    if(pw === SECRET_KEY) unlock(false);
-                    clicks = 0;
-                }
-            });
-        })();
-        // --- 鎖定邏輯結束 ---
-
         let currentMode = 'words', dataStore = { words: { sources: [] }, textbook: { sources: [] } }, expandedKeys = new Set();
+        const POS_LIST = ["n.", "v.", "adj.", "adv.", "prep.", "conj.", "pron.", "int.", "phr."];
         const ICONS = {
             folder: '<svg class="svg-icon" style="color:#64748b" viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>',
             file: '<svg class="svg-icon" style="color:#94a3b8" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>',
@@ -168,12 +198,20 @@
                         const lKey = `l-${sIdx}-${lIdx}`;
                         const items = currentMode === 'words' ? (l.vocabulary || []) : (l.sentences || []);
                         const label = currentMode === 'words' ? '單字' : '段落';
-                        return `<div class="lesson-block"><div class="lesson-header" onclick="event.stopPropagation();toggleKey('${lKey}')" style="cursor:pointer"><div style="display:flex;align-items:center;gap:10px">${ICONS.file}<div class="editable-cell cell-lesson-num" onclick="event.stopPropagation();startEdit(this,${sIdx},${lIdx},-1,'lesson')">${l.lesson}</div><div class="editable-cell" style="font-weight:bold" onclick="event.stopPropagation();startEdit(this,${sIdx},${lIdx},-1,'title')">${l.title}</div></div><button class="btn-action" style="padding:2px 6px;color:#ef4444;border:none" onclick="event.stopPropagation();delLes(${sIdx},${lIdx})">${ICONS.close}</button></div>
+                        return `<div class="lesson-block">
+                            <div class="lesson-header" onclick="event.stopPropagation();toggleKey('${lKey}')">
+                                <div class="lesson-header-left">
+                                    ${ICONS.file}
+                                    <div class="editable-cell cell-lesson-num" onclick="event.stopPropagation();startEdit(this,${sIdx},${lIdx},-1,'lesson')">${l.lesson}</div>
+                                    <div class="editable-cell lesson-title-cell" onclick="event.stopPropagation();startEdit(this,${sIdx},${lIdx},-1,'title')">${parseMarkdown(l.title)}</div>
+                                </div>
+                                <button class="btn-action" style="padding:2px 6px;color:#ef4444;border:none;flex-shrink:0;" onclick="event.stopPropagation();delLes(${sIdx},${lIdx})">${ICONS.close}</button>
+                            </div>
                         <div style="display:${expandedKeys.has(lKey)?'block':'none'};padding:10px;">
                             ${createInsertBarHtml(sIdx, lIdx, 0)}
                             ${items.map((item, iIdx) => `<div class="data-item"><div class="drag-handle">${ICONS.drag}</div><div style="flex:1">
-                                ${currentMode === 'words' ? `<div style="display:grid;grid-template-columns:180px 80px 1fr;gap:10px"><div class="editable-cell" style="font-weight:bold" onclick="startEdit(this,${sIdx},${lIdx},${iIdx},'word')">${item.word}</div><div class="editable-cell cell-pos" onclick="startEdit(this,${sIdx},${lIdx},${iIdx},'pos')">${item.pos||'(Pos)'}</div><div class="editable-cell" onclick="startEdit(this,${sIdx},${lIdx},${iIdx},'chinese')">${item.chinese}</div></div>` : 
-                                `<div style="display:flex; flex-direction:column; gap:4px"><div class="editable-cell" onclick="startEdit(this,${sIdx},${lIdx},${iIdx},'en')">${item.en}</div><div class="editable-cell cell-trans" onclick="startEdit(this,${sIdx},${lIdx},${iIdx},'ch')">${item.ch}</div></div>`}
+                                ${currentMode === 'words' ? `<div style="display:grid;grid-template-columns:180px 100px 1fr;gap:10px"><div class="editable-cell" style="font-weight:bold" onclick="startEdit(this,${sIdx},${lIdx},${iIdx},'word')">${parseMarkdown(item.word)}</div><div class="editable-cell cell-pos" onclick="startEdit(this,${sIdx},${lIdx},${iIdx},'pos')">${item.pos||'(Pos)'}</div><div class="editable-cell" onclick="startEdit(this,${sIdx},${lIdx},${iIdx},'chinese')">${parseMarkdown(item.chinese)}</div></div>` : 
+                                `<div style="display:flex; flex-direction:column; gap:4px"><div class="editable-cell" onclick="startEdit(this,${sIdx},${lIdx},${iIdx},'en')">${parseMarkdown(item.en)}</div><div class="editable-cell cell-trans" onclick="startEdit(this,${sIdx},${lIdx},${iIdx},'ch')">${parseMarkdown(item.ch)}</div></div>`}
                             </div><button class="btn-action" style="border:none;color:#ef4444" onclick="delItem(${sIdx},${lIdx},${iIdx})">${ICONS.close}</button></div>${createInsertBarHtml(sIdx, lIdx, iIdx + 1)}`).join('')}
                             <button class="btn-add-item-bottom" onclick="addItem(${sIdx},${lIdx},${items.length})">${ICONS.plus} 新增${label}</button>
                         </div></div>`;
@@ -183,25 +221,75 @@
                 root.appendChild(srcEl);
             });
         }
+
         function createInsertBarHtml(sIdx, lIdx, atIndex) { const label = currentMode === 'words' ? '單字' : '句子'; return `<div class="insert-bar" onclick="addItem(${sIdx}, ${lIdx}, ${atIndex})"><div class="insert-line"></div><div class="insert-btn-text">+ 在此插入${label}</div><div class="insert-line"></div></div>`; }
         function toggleKey(k) { expandedKeys.has(k) ? expandedKeys.delete(k) : expandedKeys.add(k); render(); }
+        
         function startEdit(el, s, l, i, f) {
-            if(el.querySelector('textarea')) return;
+            if(el.querySelector('input') || el.querySelector('textarea')) return;
             const db = currentMode === 'words' ? dataStore.words : dataStore.textbook;
             const rawVal = i === -1 ? db.sources[s].lessons[l][f] : (currentMode === 'words' ? db.sources[s].lessons[l].vocabulary[i][f] : db.sources[s].lessons[l].sentences[i][f]);
-            el.innerHTML = `<textarea class="inline-textarea">${rawVal||''}</textarea>`;
-            const t = el.querySelector('textarea'); t.focus();
-            t.onblur = () => { 
-                if(i===-1) db.sources[s].lessons[l][f]=t.value; 
-                else { const arr=currentMode==='words'?db.sources[s].lessons[l].vocabulary:db.sources[s].lessons[l].sentences; arr[i][f]=t.value; }
+            
+            const useInput = (currentMode === 'words' && (f === 'word' || f === 'pos' || f === 'chinese')) || f === 'lesson' || f === 'title';
+            
+            if (useInput) {
+                // 如果是標題欄位，增加特定寬度樣式
+                const inputClass = (f === 'title') ? 'inline-input inline-input-title' : 'inline-input';
+                el.innerHTML = `<input type="text" class="${inputClass}" value="${rawVal||''}">`;
+                
+                if (f === 'pos') {
+                    const helper = document.createElement('div');
+                    helper.className = 'pos-helper';
+                    POS_LIST.forEach(p => {
+                        const btn = document.createElement('button');
+                        btn.className = 'pos-btn';
+                        btn.innerText = p;
+                        btn.onclick = (e) => {
+                            e.preventDefault();
+                            const input = el.querySelector('input');
+                            let val = input.value.trim();
+                            let parts = val ? val.split(/\s+/) : [];
+                            if (parts.includes(p)) parts = parts.filter(x => x !== p);
+                            else parts.push(p);
+                            input.value = parts.join(' ');
+                            input.focus();
+                        };
+                        helper.appendChild(btn);
+                    });
+                    el.appendChild(helper);
+                }
+            } else {
+                el.innerHTML = `<textarea class="inline-textarea">${rawVal||''}</textarea>`;
+            }
+
+            const inputEl = el.querySelector('input, textarea');
+            inputEl.focus();
+            
+            const save = () => {
+                const newVal = inputEl.value;
+                if(i===-1) db.sources[s].lessons[l][f] = newVal; 
+                else { 
+                    const arr = currentMode==='words' ? db.sources[s].lessons[l].vocabulary : db.sources[s].lessons[l].sentences; 
+                    arr[i][f] = newVal; 
+                }
                 sync(); render(); 
             };
+
+            inputEl.onblur = (e) => {
+                if (e.relatedTarget && e.relatedTarget.className === 'pos-btn') return;
+                save();
+            };
+            if(useInput) {
+                inputEl.onkeydown = (e) => { if(e.key === 'Enter') save(); };
+            }
         }
+
         function sync() { 
             localStorage.setItem('english_words_draft', JSON.stringify(dataStore.words)); 
             localStorage.setItem('english_textbook_draft', JSON.stringify(dataStore.textbook)); 
             document.getElementById('status').innerHTML = '💾 已自動暫存'; 
         }
+
         function editSrc(s) { const db=currentMode==='words'?dataStore.words:dataStore.textbook; const n=prompt('名稱:', db.sources[s].name); if(n){ db.sources[s].name=n; sync(); render(); }}
         function delSrc(s) { const db=currentMode==='words'?dataStore.words:dataStore.textbook; if(confirm('刪除版本？')){ db.sources.splice(s,1); sync(); render(); }}
         function addLes(s) { const db=currentMode==='words'?dataStore.words:dataStore.textbook; db.sources[s].lessons.push({lesson: db.sources[s].lessons.length+1, title:'New Lesson', vocabulary:[], sentences:[]}); sync(); render(); }
@@ -216,6 +304,7 @@
         function delItem(s, l, i) { const db=currentMode==='words'?dataStore.words:dataStore.textbook; const arr = currentMode==='words'?db.sources[s].lessons[l].vocabulary:db.sources[s].lessons[l].sentences; arr.splice(i,1); sync(); render(); }
         function addNewSource() { const db=currentMode==='words'?dataStore.words:dataStore.textbook; db.sources.push({name:'New Source', lessons:[]}); sync(); render(); }
         function resetDraft() { if(confirm('還原修改？')){ localStorage.removeItem('english_words_draft'); localStorage.removeItem('english_textbook_draft'); location.reload(); } }
+        
         function showJSON() {
             const isWords = currentMode === 'words';
             const targetData = isWords ? dataStore.words : dataStore.textbook;
@@ -224,7 +313,9 @@
             document.getElementById('json-output').value = JSON.stringify(targetData, null, 2);
             document.getElementById('json-modal').style.display = 'flex';
         }
+        
         function downloadJSON() { const db=currentMode==='words'?dataStore.words:dataStore.textbook; const filename=currentMode==='words'?'english.json':'english-textbook.json'; const b = new Blob([JSON.stringify(db,null,2)],{type:'application/json'}); const a = document.createElement('a'); a.href=URL.createObjectURL(b); a.download=filename; a.click(); }
+        
         init();
     </script>
 </body>

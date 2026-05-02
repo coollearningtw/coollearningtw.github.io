@@ -102,7 +102,7 @@
 </head>
 <body>
     <header>
-        <div class="logo">
+        <div class="logo" id="main-logo-area">
             <img src="images/logo.png" alt="Logo" height="50px">
             <img src="images/logo_text.png" alt="知識酷字標" height="40">
         </div>
@@ -257,5 +257,22 @@
     <script src="scripts/announcement.js"></script>
     <script src="scripts/utils.js"></script>
     <script src="scripts/feedback.js"></script>
+</script>
+<script>
+// 連點 LOGO 5 下進入管理員首頁
+(() => {
+    const logoArea = document.getElementById('main-logo-area');
+    let clickCount = 0;
+    let timer = null;
+    logoArea.addEventListener('click', function() {
+        clickCount++;
+        clearTimeout(timer);
+        timer = setTimeout(() => { clickCount = 0; }, 600);
+        if (clickCount === 5) {
+            window.location.href = 'admin/index.html';
+        }
+    });
+})();
+</script>
 </body>
 </html>

@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>更新日誌管理台 - 酷學習</title>
+    <link rel="icon" type="image/png" href="../images/logo-gold.png">
+    <link rel="stylesheet" href="../styles/style.css">
+    <link rel="stylesheet" href="../styles/header.css">
+    <style>
+        /* ========== 鎖定系統樣式 ========== */
+        #page-lock-mask {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.65); backdrop-filter: blur(25px) saturate(160%);
+            -webkit-backdrop-filter: blur(25px) saturate(160%); z-index: 999999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.6s ease, visibility 0.6s;
+            pointer-events: auto;
+        }
+        .lock-content { text-align: center; user-select: none; pointer-events: auto; }
+        #lock-icon { width: 100px; height: 100px; cursor: pointer; fill: #0b76d1; margin-bottom: 25px; transition: transform 0.1s; pointer-events: auto; }
+        #lock-icon:active { transform: scale(0.9); }
+        .lock-notice { font-size: 1.2rem; font-weight: 900; color: #334155; }
+        body.locked-scrolling { overflow: hidden !important; height: 100vh !important; }
+        body.locked-scrolling .admin-layout, body.locked-scrolling header { pointer-events: none !important; }
+        .unlocked-hidden { opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; }
+
+        /* ========== 編輯器三欄佈局 ========== */
+        body { background-color: #f1f5f9; height: 100vh; overflow: hidden; display: flex; flex-direction: column; margin: 0; }
+        header { flex-shrink: 0; margin: 0 !important; border-radius: 0 !important; width: 100% !important; max-width: none !important; background-color: #fff !important; border-bottom: 1px solid #e2e8f0 !important; }
+        .admin-layout { display: grid; grid-template-columns: 280px 1fr 480px; flex: 1; overflow: hidden; background: #e2e8f0; gap: 1px; }
+        
+        /* 左側清單 */
+        .sidebar { background: #fff; display: flex; flex-direction: column; overflow-y: auto; }
+        .sidebar-header { padding: 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc; position: sticky; top: 0; z-index: 10; }
+        .log-item { padding: 15px 20px; border-bottom: 1px solid #f1f5f9; cursor: pointer; transition: 0.2s; }
+        .log-item:hover { background: #f8fafc; }
+        .log-item.active { background: var(--primary-light); border-left: 4px solid var(--primary); }
+        .log-item .v { font-weight: bold; font-size: 0.95rem; color: #1e293b; }
+        .log-item .d { font-size: 0.8rem; color: #64748b; }
+
+        /* 中間編輯 */
+        .editor-main { background: #fff; overflow-y: auto; padding: 30px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-weight: bold; margin-bottom: 8px; color: #475569; font-size: 0.85rem; }
+        input, textarea, select { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; font-family: inherit; font-size: 0.95rem; }
+        textarea { height: 100px; resize: vertical; }
+        .section-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px; margin-bottom: 20px; position: relative; }
+        .remove-btn { color: #ef4444; cursor: pointer; font-size: 0.75rem; font-weight: bold; float: right; margin-top: -5px; }
+
+        /* 右側預覽 */
+        .preview-panel { background: #f1f5f9; overflow-y: auto; padding: 20px; border-left: 1px solid #e2e8f0; }
+        .preview-container { background: #fff; min-height: 100%; border-radius: 8px; padding: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+
+        /* 模擬樣式 */
+        .v-item { border-left: 3px solid #0b76d1; padding-left: 25px; margin-bottom: 40px; position: relative; }
+        .v-item::before { content: ''; position: absolute; left: -11px; top: 5px; width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 3px solid #0b76d1; }
+        .v-head { display: flex; align-items: center; gap: 12px; margin-bottom: 15px; }
+        .v-num { font-size: 1.5rem; font-weight: 900; color: #0b76d1; }
+        .v-tag { font-size: 0.75rem; padding: 4px 10px; border-radius: 6px; background: #0f172a; color: #fff; font-weight: bold; }
+        .v-date { font-size: 1rem; color: #64748b; }
+        .v-body-box { background: #fdfdfe; padding: 20px 25px; border-radius: 12px; border: 1px solid #e2e8f0; }
+        .v-intro { font-size: 1rem; color: #475569; margin-bottom: 20px; line-height: 1.8; }
+        .v-sec-title { font-weight: 800; color: #0f172a; margin: 25px 0 10px; display: flex; align-items: center; gap: 8px; font-size: 1.1rem; }
+        .v-sec-title svg { width: 20px; height: 20px; fill: #0b76d1; }
+        .v-list { list-style: none; padding: 0; margin: 0; }
+        .v-list li { margin-bottom: 12px; padding-left: 18px; position: relative; font-size: 1rem; color: #334155; line-height: 1.7; }
+        .v-list li::before { content: "．"; position: absolute; left: 0; font-weight: bold; }
+
+        .highlight { background-color: #fff3cd; padding: 0 4px; border-radius: 4px; color: #1e293b; font-weight: bold; }
+        .sub-group { margin-top: 8px; padding-left: 20px; border-left: 1px dashed #cbd5e1; color: #64748b; }
+
+        #json-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.8); display: none; align-items: center; justify-content: center; z-index: 3000; }
+        .json-box { background: #fff; padding: 30px; border-radius: 16px; width: 90%; max-width: 900px; }
+        textarea#html-output { height: 500px; font-family: monospace; background: #0f172a; color: #38bdf8; font-size: 0.8rem; padding: 15px; border-radius: 8px; width: 100%; resize: none; }
+        
+        #fetch-status { font-size: 0.7rem; color: #0b76d1; margin-left: 10px; font-weight: normal; }
+    </style>
+</head>
+<body>
+    <div id="page-lock-mask">
+        <div class="lock-content">
+            <svg id="lock-icon" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm9 14H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg>
+            <div class="lock-notice">此功能僅提供給部分用戶使用</div>
+        </div>
+    </div>
+
+    <header>
+        <div class="logo">
+            <a href="index.html" class="back-link">⬅</a>
+            <span style="font-weight:bold; color:var(--primary);">更新日誌管理台 <span id="fetch-status">連線中...</span></span>
+        </div>
+        <div class="header-right">
+            <button class="btn-tool-text" onclick="generateHTML()">產出 HTML 代碼</button>
+        </div>
+    </header>
+
+    <div class="admin-layout">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <strong>版本紀錄</strong>
+                <button class="btn-tool-text" onclick="addNewVersion()">+ 新增</button>
+            </div>
+            <div id="log-list"></div>
+        </div>
+        <div class="editor-main">
+            <div id="editor-form" class="form-section">
+                <p style="text-align:center; color:#94a3b8; margin-top:100px;">請選擇版本開始編輯</p>
+            </div>
+        </div>
+        <div class="preview-panel">
+            <div class="preview-container">
+                <div id="live-preview-root"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="json-modal">
+        <div class="json-box">
+            <h3 style="margin-top:0;">產出 HTML 代碼</h3>
+            <p style="color:#64748b; font-size:0.9rem;">全選代碼並覆蓋 <code>changelog.html</code>。</p>
+            <textarea id="html-output" readonly></textarea>
+            <div style="margin-top:20px; text-align:right;">
+                <button class="btn-tool-text" onclick="document.getElementById('json-modal').style.display='none'">關閉分頁</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引用工具函式 -->
+    <script src="../scripts/utils.js"></script>
+
+    <!-- 引用外部鎖定邏輯 -->
+    <script src="../scripts/admin-lock.js"></script>
+
+    <script>
+        // --- 核心業務邏輯 ---
+        let logs = [];
+        let currIdx = -1;
+        const GITHUB_URL = "https://raw.githubusercontent.com/coollearningtw/cool-learning-data/main/changelog.html";
+
+        const ICONS = {
+            core: "M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z",
+            detail: "M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3z",
+            content: "M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9H9V9h10v2zm-4 4H9v-2h6v2zm4-8H9V5h10v2z"
+        };
+
+        function parseLogMarkdown(text) {
+            if (!text) return '';
+            let html = parseMarkdown(text);
+            html = html.replace(/md-highlight/g, 'highlight');
+            return html;
+        }
+
+        function htmlToMarkdown(html) {
+            return html
+                .replace(/<span class="highlight">(.*?)<\/span>/g, '==$1==')
+                .replace(/<strong>(.*?)<\/strong>/g, '**$1**')
+                .replace(/<em>(.*?)<\/em>/g, '*$1*')
+                .replace(/<div class="sub-group">(.*?)<\/div>/g, '$1')
+                .trim();
+        }
+
+        async function fetchLogs() {
+            const status = document.getElementById('fetch-status');
+            try {
+                const response = await fetch(GITHUB_URL + '?t=' + Date.now());
+                const htmlText = await response.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(htmlText, 'text/html');
+                const items = doc.querySelectorAll('.version-item');
+                
+                logs = Array.from(items).map(item => {
+                    const v = item.querySelector('.v-number').innerText;
+                    const tag = item.querySelector('.tag').innerText;
+                    const date = item.querySelector('.v-date').innerText;
+                    const intro = htmlToMarkdown(item.querySelector('.content-text').innerHTML);
+                    const sectionTitles = item.querySelectorAll('.v-section-title');
+                    const sectionLists = item.querySelectorAll('.official-list');
+                    
+                    const sections = Array.from(sectionTitles).map((st, si) => {
+                        const iconPath = st.querySelector('path').getAttribute('d');
+                        const iconKey = Object.keys(ICONS).find(k => ICONS[k] === iconPath) || "content";
+                        return { 
+                            title: st.innerText.trim(), 
+                            icon: iconKey, 
+                            items: Array.from(sectionLists[si].querySelectorAll('li')).map(li => htmlToMarkdown(li.innerHTML)) 
+                        };
+                    });
+                    return { v, tag, date, intro, sections };
+                });
+                status.innerText = "GitHub 資料提取成功";
+                renderList();
+            } catch (err) { status.innerText = "提取失敗，請手動新增"; }
+        }
+
+        function renderList() {
+            const root = document.getElementById('log-list');
+            root.innerHTML = logs.map((l, i) => `
+                <div class="log-item ${currIdx===i?'active':''}" onclick="selectLog(${i})">
+                    <div class="v">${l.v} <span class="v-tag" style="background:#475569; font-size:10px">${l.tag}</span></div>
+                    <div class="d">${l.date}</div>
+                </div>
+            `).join('');
+        }
+
+        function selectLog(i) {
+            currIdx = i;
+            renderList();
+            const l = logs[i];
+            const form = document.getElementById('editor-form');
+            form.innerHTML = `
+                <div class="form-group"><label>版本號</label><input type="text" value="${l.v}" oninput="updateData('v', this.value)"></div>
+                <div class="form-group"><label>發布日期</label><input type="date" value="${l.date}" oninput="updateData('date', this.value)"></div>
+                <div class="form-group"><label>標籤</label><input type="text" value="${l.tag}" oninput="updateData('tag', this.value)"></div>
+                <div class="form-group"><label>描述 (支援 Markdown)</label><textarea oninput="updateData('intro', this.value)">${l.intro}</textarea></div>
+                <div id="sections-root"></div>
+                <button class="btn-tool-text" onclick="addSection()" style="width:100%; border-style:dashed; margin-bottom:20px">+ 新增章節</button>
+                <div style="border-top:1px solid #eee; padding-top:20px;"><button style="color:red; background:none; border:none; cursor:pointer;" onclick="deleteVersion()">刪除此版本</button></div>
+            `;
+            renderSections();
+            updatePreview();
+        }
+
+        function renderSections() {
+            const root = document.getElementById('sections-root');
+            root.innerHTML = logs[currIdx].sections.map((s, si) => `
+                <div class="section-box">
+                    <span class="remove-btn" onclick="removeSection(${si})">移除</span>
+                    <div class="form-group"><label>標題</label><input type="text" value="${s.title}" oninput="updateSec(${si}, 'title', this.value)"></div>
+                    <div class="form-group"><label>圖示</label><select onchange="updateSec(${si}, 'icon', this.value)">
+                        <option value="core" ${s.icon==='core'?'selected':''}>核心 (箭頭)</option>
+                        <option value="detail" ${s.icon==='detail'?'selected':''}>說明 (博士帽)</option>
+                        <option value="content" ${s.icon==='content'?'selected':''}>內容 (文件)</option>
+                    </select></div>
+                    <div class="form-group"><label>項目 (每行一項，支援 Markdown)</label><textarea style="height:150px" oninput="updateSec(${si}, 'items', this.value)">${s.items.join('\n')}</textarea></div>
+                </div>
+            `).join('');
+        }
+
+        function updateData(f,v) { logs[currIdx][f]=v; renderList(); updatePreview(); }
+        function updateSec(si,f,v) { 
+            if(f==='items') logs[currIdx].sections[si][f] = v.split('\n');
+            else logs[currIdx].sections[si][f]=v; 
+            updatePreview();
+        }
+        function addSection() { logs[currIdx].sections.push({ title: "新章節", icon: "content", items: [] }); renderSections(); updatePreview(); }
+        function removeSection(si) { logs[currIdx].sections.splice(si,1); renderSections(); updatePreview(); }
+        function addNewVersion() { logs.unshift({ v: "v1.x.x", date: new Date().toISOString().split('T')[0], tag: "正式發布版本", intro: "", sections: [] }); selectLog(0); }
+        function deleteVersion() { if(confirm("刪除此版本？")){ logs.splice(currIdx,1); currIdx=-1; renderList(); document.getElementById('editor-form').innerHTML = '<p style="text-align:center; margin-top:100px;">已刪除</p>'; updatePreview(); }}
+
+        function updatePreview() {
+            const root = document.getElementById('live-preview-root');
+            if (currIdx === -1) { root.innerHTML = '<p style="color:#94a3b8;">請選擇版本開始編輯</p>'; return; }
+            const l = logs[currIdx];
+            let html = `
+                <div class="v-item">
+                    <div class="v-head">
+                        <span class="v-num">${l.v}</span>
+                        <span class="v-tag">${l.tag}</span>
+                        <span class="v-date">${l.date}</span>
+                    </div>
+                    <div class="v-body-box">
+                        <div class="v-intro">${parseLogMarkdown(l.intro)}</div>
+                        ${l.sections.map(s => `
+                            <div class="v-sec-title">
+                                <svg viewBox="0 0 24 24"><path d="${ICONS[s.icon]}"/></svg>
+                                ${s.title}
+                            </div>
+                            <ul class="v-list">${s.items.map(it => `<li>${parseLogMarkdown(it)}</li>`).join('')}</ul>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            root.innerHTML = html;
+        }
+
+        function generateHTML() {
+            let itemsHtml = logs.map(l => {
+                let sectionsHtml = l.sections.map(s => `
+            <span class="v-section-title">
+                <svg viewBox="0 0 24 24"><path d="${ICONS[s.icon]}"/></svg>
+                ${s.title}
+            </span>
+            <ul class="official-list">
+                ${s.items.map(it => `<li>${parseLogMarkdown(it)}</li>`).join('\n                ')}
+            </ul>`).join('');
+
+                return `
+    <div class="version-item">
+        <div class="v-header">
+            <span class="v-number">${l.v}</span>
+            <span class="tag">${l.tag}</span>
+            <span class="v-date">${l.date}</span>
+        </div>
+        <div class="v-body">
+            <div class="content-text">${parseLogMarkdown(l.intro)}</div>
+            ${sectionsHtml}
+        </div>
+    </div>`;
+            }).join('\n');
+
+            const fullHTML = `<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: "Noto Sans TC", sans-serif; line-height: 1.8; color: #334155; padding: 30px; margin: 0; background-color: #ffffff; }
+        h2 { color: #0f172a; display: flex; align-items: center; gap: 12px; font-size: 1.5rem; margin-top: 0; border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; font-weight: 900; }
+        h2 svg { width: 28px !important; height: 28px !important; flex-shrink: 0; fill: #0b76d1; }
+        .version-item { position: relative; padding-left: 30px; margin: 30px 0 40px; border-left: 3px solid #0b76d1; }
+        .version-item::before { content: ''; position: absolute; left: -11px; top: 5px; width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 3px solid #0b76d1; }
+        .v-header { display: flex; align-items: center; gap: 12px; margin-bottom: 15px; }
+        .v-number { font-size: 1.6rem; font-weight: 900; color: #0b76d1; }
+        .tag { font-size: 0.8rem; padding: 4px 10px; border-radius: 6px; font-weight: bold; background: #0f172a; color: #fff; letter-spacing: 1px; }
+        .v-date { font-size: 1rem; color: #64748b; font-weight: 500; }
+        .v-body { background: #fdfdfe; padding: 25px 30px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 2px 10px rgba(0,0,0,0.03); }
+        .v-section-title { font-weight: 800; color: #0f172a; margin: 25px 0 10px; display: flex; align-items: center; gap: 8px; font-size: 1.1rem; }
+        .v-section-title svg { width: 20px !important; height: 20px !important; fill: #0b76d1; flex-shrink: 0; }
+        .content-text { font-size: 1rem; color: #475569; white-space: pre-wrap; margin-bottom: 15px; }
+        .highlight { background-color: #fff3cd; padding: 0 4px; border-radius: 4px; color: #1e293b; font-weight: bold; }
+        .official-list { list-style: none; padding: 0; margin: 0; }
+        .official-list li { margin-bottom: 12px; padding-left: 18px; position: relative; }
+        .official-list li::before { content: "．"; position: absolute; left: 0; font-weight: bold; }
+        .sub-group { margin-top: 8px; padding-left: 20px; border-left: 1px dashed #cbd5e1; color: #64748b; }
+        .footer-note { margin-top: 25px; padding-top: 15px; border-top: 1px solid #f1f5f9; font-size: 0.9rem; color: #64748b; }
+    </style>
+</head>
+<body>
+    <h2>
+        <svg viewBox="0 0 24 24"><path d="M13 3H6c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V9l-7-7zm0 1.5L18.5 10H13V4.5zM6 19.5v-15h6v6h6v9H6z"/></svg>
+        系統更新日誌 (Changelog)
+    </h2>
+    ${itemsHtml}
+    <div class="footer-note">※ 詳細功能介紹請點擊使用指南側邊選單查看。<br>※ 內容勘誤或建議請利用系統回報按鈕。</div>
+</body>
+</html>`;
+            document.getElementById('html-output').value = fullHTML;
+            document.getElementById('json-modal').style.display = 'flex';
+        }
+
+        fetchLogs();
+    </script>
+</body>
+</html>

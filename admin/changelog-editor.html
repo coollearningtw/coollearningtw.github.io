@@ -43,21 +43,15 @@
         input, textarea, select { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; font-family: inherit; font-size: 0.95rem; }
         textarea { height: 100px; resize: vertical; }
         
-        /* 章節區塊與拖曳樣式 */
         .section-box { 
             background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; 
             padding: 15px; margin-bottom: 20px; position: relative;
-            transition: transform 0.1s, box-shadow 0.2s, border-color 0.2s;
         }
         .section-box.dragging { opacity: 0.5; background: #e2e8f0; }
-        .section-box.drag-over { border: 2px solid var(--primary); transform: scale(1.01); }
+        .section-box.drag-over { border: 2px solid var(--primary); }
         
         .section-ctrl-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-        .drag-handle { 
-            cursor: grab; color: #94a3b8; display: flex; align-items: center; gap: 5px; 
-            font-size: 14px; font-weight: bold; user-select: none;
-        }
-        .drag-handle:active { cursor: grabbing; }
+        .drag-handle { cursor: grab; color: #94a3b8; display: flex; align-items: center; gap: 5px; font-size: 14px; font-weight: bold; }
         .remove-btn { color: #ef4444; cursor: pointer; font-size: 0.75rem; font-weight: bold; }
 
         .preview-panel { background: #f1f5f9; overflow-y: auto; padding: 20px; border-left: 1px solid #e2e8f0; }
@@ -81,7 +75,16 @@
         .v-list li.no-dot { list-style: none; }
 
         .highlight { background-color: #fff3cd; padding: 0 4px; border-radius: 4px; color: #1e293b; font-weight: bold; }
-        .sub-group { margin-top: 8px; padding-left: 20px; border-left: 1px dashed #cbd5e1; color: #64748b; font-size: 0.95rem; }
+        
+        /* 連續虛線修正 */
+        .sub-group { 
+            margin: 4px 0 10px 10px; 
+            padding-left: 15px; 
+            border-left: 1px dashed #cbd5e1; 
+            color: #64748b; 
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
 
         #json-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.8); display: none; align-items: center; justify-content: center; z-index: 3000; }
         .json-box { background: #fff; padding: 30px; border-radius: 16px; width: 90%; max-width: 900px; }
@@ -89,7 +92,6 @@
         
         #save-status { font-size: 0.75rem; color: #10b981; margin-left: 10px; font-weight: bold; opacity: 0; transition: 0.3s; }
 
-        /* ========== 下方常用工具列 ========== */
         .floating-helper {
             position: fixed; bottom: 20px; left: 20px;
             background: #fff; border: 1px solid #cbd5e1;
@@ -104,7 +106,6 @@
             transition: 0.2s; border: 1px solid transparent;
         }
         .copy-chip:hover { background: var(--primary-light); border-color: var(--primary); color: var(--primary); }
-        .copy-chip:active { transform: scale(0.95); }
 
         #toast {
             position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
@@ -127,8 +128,8 @@
             <a href="index.html" class="back-link">⬅</a>
             <span style="font-weight:bold; color:var(--primary);">更新日誌管理台 <span id="save-status">● 已自動存檔</span></span>
         </div>
-        <div style="display:flex; gap:10px; align-items:center;">
-            <button class="btn-tool-text" onclick="resetDraft()" style="color:#ef4444; border-color:#fecaca;">重置暫存</button>
+        <div style="display:flex; gap:10px;">
+            <button class="btn-tool-text" onclick="resetDraft()" style="color:#ef4444;">重置暫存</button>
             <button class="btn-tool-text" onclick="generateHTML()">產出 HTML 代碼</button>
         </div>
     </header>
@@ -155,7 +156,7 @@
 
     <div class="floating-helper">
         <span class="helper-label">快捷複製：</span>
-        <div class="copy-chip" onclick="copyMarker('- ')">項目點 -</div>
+        <div class="copy-chip" onclick="copyMarker('- ')">項目 -</div>
         <div class="copy-chip" onclick="copyMarker('+ ')">空白項目 +</div>
         <div class="copy-chip" onclick="copyMarker('> ')">副群組 ></div>
         <div class="copy-chip" onclick="copyMarker('**粗體**')">粗體</div>
@@ -163,15 +164,14 @@
         <div class="copy-chip" onclick="copyMarker('[文字|編號]')">註釋</div>
     </div>
 
-    <div id="toast">已複製到剪貼簿</div>
+    <div id="toast">已複製</div>
 
     <div id="json-modal">
         <div class="json-box">
             <h3 style="margin-top:0;">產出 HTML 代碼</h3>
-            <p style="color:#64748b; font-size:0.9rem;">全選代碼並覆蓋 <code>changelog.html</code>。</p>
             <textarea id="html-output" readonly></textarea>
             <div style="margin-top:20px; text-align:right;">
-                <button class="btn-tool-text" onclick="document.getElementById('json-modal').style.display='none'">關閉分頁</button>
+                <button class="btn-tool-text" onclick="document.getElementById('json-modal').style.display='none'">關閉</button>
             </div>
         </div>
     </div>
@@ -194,21 +194,15 @@
             check: "M21 7L9 19l-5.5-5.5 1.41-1.41L9 16.17 19.59 5.59 21 7z"
         };
 
-        // --- 核心工具：切換拖曳狀態 ---
         function toggleDraggable(el, status) {
             const box = el.closest('.section-box');
             if (box) box.setAttribute('draggable', status ? 'true' : 'false');
         }
 
-        // --- 初始化與儲存 ---
         async function init() {
             const draft = localStorage.getItem(STORAGE_KEY);
-            if (draft) {
-                logs = JSON.parse(draft);
-                renderList();
-            } else {
-                await fetchLogs();
-            }
+            if (draft) { logs = JSON.parse(draft); renderList(); } 
+            else { await fetchLogs(); }
         }
 
         function saveDraft() {
@@ -219,80 +213,53 @@
         }
 
         function resetDraft() {
-            if (confirm("確定要重置暫存嗎？這將會從 GitHub 重新載入。")) {
-                localStorage.removeItem(STORAGE_KEY);
-                location.reload();
-            }
+            if (confirm("重置暫存？")) { localStorage.removeItem(STORAGE_KEY); location.reload(); }
         }
 
-        // --- 拖曳事件處理 ---
-        function handleSecDragStart(e, index) {
-            // 如果是在輸入框觸發，攔截並取消拖曳
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
-                e.preventDefault();
-                return;
-            }
-            draggedSecIdx = index;
-            e.target.classList.add('dragging');
-            e.dataTransfer.effectAllowed = 'move';
-        }
-
-        function handleSecDragOver(e) {
-            e.preventDefault();
-            const el = e.target.closest('.section-box');
-            if (el) el.classList.add('drag-over');
-        }
-
-        function handleSecDragLeave(e) {
-            const el = e.target.closest('.section-box');
-            if (el) el.classList.remove('drag-over');
-        }
-
-        function handleSecDrop(e, targetIndex) {
-            e.preventDefault();
-            const el = e.target.closest('.section-box');
-            if (el) el.classList.remove('drag-over');
-            if (draggedSecIdx === null || draggedSecIdx === targetIndex) return;
-
-            const sections = logs[currIdx].sections;
-            const movedItem = sections.splice(draggedSecIdx, 1)[0];
-            sections.splice(targetIndex, 0, movedItem);
-
-            renderSections();
-            updatePreview();
-            saveDraft();
-        }
-
-        // --- 解析與渲染 ---
+        // --- 改進的解析邏輯：將連續的 > 合併 ---
         function processListItems(itemsArray) {
             if (!itemsArray || itemsArray.length === 0) return '';
             let html = '';
             let currentInLi = false;
+            let inSubGroup = false;
 
             itemsArray.forEach((line) => {
                 const trimmed = line.trim();
                 if (!trimmed) return;
 
-                if (trimmed.startsWith('- ')) {
-                    if (currentInLi) html += '</li>';
-                    html += `<li class="has-dot">${parseLogMarkdown(trimmed.substring(2))}`;
-                    currentInLi = true;
-                } 
-                else if (trimmed.startsWith('+ ')) {
-                    if (currentInLi) html += '</li>';
-                    html += `<li class="no-dot">${parseLogMarkdown(trimmed.substring(2))}`;
-                    currentInLi = true;
-                }
-                else if (trimmed.startsWith('> ')) {
-                    const subContent = `<div class="sub-group">${parseLogMarkdown(trimmed.substring(2))}</div>`;
-                    if (currentInLi) html += subContent;
-                    else html += `<li>${subContent}</li>`;
-                } 
-                else {
-                    if (currentInLi) html += `<br>${parseLogMarkdown(trimmed)}`;
-                    else { html += `<li class="no-dot">${parseLogMarkdown(trimmed)}`; currentInLi = true; }
+                if (trimmed.startsWith('> ')) {
+                    // 如果目前不在副群組內，開啟一個新的
+                    if (!inSubGroup) {
+                        html += '<div class="sub-group">';
+                        inSubGroup = true;
+                    } else {
+                        // 如果已在副群組內，則加上換行
+                        html += '<br>';
+                    }
+                    html += parseLogMarkdown(trimmed.substring(2));
+                } else {
+                    // 如果之前在副群組內，現在遇到了別的，先關閉副群組
+                    if (inSubGroup) {
+                        html += '</div>';
+                        inSubGroup = false;
+                    }
+
+                    if (trimmed.startsWith('- ')) {
+                        if (currentInLi) html += '</li>';
+                        html += `<li class="has-dot">${parseLogMarkdown(trimmed.substring(2))}`;
+                        currentInLi = true;
+                    } else if (trimmed.startsWith('+ ')) {
+                        if (currentInLi) html += '</li>';
+                        html += `<li class="no-dot">${parseLogMarkdown(trimmed.substring(2))}`;
+                        currentInLi = true;
+                    } else {
+                        if (currentInLi) html += `<br>${parseLogMarkdown(trimmed)}`;
+                        else { html += `<li class="no-dot">${parseLogMarkdown(trimmed)}`; currentInLi = true; }
+                    }
                 }
             });
+
+            if (inSubGroup) html += '</div>';
             if (currentInLi) html += '</li>';
             return html;
         }
@@ -306,12 +273,15 @@
         function htmlToMarkdown(html) {
             return html.replace(/<span class="highlight">(.*?)<\/span>/g, '==$1==')
                        .replace(/<strong>(.*?)<\/strong>/g, '**$1**')
+                       .replace(/<div class="sub-group">(.*?)<\/div>/g, (m, p1) => {
+                           // 將 div 內的 br 換回 \n> 
+                           const content = m.replace(/<div class="sub-group">/,'').replace(/<\/div>/,'');
+                           return '\n> ' + content.replace(/<br>/g, '\n> ');
+                       })
                        .replace(/<br>/g, '\n')
                        .replace(/<li class="has-dot">/g, '\n- ')
                        .replace(/<li class="no-dot">/g, '\n+ ')
-                       .replace(/<li>/g, '\n- ')
-                       .replace(/<\/li>/g, '')
-                       .replace(/<div class="sub-group">(.*?)<\/div>/g, '\n> $1').trim();
+                       .replace(/<\/li>/g, '').trim();
         }
 
         async function fetchLogs() {
@@ -320,99 +290,99 @@
                 const htmlText = await response.text();
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(htmlText, 'text/html');
-                const items = doc.querySelectorAll('.version-item');
-                
-                logs = Array.from(items).map(item => {
-                    const v = item.querySelector('.v-number').innerText;
-                    const tag = item.querySelector('.tag').innerText;
-                    const date = item.querySelector('.v-date').innerText;
-                    const intro = htmlToMarkdown(item.querySelector('.content-text').innerHTML);
+                logs = Array.from(doc.querySelectorAll('.version-item')).map(item => {
                     const sections = Array.from(item.querySelectorAll('.v-section-title')).map((st, si) => {
                         const iconPath = st.querySelector('path').getAttribute('d');
                         const iconKey = Object.keys(ICONS).find(k => ICONS[k] === iconPath) || "content";
-                        const rawLines = Array.from(item.querySelectorAll('.official-list')[si].children).map(node => {
-                            let content = node.innerHTML;
-                            let prefix = node.classList.contains('no-dot') ? '+ ' : '- ';
-                            if (content.includes('sub-group')) content = content.replace(/<div class="sub-group">(.*?)<\/div>/g, '\n> $1');
-                            return prefix + content.replace(/<br>/g, '\n');
+                        const list = item.querySelectorAll('.official-list')[si];
+                        
+                        // 嘗試重建原始多行格式
+                        let rawLines = [];
+                        Array.from(list.childNodes).forEach(node => {
+                            if (node.tagName === 'LI') {
+                                let prefix = node.classList.contains('no-dot') ? '+ ' : '- ';
+                                let content = node.innerHTML.split(/<div class="sub-group">/);
+                                rawLines.push(prefix + content[0].replace(/<br>/g, '\n' + prefix));
+                                if (content[1]) {
+                                    let sub = content[1].replace('</div>','').split('<br>');
+                                    sub.forEach(s => rawLines.push('> ' + s));
+                                }
+                            } else if (node.className === 'sub-group') {
+                                node.innerHTML.split('<br>').forEach(s => rawLines.push('> ' + s));
+                            }
                         });
                         return { title: st.innerText.trim(), icon: iconKey, items: rawLines.join('\n').split('\n').filter(l => l.trim()) };
                     });
-                    return { v, tag, date, intro, sections };
+                    return { 
+                        v: item.querySelector('.v-number').innerText, 
+                        tag: item.querySelector('.tag').innerText, 
+                        date: item.querySelector('.v-date').innerText, 
+                        intro: htmlToMarkdown(item.querySelector('.content-text').innerHTML), 
+                        sections 
+                    };
                 });
                 renderList();
             } catch (err) { console.error(err); }
         }
 
+        function handleSecDragStart(e, index) { if (['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)) { e.preventDefault(); return; } draggedSecIdx = index; e.target.classList.add('dragging'); }
+        function handleSecDragOver(e) { e.preventDefault(); const el = e.target.closest('.section-box'); if (el) el.classList.add('drag-over'); }
+        function handleSecDragLeave(e) { const el = e.target.closest('.section-box'); if (el) el.classList.remove('drag-over'); }
+        function handleSecDrop(e, targetIndex) {
+            e.preventDefault();
+            const sections = logs[currIdx].sections;
+            const movedItem = sections.splice(draggedSecIdx, 1)[0];
+            sections.splice(targetIndex, 0, movedItem);
+            renderSections(); updatePreview(); saveDraft();
+        }
+
         function renderList() {
-            const root = document.getElementById('log-list');
-            root.innerHTML = logs.map((l, i) => `
+            document.getElementById('log-list').innerHTML = logs.map((l, i) => `
                 <div class="log-item ${currIdx===i?'active':''}" onclick="selectLog(${i})">
                     <div class="v">${l.v} <span class="v-tag" style="background:#475569; font-size:10px">${l.tag}</span></div>
                     <div class="d">${l.date}</div>
-                </div>
-            `).join('');
+                </div>`).join('');
         }
 
         function selectLog(i) {
-            currIdx = i;
-            renderList();
-            const l = logs[i];
-            const form = document.getElementById('editor-form');
-            form.innerHTML = `
+            currIdx = i; renderList(); const l = logs[i];
+            document.getElementById('editor-form').innerHTML = `
                 <div class="form-group"><label>版本號</label><input type="text" value="${l.v}" onfocus="toggleDraggable(this, false)" onblur="toggleDraggable(this, true)" oninput="updateData('v', this.value)"></div>
                 <div class="form-group"><label>發布日期</label><input type="date" value="${l.date}" onfocus="toggleDraggable(this, false)" onblur="toggleDraggable(this, true)" oninput="updateData('date', this.value)"></div>
                 <div class="form-group"><label>標籤</label><input type="text" value="${l.tag}" onfocus="toggleDraggable(this, false)" onblur="toggleDraggable(this, true)" oninput="updateData('tag', this.value)"></div>
                 <div class="form-group"><label>描述</label><textarea onfocus="toggleDraggable(this, false)" onblur="toggleDraggable(this, true)" oninput="updateData('intro', this.value)">${l.intro}</textarea></div>
                 <div id="sections-root"></div>
                 <button class="btn-tool-text" onclick="addSection()" style="width:100%; border-style:dashed; margin-bottom:20px">+ 新增章節</button>
-                <div style="border-top:1px solid #eee; padding-top:20px;"><button style="color:red; background:none; border:none; cursor:pointer;" onclick="deleteVersion()">刪除此版本</button></div>
-            `;
-            renderSections();
-            updatePreview();
+                <div style="border-top:1px solid #eee; padding-top:20px;"><button style="color:red; background:none; border:none; cursor:pointer;" onclick="deleteVersion()">刪除此版本</button></div>`;
+            renderSections(); updatePreview();
         }
 
         function renderSections() {
-            const root = document.getElementById('sections-root');
-            root.innerHTML = logs[currIdx].sections.map((s, si) => `
-                <div class="section-box" 
-                     draggable="true" 
-                     ondragstart="handleSecDragStart(event, ${si})"
-                     ondragover="handleSecDragOver(event)"
-                     ondragleave="handleSecDragLeave(event)"
-                     ondrop="handleSecDrop(event, ${si})"
-                     ondragend="this.classList.remove('dragging')">
-                    <div class="section-ctrl-bar">
-                        <div class="drag-handle">⋮⋮ 章節 #${si + 1}</div>
-                        <span class="remove-btn" onclick="removeSection(${si})">移除</span>
-                    </div>
+            document.getElementById('sections-root').innerHTML = logs[currIdx].sections.map((s, si) => `
+                <div class="section-box" draggable="true" ondragstart="handleSecDragStart(event, ${si})" ondragover="handleSecDragOver(event)" ondragleave="handleSecDragLeave(event)" ondrop="handleSecDrop(event, ${si})" ondragend="this.classList.remove('dragging')">
+                    <div class="section-ctrl-bar"><div class="drag-handle">⋮⋮ 章節 #${si + 1}</div><span class="remove-btn" onclick="removeSection(${si})">移除</span></div>
                     <div class="form-group"><label>標題</label><input type="text" value="${s.title}" onfocus="toggleDraggable(this, false)" onblur="toggleDraggable(this, true)" oninput="updateSec(${si}, 'title', this.value)"></div>
-                    <div class="form-group"><label>圖示</label>
-                        <select onfocus="toggleDraggable(this, false)" onblur="toggleDraggable(this, true)" onchange="updateSec(${si}, 'icon', this.value)">
-                            <option value="core" ${s.icon==='core'?'selected':''}>核心 (箭頭)</option>
-                            <option value="detail" ${s.icon==='detail'?'selected':''}>說明 (博士帽)</option>
-                            <option value="content" ${s.icon==='content'?'selected':''}>內容 (文件)</option>
-                            <option value="features" ${s.icon==='features'?'selected':''}>功能 (幾何)</option>
-                            <option value="check" ${s.icon==='check'?'selected':''}>核取 (勾號)</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <textarea style="height:150px" placeholder="- 項目點 / + 空白項目 / > 副群組" onfocus="toggleDraggable(this, false)" onblur="toggleDraggable(this, true)" oninput="updateSec(${si}, 'items', this.value)">${s.items.join('\n')}</textarea>
-                    </div>
-                </div>
-            `).join('');
+                    <div class="form-group"><label>圖示</label><select onfocus="toggleDraggable(this, false)" onblur="toggleDraggable(this, true)" onchange="updateSec(${si}, 'icon', this.value)">
+                        <option value="core" ${s.icon==='core'?'selected':''}>核心</option>
+                        <option value="detail" ${s.icon==='detail'?'selected':''}>說明</option>
+                        <option value="content" ${s.icon==='content'?'selected':''}>內容</option>
+                        <option value="features" ${s.icon==='features'?'selected':''}>功能</option>
+                        <option value="check" ${s.icon==='check'?'selected':''}>核取</option>
+                    </select></div>
+                    <div class="form-group"><textarea style="height:150px" placeholder="- 項目 / + 空白 / > 副群組" onfocus="toggleDraggable(this, false)" onblur="toggleDraggable(this, true)" oninput="updateSec(${si}, 'items', this.value)">${s.items.join('\n')}</textarea></div>
+                </div>`).join('');
         }
 
         function updateData(f,v) { logs[currIdx][f]=v; renderList(); updatePreview(); saveDraft(); }
         function updateSec(si,f,v) { if(f==='items') logs[currIdx].sections[si][f] = v.split('\n'); else logs[currIdx].sections[si][f]=v; updatePreview(); saveDraft(); }
         function addSection() { logs[currIdx].sections.push({ title: "新章節", icon: "content", items: [] }); renderSections(); updatePreview(); saveDraft(); }
         function removeSection(si) { logs[currIdx].sections.splice(si,1); renderSections(); updatePreview(); saveDraft(); }
-        function addNewVersion() { logs.unshift({ v: "v1.x.x", date: new Date().toISOString().split('T')[0], tag: "正式發布", intro: "", sections: [] }); selectLog(0); saveDraft(); }
-        function deleteVersion() { if(confirm("刪除此版本？")){ logs.splice(currIdx,1); currIdx=-1; renderList(); document.getElementById('editor-form').innerHTML = '<p style="text-align:center; margin-top:100px;">已刪除</p>'; updatePreview(); saveDraft(); }}
+        function addNewVersion() { logs.unshift({ v: "v1.x.x", date: new Date().toISOString().split('T')[0], tag: "發布", intro: "", sections: [] }); selectLog(0); saveDraft(); }
+        function deleteVersion() { if(confirm("刪除？")){ logs.splice(currIdx,1); currIdx=-1; renderList(); document.getElementById('editor-form').innerHTML = ''; updatePreview(); saveDraft(); }}
 
         function updatePreview() {
             const root = document.getElementById('live-preview-root');
-            if (currIdx === -1) { root.innerHTML = '<p>選擇後預覽</p>'; return; }
+            if (currIdx === -1) { root.innerHTML = '<p>選擇版本後預覽</p>'; return; }
             const l = logs[currIdx];
             root.innerHTML = `<div class="v-item"><div class="v-head"><span class="v-num">${l.v}</span><span class="v-tag">${l.tag}</span><span class="v-date">${l.date}</span></div>
                 <div class="v-body-box"><div class="v-intro">${parseLogMarkdown(l.intro)}</div>

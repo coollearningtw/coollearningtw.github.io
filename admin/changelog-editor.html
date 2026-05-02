@@ -39,7 +39,7 @@
         .log-item .d { font-size: 0.8rem; color: #64748b; }
 
         /* 中間編輯 */
-        .editor-main { background: #fff; overflow-y: auto; padding: 30px; }
+        .editor-main { background: #fff; overflow-y: auto; padding: 30px; padding-bottom: 100px; }
         .form-group { margin-bottom: 20px; }
         .form-group label { display: block; font-weight: bold; margin-bottom: 8px; color: #475569; font-size: 0.85rem; }
         input, textarea, select { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; font-family: inherit; font-size: 0.95rem; }
@@ -67,13 +67,38 @@
         .v-list li::before { content: "．"; position: absolute; left: 0; font-weight: bold; }
 
         .highlight { background-color: #fff3cd; padding: 0 4px; border-radius: 4px; color: #1e293b; font-weight: bold; }
-        .sub-group { margin-top: 8px; padding-left: 20px; border-left: 1px dashed #cbd5e1; color: #64748b; }
+        .sub-group { margin-top: 8px; padding-left: 20px; border-left: 1px dashed #cbd5e1; color: #64748b; font-size: 0.95rem; }
 
         #json-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.8); display: none; align-items: center; justify-content: center; z-index: 3000; }
         .json-box { background: #fff; padding: 30px; border-radius: 16px; width: 90%; max-width: 900px; }
         textarea#html-output { height: 500px; font-family: monospace; background: #0f172a; color: #38bdf8; font-size: 0.8rem; padding: 15px; border-radius: 8px; width: 100%; resize: none; }
         
         #fetch-status { font-size: 0.7rem; color: #0b76d1; margin-left: 10px; font-weight: normal; }
+        #save-status { font-size: 0.75rem; color: #10b981; margin-left: 10px; font-weight: bold; opacity: 0; transition: 0.3s; }
+
+        /* ========== 下方常用工具列 ========== */
+        .floating-helper {
+            position: fixed; bottom: 20px; left: 20px;
+            background: #fff; border: 1px solid #cbd5e1;
+            padding: 10px 15px; border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+            z-index: 100; display: flex; align-items: center; gap: 10px;
+        }
+        .helper-label { font-size: 0.75rem; font-weight: bold; color: #64748b; margin-right: 5px; }
+        .copy-chip {
+            padding: 4px 10px; background: #f1f5f9; border-radius: 6px;
+            font-size: 0.8rem; font-family: monospace; cursor: pointer;
+            transition: 0.2s; border: 1px solid transparent;
+        }
+        .copy-chip:hover { background: var(--primary-light); border-color: var(--primary); color: var(--primary); }
+        .copy-chip:active { transform: scale(0.95); }
+
+        #toast {
+            position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+            background: #0f172a; color: #fff; padding: 8px 20px;
+            border-radius: 50px; font-size: 0.85rem; opacity: 0; transition: 0.3s;
+            pointer-events: none; z-index: 2000;
+        }
     </style>
 </head>
 <body>
@@ -87,9 +112,10 @@
     <header>
         <div class="logo">
             <a href="index.html" class="back-link">⬅</a>
-            <span style="font-weight:bold; color:var(--primary);">更新日誌管理台 <span id="fetch-status">連線中...</span></span>
+            <span style="font-weight:bold; color:var(--primary);">更新日誌管理台 <span id="fetch-status">就緒</span> <span id="save-status">● 已自動存檔</span></span>
         </div>
-        <div class="header-right">
+        <div style="display:flex; gap:10px; align-items:center;">
+            <button class="btn-tool-text" onclick="resetDraft()" style="color:#ef4444; border-color:#fecaca;">重置暫存</button>
             <button class="btn-tool-text" onclick="generateHTML()">產出 HTML 代碼</button>
         </div>
     </header>
@@ -114,6 +140,20 @@
         </div>
     </div>
 
+    <!-- 浮動工具列 -->
+    <div class="floating-helper">
+        <span class="helper-label">快捷點擊複製：</span>
+        <div class="copy-chip" onclick="copyMarker('- ')">清單 -</div>
+        <div class="copy-chip" onclick="copyMarker('> ')">副群組 ></div>
+        <div class="copy-chip" onclick="copyMarker('**文字**')">粗體</div>
+        <div class="copy-chip" onclick="copyMarker('==文字==')">螢光筆</div>
+        <div class="copy-chip" onclick="copyMarker('__文字__')">底線</div>
+        <div class="copy-chip" onclick="copyMarker('[文字|編號]')">註釋</div>
+        <div class="copy-chip" onclick="copyMarker('[文字](網址)')">連結</div>
+    </div>
+
+    <div id="toast">已複製到剪貼簿</div>
+
     <div id="json-modal">
         <div class="json-box">
             <h3 style="margin-top:0;">產出 HTML 代碼</h3>
@@ -132,10 +172,10 @@
     <script src="../scripts/admin-lock.js"></script>
 
     <script>
-        // --- 核心業務邏輯 ---
         let logs = [];
         let currIdx = -1;
         const GITHUB_URL = "https://raw.githubusercontent.com/coollearningtw/cool-learning-data/main/changelog.html";
+        const STORAGE_KEY = 'cool_learning_changelog_draft';
 
         const ICONS = {
             core: "M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z",
@@ -144,6 +184,63 @@
             features: "M12 2l-5.5 9h11L12 2zm0 3.84L13.93 9h-3.87L12 5.84zM17.5 13c-2.49 0-4.5 2.01-4.5 4.5s2.01 4.5 4.5 4.5 4.5-2.01 4.5-4.5-2.01-4.5-4.5-4.5zm0 7c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5zM3 21.5h8v-8H3v8zm2-6h4v4H5v-4z",
             check: "M21 7L9 19l-5.5-5.5 1.41-1.41L9 16.17 19.59 5.59 21 7z"
         };
+
+        // --- 初始化與儲存邏輯 ---
+        async function init() {
+            const draft = localStorage.getItem(STORAGE_KEY);
+            if (draft) {
+                logs = JSON.parse(draft);
+                renderList();
+            } else {
+                await fetchLogs();
+            }
+        }
+
+        function saveDraft() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(logs));
+            const status = document.getElementById('save-status');
+            status.style.opacity = '1';
+            setTimeout(() => { status.style.opacity = '0'; }, 1500);
+        }
+
+        function resetDraft() {
+            if (confirm("確定要重置暫存嗎？這將會清除所有未產出的修改，並重新從 GitHub 載入。")) {
+                localStorage.removeItem(STORAGE_KEY);
+                location.reload();
+            }
+        }
+
+        // --- 解析邏輯 ---
+        function processListItems(itemsArray) {
+            if (!itemsArray || itemsArray.length === 0) return '';
+            let html = '';
+            let currentInLi = false;
+
+            itemsArray.forEach(line => {
+                const trimmed = line.trim();
+                if (!trimmed) return;
+
+                if (trimmed.startsWith('- ')) {
+                    if (currentInLi) html += '</li>';
+                    html += `<li>${parseLogMarkdown(trimmed.substring(2))}`;
+                    currentInLi = true;
+                } else if (trimmed.startsWith('> ')) {
+                    const subContent = `<div class="sub-group">${parseLogMarkdown(trimmed.substring(2))}</div>`;
+                    if (currentInLi) html += subContent;
+                    else html += `<li>${subContent}</li>`;
+                } else {
+                    const content = `<br>${parseLogMarkdown(trimmed)}`;
+                    if (currentInLi) html += content;
+                    else {
+                        html += `<li>${parseLogMarkdown(trimmed)}</li>`;
+                        currentInLi = true;
+                    }
+                }
+            });
+
+            if (currentInLi) html += '</li>';
+            return html;
+        }
 
         function parseLogMarkdown(text) {
             if (!text) return '';
@@ -156,13 +253,16 @@
             return html
                 .replace(/<span class="highlight">(.*?)<\/span>/g, '==$1==')
                 .replace(/<strong>(.*?)<\/strong>/g, '**$1**')
-                .replace(/<em>(.*?)<\/em>/g, '*$1*')
-                .replace(/<div class="sub-group">(.*?)<\/div>/g, '$1')
+                .replace(/<br>/g, '\n')
+                .replace(/<li>/g, '\n- ')
+                .replace(/<\/li>/g, '')
+                .replace(/<div class="sub-group">(.*?)<\/div>/g, '\n> $1')
                 .trim();
         }
 
         async function fetchLogs() {
             const status = document.getElementById('fetch-status');
+            status.innerText = "讀取 GitHub 中...";
             try {
                 const response = await fetch(GITHUB_URL + '?t=' + Date.now());
                 const htmlText = await response.text();
@@ -181,17 +281,25 @@
                     const sections = Array.from(sectionTitles).map((st, si) => {
                         const iconPath = st.querySelector('path').getAttribute('d');
                         const iconKey = Object.keys(ICONS).find(k => ICONS[k] === iconPath) || "content";
+                        const rawLines = Array.from(sectionLists[si].children).map(node => {
+                            let content = node.innerHTML;
+                            if (content.includes('sub-group')) {
+                                content = content.replace(/<div class="sub-group">(.*?)<\/div>/g, '\n> $1');
+                            }
+                            return '- ' + content.replace(/<br>/g, '\n');
+                        });
+
                         return { 
                             title: st.innerText.trim(), 
                             icon: iconKey, 
-                            items: Array.from(sectionLists[si].querySelectorAll('li')).map(li => htmlToMarkdown(li.innerHTML)) 
+                            items: rawLines.join('\n').split('\n').filter(l => l.trim())
                         };
                     });
                     return { v, tag, date, intro, sections };
                 });
-                status.innerText = "GitHub 資料提取成功";
+                status.innerText = "就緒";
                 renderList();
-            } catch (err) { status.innerText = "提取失敗，請手動新增"; }
+            } catch (err) { status.innerText = "抓取失敗"; }
         }
 
         function renderList() {
@@ -213,7 +321,7 @@
                 <div class="form-group"><label>版本號</label><input type="text" value="${l.v}" oninput="updateData('v', this.value)"></div>
                 <div class="form-group"><label>發布日期</label><input type="date" value="${l.date}" oninput="updateData('date', this.value)"></div>
                 <div class="form-group"><label>標籤</label><input type="text" value="${l.tag}" oninput="updateData('tag', this.value)"></div>
-                <div class="form-group"><label>描述 (支援 Markdown)</label><textarea oninput="updateData('intro', this.value)">${l.intro}</textarea></div>
+                <div class="form-group"><label>描述</label><textarea oninput="updateData('intro', this.value)">${l.intro}</textarea></div>
                 <div id="sections-root"></div>
                 <button class="btn-tool-text" onclick="addSection()" style="width:100%; border-style:dashed; margin-bottom:20px">+ 新增章節</button>
                 <div style="border-top:1px solid #eee; padding-top:20px;"><button style="color:red; background:none; border:none; cursor:pointer;" onclick="deleteVersion()">刪除此版本</button></div>
@@ -227,7 +335,7 @@
             root.innerHTML = logs[currIdx].sections.map((s, si) => `
                 <div class="section-box">
                     <span class="remove-btn" onclick="removeSection(${si})">移除</span>
-                    <div class="form-group"><label>標題</label><input type="text" value="${s.title}" oninput="updateSec(${si}, 'title', this.value)"></div>
+                    <div class="form-group"><label>章節標題</label><input type="text" value="${s.title}" oninput="updateSec(${si}, 'title', this.value)"></div>
                     <div class="form-group"><label>圖示</label><select onchange="updateSec(${si}, 'icon', this.value)">
                         <option value="core" ${s.icon==='core'?'selected':''}>核心 (箭頭)</option>
                         <option value="detail" ${s.icon==='detail'?'selected':''}>說明 (博士帽)</option>
@@ -235,21 +343,25 @@
                         <option value="features" ${s.icon==='features'?'selected':''}>功能 (幾何)</option>
                         <option value="check" ${s.icon==='check'?'selected':''}>核取 (勾號)</option>
                     </select></div>
-                    <div class="form-group"><label>項目 (每行一項，支援 Markdown)</label><textarea style="height:150px" oninput="updateSec(${si}, 'items', this.value)">${s.items.join('\n')}</textarea></div>
+                    <div class="form-group">
+                        <label>項目內容</label>
+                        <textarea style="height:180px" placeholder="行首加 - 為項目點&#10;行首加 > 為副群組&#10;一般換行不加點" oninput="updateSec(${si}, 'items', this.value)">${s.items.join('\n')}</textarea>
+                    </div>
                 </div>
             `).join('');
         }
 
-        function updateData(f,v) { logs[currIdx][f]=v; renderList(); updatePreview(); }
+        function updateData(f,v) { logs[currIdx][f]=v; renderList(); updatePreview(); saveDraft(); }
         function updateSec(si,f,v) { 
             if(f==='items') logs[currIdx].sections[si][f] = v.split('\n');
             else logs[currIdx].sections[si][f]=v; 
             updatePreview();
+            saveDraft();
         }
-        function addSection() { logs[currIdx].sections.push({ title: "新章節", icon: "content", items: [] }); renderSections(); updatePreview(); }
-        function removeSection(si) { logs[currIdx].sections.splice(si,1); renderSections(); updatePreview(); }
-        function addNewVersion() { logs.unshift({ v: "v1.x.x", date: new Date().toISOString().split('T')[0], tag: "正式發布版本", intro: "", sections: [] }); selectLog(0); }
-        function deleteVersion() { if(confirm("刪除此版本？")){ logs.splice(currIdx,1); currIdx=-1; renderList(); document.getElementById('editor-form').innerHTML = '<p style="text-align:center; margin-top:100px;">已刪除</p>'; updatePreview(); }}
+        function addSection() { logs[currIdx].sections.push({ title: "新章節", icon: "content", items: [] }); renderSections(); updatePreview(); saveDraft(); }
+        function removeSection(si) { logs[currIdx].sections.splice(si,1); renderSections(); updatePreview(); saveDraft(); }
+        function addNewVersion() { logs.unshift({ v: "v1.x.x", date: new Date().toISOString().split('T')[0], tag: "正式發布版本", intro: "", sections: [] }); selectLog(0); saveDraft(); }
+        function deleteVersion() { if(confirm("刪除此版本？")){ logs.splice(currIdx,1); currIdx=-1; renderList(); document.getElementById('editor-form').innerHTML = '<p style="text-align:center; margin-top:100px;">已刪除</p>'; updatePreview(); saveDraft(); }}
 
         function updatePreview() {
             const root = document.getElementById('live-preview-root');
@@ -269,7 +381,7 @@
                                 <svg viewBox="0 0 24 24"><path d="${ICONS[s.icon]}"/></svg>
                                 ${s.title}
                             </div>
-                            <ul class="v-list">${s.items.map(it => `<li>${parseLogMarkdown(it)}</li>`).join('')}</ul>
+                            <ul class="v-list">${processListItems(s.items)}</ul>
                         `).join('')}
                     </div>
                 </div>
@@ -285,7 +397,7 @@
                 ${s.title}
             </span>
             <ul class="official-list">
-                ${s.items.map(it => `<li>${parseLogMarkdown(it)}</li>`).join('\n                ')}
+                ${processListItems(s.items)}
             </ul>`).join('');
 
                 return `
@@ -341,7 +453,15 @@
             document.getElementById('json-modal').style.display = 'flex';
         }
 
-        fetchLogs();
+        function copyMarker(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                const toast = document.getElementById('toast');
+                toast.style.opacity = '1';
+                setTimeout(() => toast.style.opacity = '0', 2000);
+            });
+        }
+
+        init();
     </script>
 </body>
 </html>

@@ -2,8 +2,8 @@
  * 酷學習管理後台 - 統一鎖定系統邏輯
  * 建議存放在 ../scripts/admin-lock.js 或 admin-auth.js
  */
-(function() {
-    const SECRET_KEY = "admin123"; // 在此統一管理管理員密碼
+ (function() {
+    const SECRET_KEYS = ["admin123", "admin456"]; // 在此統一管理多組管理員密碼
     const UNLOCK_STORAGE_KEY = 'global_editor_unlocked';
 
     // 等待 DOM 載入後執行
@@ -49,11 +49,11 @@
             timer = setTimeout(() => { clicks = 0; }, 400);
 
             if (clicks === 3) {
-                const pw = prompt("請輸入管理員解鎖密碼：");
-                if (pw === SECRET_KEY) {
+                const pw = prompt("請輸入您的身分代碼：");
+                if (SECRET_KEYS.includes(pw)) {
                     performUnlock(false);
                 } else if (pw !== null) {
-                    alert("密碼錯誤，拒絕訪問。");
+                    alert("查無此身分代碼，請重新嘗試。");
                 }
                 clicks = 0;
             }

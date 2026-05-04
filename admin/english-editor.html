@@ -99,9 +99,39 @@
         .inline-input-title { width: 300px; } /* 限制標題輸入框寬度 */
         .inline-textarea { resize: vertical; min-height: 80px; }
         
-        .pos-helper { display: flex; gap: 5px; margin-top: 5px; flex-wrap: wrap; }
-        .pos-btn { font-size: 11px; padding: 2px 8px; border: 1px solid #cbd5e1; background: #fff; border-radius: 4px; cursor: pointer; }
-        .pos-btn:hover { background: #f1f5f9; border-color: #0b76d1; }
+
+        /* 詞性懸浮視窗樣式 */
+        .pos-popover {
+            position: absolute;
+            z-index: 2000;
+            background: #fff;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px 0 rgba(0,0,0,0.08);
+            padding: 10px 12px;
+            display: none;
+            flex-wrap: wrap;
+            gap: 6px;
+            min-width: 180px;
+            max-width: 260px;
+        }
+        .pos-popover.active { display: flex; }
+        .pos-btn {
+            font-size: 12px;
+            padding: 3px 10px;
+            border: 1px solid #cbd5e1;
+            background: #f8fafc;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 2px 0;
+            transition: background 0.15s, border 0.15s;
+        }
+        .pos-btn.selected {
+            background: #0b76d1;
+            color: #fff;
+            border-color: #0b76d1;
+        }
+        .pos-btn:hover { background: #e0f2fe; border-color: #0b76d1; }
         
         .svg-icon { width: 18px; height: 18px; fill: currentColor; flex-shrink: 0; }
         .back-link { display: flex; align-items: center; text-decoration: none; color: var(--primary) !important; margin-right: 10px; }
@@ -117,6 +147,7 @@
                 <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm9 14H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/>
             </svg>
             <div class="lock-notice">此功能僅提供給部分用戶使用</div>
+            <a href="../index.html" style="color: white; text-decoration: none; background-color: #0b76d1; height: 40px; margin-top: 20px; border-radius: 20px; display: flex; align-items: center; justify-content: center;">回到首頁</a>
         </div>
     </div>
 
@@ -167,7 +198,7 @@
     <script src="../scripts/admin-lock.js"></script>
     <script>
         let currentMode = 'words', dataStore = { words: { sources: [] }, textbook: { sources: [] } }, expandedKeys = new Set();
-        const POS_LIST = ["n.", "v.", "adj.", "adv.", "prep.", "conj.", "pron.", "int.", "phr."];
+        const POS_LIST = ["n.", "n. [C]", "n. [U]", "n. [C][U]", "v.", "vi.", "vt.", "adj.", "adv.", "prep.", "conj.", "pron.", "int.", "phr."];
         const ICONS = {
             folder: '<svg class="svg-icon" style="color:#64748b" viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>',
             file: '<svg class="svg-icon" style="color:#94a3b8" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>',
@@ -229,34 +260,28 @@
             if(el.querySelector('input') || el.querySelector('textarea')) return;
             const db = currentMode === 'words' ? dataStore.words : dataStore.textbook;
             const rawVal = i === -1 ? db.sources[s].lessons[l][f] : (currentMode === 'words' ? db.sources[s].lessons[l].vocabulary[i][f] : db.sources[s].lessons[l].sentences[i][f]);
-            
+
             const useInput = (currentMode === 'words' && (f === 'word' || f === 'pos' || f === 'chinese')) || f === 'lesson' || f === 'title';
-            
+
             if (useInput) {
                 // 如果是標題欄位，增加特定寬度樣式
                 const inputClass = (f === 'title') ? 'inline-input inline-input-title' : 'inline-input';
                 el.innerHTML = `<input type="text" class="${inputClass}" value="${rawVal||''}">`;
-                
+
                 if (f === 'pos') {
-                    const helper = document.createElement('div');
-                    helper.className = 'pos-helper';
-                    POS_LIST.forEach(p => {
-                        const btn = document.createElement('button');
-                        btn.className = 'pos-btn';
-                        btn.innerText = p;
-                        btn.onclick = (e) => {
-                            e.preventDefault();
-                            const input = el.querySelector('input');
-                            let val = input.value.trim();
-                            let parts = val ? val.split(/\s+/) : [];
-                            if (parts.includes(p)) parts = parts.filter(x => x !== p);
-                            else parts.push(p);
-                            input.value = parts.join(' ');
-                            input.focus();
-                        };
-                        helper.appendChild(btn);
+                    // 懸浮詞性選擇器
+                    const input = el.querySelector('input');
+                    input.readOnly = false;
+                    input.style.background = '#fff';
+                    input.addEventListener('focus', function(e) {
+                        showPosPopover(input, s, l, i);
                     });
-                    el.appendChild(helper);
+                    // 若直接點擊輸入框外部，需自動儲存
+                    input.addEventListener('blur', function(e) {
+                        setTimeout(() => {
+                            if (!window._posPopoverActive) save();
+                        }, 120);
+                    });
                 }
             } else {
                 el.innerHTML = `<textarea class="inline-textarea">${rawVal||''}</textarea>`;
@@ -264,7 +289,7 @@
 
             const inputEl = el.querySelector('input, textarea');
             inputEl.focus();
-            
+
             const save = () => {
                 const newVal = inputEl.value;
                 if(i===-1) db.sources[s].lessons[l][f] = newVal; 
@@ -275,13 +300,60 @@
                 sync(); render(); 
             };
 
-            inputEl.onblur = (e) => {
-                if (e.relatedTarget && e.relatedTarget.className === 'pos-btn') return;
-                save();
-            };
+            if (f !== 'pos') {
+                inputEl.onblur = (e) => { save(); };
+            }
             if(useInput) {
                 inputEl.onkeydown = (e) => { if(e.key === 'Enter') save(); };
             }
+        }
+
+        // 懸浮詞性選擇器
+        function showPosPopover(input, s, l, i) {
+            let pop = document.getElementById('pos-popover');
+            if (!pop) {
+                pop = document.createElement('div');
+                pop.id = 'pos-popover';
+                pop.className = 'pos-popover';
+                document.body.appendChild(pop);
+            }
+            pop.innerHTML = '';
+            const val = input.value.trim();
+            let parts = val ? val.split(/\s+/) : [];
+            POS_LIST.forEach(p => {
+                const btn = document.createElement('button');
+                btn.className = 'pos-btn' + (parts.includes(p) ? ' selected' : '');
+                btn.innerText = p;
+                btn.onclick = (e) => {
+                    e.preventDefault();
+                    let v = input.value.trim();
+                    let arr = v ? v.split(/\s+/) : [];
+                    if (arr.includes(p)) arr = arr.filter(x => x !== p);
+                    else arr.push(p);
+                    input.value = arr.join(' ');
+                    input.focus();
+                    showPosPopover(input, s, l, i); // 重新渲染選擇狀態
+                };
+                pop.appendChild(btn);
+            });
+            // 定位到輸入框下方
+            const rect = input.getBoundingClientRect();
+            pop.style.left = (window.scrollX + rect.left) + 'px';
+            pop.style.top = (window.scrollY + rect.bottom + 4) + 'px';
+            pop.classList.add('active');
+            window._posPopoverActive = true;
+
+            // 點擊外部自動關閉
+            function hidePopover(e) {
+                if (!pop.contains(e.target) && e.target !== input) {
+                    pop.classList.remove('active');
+                    window._posPopoverActive = false;
+                    document.removeEventListener('mousedown', hidePopover);
+                }
+            }
+            setTimeout(() => {
+                document.addEventListener('mousedown', hidePopover);
+            }, 0);
         }
 
         function sync() { 

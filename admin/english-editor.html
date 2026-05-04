@@ -138,6 +138,27 @@
         #json-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.8); display: none; align-items: center; justify-content: center; z-index: 3000; backdrop-filter: blur(4px); }
         .json-box { background: #fff; padding: 30px; border-radius: 16px; width: 90%; max-width: 800px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
         textarea#json-output { width: 100%; height: 400px; font-family: monospace; font-size: 0.85rem; padding: 15px; background: #0f172a; color: #38bdf8; border: none; border-radius: 8px; resize: none; }
+        
+        .floating-helper {
+            position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%);
+            background: #fff; border: 1px solid #cbd5e1;
+            padding: 10px 15px; border-radius: 12px;
+            z-index: 100; display: flex; align-items: center; gap: 10px;
+        }
+        .helper-label { font-size: 0.75rem; font-weight: bold; color: #64748b; margin-right: 5px; }
+        .copy-chip {
+            padding: 4px 10px; background: #f1f5f9; border-radius: 6px;
+            font-size: 0.8rem; cursor: pointer;
+            transition: 0.2s; border: 1px solid transparent;
+        }
+        .copy-chip:hover { background: var(--primary-light); border-color: var(--primary); color: var(--primary); }
+
+        #toast {
+            position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+            background: #0f172a; color: #fff; padding: 8px 20px;
+            border-radius: 50px; font-size: 0.85rem; opacity: 0; transition: 0.3s;
+            pointer-events: none; z-index: 2000;
+        }
     </style>
 </head>
 <body>
@@ -174,6 +195,12 @@
 
     <div class="floating-footer">
         <div id="status" style="color:#64748b;font-size:0.85rem">就緒</div>
+        <div class="floating-helper">
+        <span class="helper-label">快捷複製：</span>
+        <div class="copy-chip" onclick="copyMarker('…')">…</div>
+    </div>
+
+    <div id="toast">已複製</div>
         <div style="display:flex;gap:10px">
             <button class="btn-action" onclick="resetDraft()">重置暫存</button>
             <button class="btn-action" onclick="showJSON()">複製 JSON</button>
@@ -389,6 +416,14 @@
         function downloadJSON() { const db=currentMode==='words'?dataStore.words:dataStore.textbook; const filename=currentMode==='words'?'english.json':'english-textbook.json'; const b = new Blob([JSON.stringify(db,null,2)],{type:'application/json'}); const a = document.createElement('a'); a.href=URL.createObjectURL(b); a.download=filename; a.click(); }
         
         init();
+
+        function copyMarker(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                const toast = document.getElementById('toast');
+                toast.style.opacity = '1';
+                setTimeout(() => toast.style.opacity = '0', 2000);
+            });
+        }
     </script>
 </body>
 </html>

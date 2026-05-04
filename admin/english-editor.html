@@ -347,8 +347,8 @@
             const inputEl = el.querySelector('input, textarea');
             inputEl.focus();
 
-            const save = () => {
-                const newVal = inputEl.value;
+            const save = (valOverride) => {
+                const newVal = typeof valOverride === 'string' ? valOverride : inputEl.value;
                 if(i===-1) db.sources[s].lessons[l][f] = newVal; 
                 else { 
                     const arr = currentMode==='words' ? db.sources[s].lessons[l].vocabulary : db.sources[s].lessons[l].sentences; 
@@ -358,8 +358,8 @@
             };
 
             // 即時儲存（input/change/Enter）
-            inputEl.addEventListener('input', save);
-            inputEl.addEventListener('change', save);
+            inputEl.addEventListener('input', () => save());
+            inputEl.addEventListener('change', () => save());
             inputEl.addEventListener('keydown', (e) => {
                 if(e.key === 'Enter') {
                     e.preventDefault();
@@ -373,17 +373,10 @@
                 if (f !== 'pos') hidePosPopover();
             });
 
-            // 失焦時自動還原顯示內容
+            // 失焦時自動還原顯示內容，直接用 inputEl.value
             inputEl.addEventListener('blur', () => {
                 el.classList.remove('editing-cell');
-                // 還原顯示內容
-                const db2 = currentMode === 'words' ? dataStore.words : dataStore.textbook;
-                let val2 = '';
-                if (i === -1) {
-                    val2 = db2.sources[s].lessons[l][f];
-                } else {
-                    val2 = currentMode === 'words' ? db2.sources[s].lessons[l].vocabulary[i][f] : db2.sources[s].lessons[l].sentences[i][f];
-                }
+                let val2 = inputEl.value;
                 if (f === 'word') el.innerHTML = parseMarkdown(val2);
                 else if (f === 'pos') el.innerHTML = val2 || '(Pos)';
                 else if (f === 'chinese') el.innerHTML = parseMarkdown(val2);
@@ -391,6 +384,7 @@
                 else if (f === 'ch') el.innerHTML = parseMarkdown(val2);
                 else if (f === 'lesson') el.innerHTML = val2;
                 else if (f === 'title') el.innerHTML = parseMarkdown(val2);
+                save(val2); // 確保同步
             });
         }
 
@@ -418,26 +412,37 @@
                 const btn = document.createElement('button');
                 btn.className = 'pos-btn' + (parts.includes(p) ? ' selected' : '');
                 btn.innerText = p;
-                btn.onclick = (e) => {
+                btn.onmousedown = (e) => {
+                    // 用 onmousedown 避免點擊時 input 失焦
                     e.preventDefault();
                     let v = input.value.trim();
                     let arr = v ? v.split(/\s+/) : [];
                     if (arr.includes(p)) arr = arr.filter(x => x !== p);
                     else arr.push(p);
                     input.value = arr.join(' ');
-                    input.focus();
+                    // 立即同步到資料
+                    if(i===-1) {
+                        const db = currentMode === 'words' ? dataStore.words : dataStore.textbook;
+                        db.sources[s].lessons[l][f] = input.value;
+                    } else {
+                        const db = currentMode === 'words' ? dataStore.words : dataStore.textbook;
+                        const arr2 = currentMode==='words' ? db.sources[s].lessons[l].vocabulary : db.sources[s].lessons[l].sentences;
+                        arr2[i][f] = input.value;
+                    }
+                    sync();
                     showPosPopover(input, s, l, i); // 重新渲染選擇狀態
                 };
                 pop.appendChild(btn);
             });
-            // 定位到輸入框下方
+            // 定位到輸入框下方（考慮滾動）
             const rect = input.getBoundingClientRect();
+            pop.style.position = 'absolute';
             pop.style.left = (window.scrollX + rect.left) + 'px';
             pop.style.top = (window.scrollY + rect.bottom + 4) + 'px';
             pop.classList.add('active');
             window._posPopoverActive = true;
 
-            // 點擊外部自動關閉
+            // 點擊外部自動關閉（但點擊浮窗本身不會關閉）
             function hidePopover(e) {
                 if (!pop.contains(e.target) && e.target !== input) {
                     pop.classList.remove('active');

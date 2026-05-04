@@ -95,7 +95,7 @@
         .btn-primary { background: #0f172a; color: #fff; border: none; }
         
         /* 編輯器 Input 樣式 */
-        .inline-textarea, .inline-input { width: 100%; padding: 8px; border: 2px solid #0b76d1; border-radius: 4px; outline: none; font-family: inherit; box-sizing: border-box; background: #fff; font-size: 1rem; }
+        .inline-textarea, .inline-input { width: 100%; border: 2px solid #0b76d1; border-radius: 4px; outline: none; font-family: inherit; box-sizing: border-box; background: #fff; font-size: 1rem; }
         .inline-input-title { width: 300px; } /* 限制標題輸入框寬度 */
         .inline-textarea { resize: vertical; min-height: 80px; }
         
@@ -150,6 +150,7 @@
             padding: 4px 10px; background: #f1f5f9; border-radius: 6px;
             font-size: 0.8rem; cursor: pointer;
             transition: 0.2s; border: 1px solid transparent;
+            font-weight: bolder;
         }
         .copy-chip:hover { background: var(--primary-light); border-color: var(--primary); color: var(--primary); }
 
@@ -238,7 +239,8 @@
             const draftW = localStorage.getItem('english_words_draft'), draftT = localStorage.getItem('english_textbook_draft');
             dataStore.words = draftW ? JSON.parse(draftW) : await (await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/english.json')).json();
             dataStore.textbook = draftT ? JSON.parse(draftT) : await (await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/english-textbook.json')).json();
-            if (dataStore.words.sources.length) expandedKeys.add('source-0');
+            // 預設不展開任何 source
+            // if (dataStore.words.sources.length) expandedKeys.add('source-0');
             render();
         }
 
@@ -284,7 +286,39 @@
         function toggleKey(k) { expandedKeys.has(k) ? expandedKeys.delete(k) : expandedKeys.add(k); render(); }
         
         function startEdit(el, s, l, i, f) {
-            if(el.querySelector('input') || el.querySelector('textarea')) return;
+            // 關閉所有其他正在編輯的輸入格
+            document.querySelectorAll('.editing-cell').forEach(cell => {
+                // 若有 input/textarea，觸發 blur 以確保儲存
+                const input = cell.querySelector('input, textarea');
+                if (input) input.blur();
+                // 還原顯示內容
+                const idx = cell.dataset;
+                if (idx) {
+                    const db = currentMode === 'words' ? dataStore.words : dataStore.textbook;
+                    let val = '';
+                    if (idx.i === '-1') {
+                        val = db.sources[+idx.s].lessons[+idx.l][idx.f];
+                    } else {
+                        val = currentMode === 'words' ? db.sources[+idx.s].lessons[+idx.l].vocabulary[+idx.i][idx.f] : db.sources[+idx.s].lessons[+idx.l].sentences[+idx.i][idx.f];
+                    }
+                    if (idx.f === 'word') cell.innerHTML = parseMarkdown(val);
+                    else if (idx.f === 'pos') cell.innerHTML = val || '(Pos)';
+                    else if (idx.f === 'chinese') cell.innerHTML = parseMarkdown(val);
+                    else if (idx.f === 'en') cell.innerHTML = parseMarkdown(val);
+                    else if (idx.f === 'ch') cell.innerHTML = parseMarkdown(val);
+                    else if (idx.f === 'lesson') cell.innerHTML = val;
+                    else if (idx.f === 'title') cell.innerHTML = parseMarkdown(val);
+                }
+                cell.classList.remove('editing-cell');
+            });
+
+            // 標記目前 cell
+            el.classList.add('editing-cell');
+            el.dataset.s = s;
+            el.dataset.l = l;
+            el.dataset.i = i;
+            el.dataset.f = f;
+
             const db = currentMode === 'words' ? dataStore.words : dataStore.textbook;
             const rawVal = i === -1 ? db.sources[s].lessons[l][f] : (currentMode === 'words' ? db.sources[s].lessons[l].vocabulary[i][f] : db.sources[s].lessons[l].sentences[i][f]);
 
@@ -293,7 +327,7 @@
             if (useInput) {
                 // 如果是標題欄位，增加特定寬度樣式
                 const inputClass = (f === 'title') ? 'inline-input inline-input-title' : 'inline-input';
-                el.innerHTML = `<input type="text" class="${inputClass}" value="${rawVal||''}">`;
+                el.innerHTML = `<input type=\"text\" class=\"${inputClass}\" value=\"${rawVal||''}\">`;
 
                 if (f === 'pos') {
                     // 懸浮詞性選擇器
@@ -301,17 +335,13 @@
                     input.readOnly = false;
                     input.style.background = '#fff';
                     input.addEventListener('focus', function(e) {
+                        // 關閉其他浮窗
+                        hidePosPopover();
                         showPosPopover(input, s, l, i);
-                    });
-                    // 若直接點擊輸入框外部，需自動儲存
-                    input.addEventListener('blur', function(e) {
-                        setTimeout(() => {
-                            if (!window._posPopoverActive) save();
-                        }, 120);
                     });
                 }
             } else {
-                el.innerHTML = `<textarea class="inline-textarea">${rawVal||''}</textarea>`;
+                el.innerHTML = `<textarea class=\"inline-textarea\">${rawVal||''}</textarea>`;
             }
 
             const inputEl = el.querySelector('input, textarea');
@@ -324,14 +354,51 @@
                     const arr = currentMode==='words' ? db.sources[s].lessons[l].vocabulary : db.sources[s].lessons[l].sentences; 
                     arr[i][f] = newVal; 
                 }
-                sync(); render(); 
+                sync();
             };
 
-            if (f !== 'pos') {
-                inputEl.onblur = (e) => { save(); };
-            }
-            if(useInput) {
-                inputEl.onkeydown = (e) => { if(e.key === 'Enter') save(); };
+            // 即時儲存（input/change/Enter）
+            inputEl.addEventListener('input', save);
+            inputEl.addEventListener('change', save);
+            inputEl.addEventListener('keydown', (e) => {
+                if(e.key === 'Enter') {
+                    e.preventDefault();
+                    save();
+                    inputEl.blur();
+                }
+            });
+
+            // 切換到其他輸入格時自動關閉 pos 浮窗
+            inputEl.addEventListener('focus', () => {
+                if (f !== 'pos') hidePosPopover();
+            });
+
+            // 失焦時自動還原顯示內容
+            inputEl.addEventListener('blur', () => {
+                el.classList.remove('editing-cell');
+                // 還原顯示內容
+                const db2 = currentMode === 'words' ? dataStore.words : dataStore.textbook;
+                let val2 = '';
+                if (i === -1) {
+                    val2 = db2.sources[s].lessons[l][f];
+                } else {
+                    val2 = currentMode === 'words' ? db2.sources[s].lessons[l].vocabulary[i][f] : db2.sources[s].lessons[l].sentences[i][f];
+                }
+                if (f === 'word') el.innerHTML = parseMarkdown(val2);
+                else if (f === 'pos') el.innerHTML = val2 || '(Pos)';
+                else if (f === 'chinese') el.innerHTML = parseMarkdown(val2);
+                else if (f === 'en') el.innerHTML = parseMarkdown(val2);
+                else if (f === 'ch') el.innerHTML = parseMarkdown(val2);
+                else if (f === 'lesson') el.innerHTML = val2;
+                else if (f === 'title') el.innerHTML = parseMarkdown(val2);
+            });
+        }
+
+        function hidePosPopover() {
+            const pop = document.getElementById('pos-popover');
+            if (pop) {
+                pop.classList.remove('active');
+                window._posPopoverActive = false;
             }
         }
 

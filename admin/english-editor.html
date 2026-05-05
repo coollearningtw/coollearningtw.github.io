@@ -349,16 +349,22 @@
 
             const save = (valOverride) => {
     const newVal = typeof valOverride === 'string' ? valOverride : inputEl.value;
-    if(i===-1) {
-        // 在這裡加入判斷，如果是 lesson 欄位，轉換為數字
-        db.sources[s].lessons[l][f] = (f === 'lesson') ? (Number(newVal) || 0) : newVal; 
-    }
-    else { 
-        const arr = currentMode==='words' ? db.sources[s].lessons[l].vocabulary : db.sources[s].lessons[l].sentences; 
+    
+    if (i === -1) {
+        // 當欄位名稱 (f) 為 'lesson' 時，強制轉為數字
+        // 使用 Number() 轉換，若轉換失敗則回傳原始字串或 0
+        if (f === 'lesson') {
+            db.sources[s].lessons[l][f] = isNaN(Number(newVal)) ? newVal : Number(newVal);
+        } else {
+            db.sources[s].lessons[l][f] = newVal;
+        }
+    } else { 
+        const arr = currentMode === 'words' ? db.sources[s].lessons[l].vocabulary : db.sources[s].lessons[l].sentences; 
         arr[i][f] = newVal; 
     }
     sync();
 };
+
 
 
             // 即時儲存（input/change/Enter）

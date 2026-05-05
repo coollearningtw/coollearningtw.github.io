@@ -10,8 +10,17 @@
         header { justify-content: space-between; }
         .trans-item { padding: 20px; margin-bottom: 12px; cursor: pointer; }
         .ch-txt { font-size: 1.1rem; font-weight: bold; }
-        .en-txt { margin-top: 10px; color: var(--primary); display: none; border-top: 1px dashed #eee; padding-top: 10px; }
+        .en-txt { 
+            margin-top: 10px; 
+            color: var(--primary); 
+            display: none; 
+            border-top: 1px dashed #eee; 
+            padding-top: 10px; 
+            line-height: 1.5;
+        }
         .en-txt.show { display: block; }
+        /* 讓粗體顏色與主色調一致或稍微加深 */
+        .en-txt strong { color: #074a86; font-weight: 800; } 
         .btn-quiz { background: #e3f2fd; color: var(--primary); border: 2px solid var(--primary); padding: 8px 16px; border-radius: 50px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
@@ -36,8 +45,11 @@
                         l.pairs.forEach(p => {
                             const card = document.createElement('div');
                             card.className = 'std-card trans-item';
-                            // 列表頁隱藏多重答案括號，只顯示第一種
-                            const displayEn = p.en.replace(/\(([^/)]+)\/[^)]+\)/g, '$1');
+
+                            // --- 核心修改：將 (A/B/C) 轉換為 <strong>A/B/C</strong> ---
+                            // 這個正則會尋找所有被括號包圍的內容，並把內容抓出來放在 strong 標籤裡
+                            const displayEn = p.en.replace(/\(([^)]+)\)/g, '<strong>$1</strong>');
+                            
                             card.innerHTML = `<div class="ch-txt">${p.ch}</div><div class="en-txt">${displayEn}</div>`;
                             card.onclick = () => card.querySelector('.en-txt').classList.toggle('show');
                             root.appendChild(card);

@@ -7,51 +7,111 @@
     <link rel="stylesheet" href="../styles/style.css">
     <link rel="stylesheet" href="../styles/header.css">
     <style>
-        .quiz-wrapper { max-width: 750px; margin: 20px auto; text-align: center; }
-        .ch-display { font-size: 1.6rem; font-weight: bold; margin-bottom: 20px; line-height: 1.4; }
-        textarea { width: 100%; height: 140px; font-size: 1.25rem; padding: 18px; border-radius: 16px; border: 2px solid #ddd; outline: none; resize: none; box-sizing: border-box; }
-        .btn-group { margin-top: 25px; display: flex; gap: 12px; justify-content: center; }
-        .btn-action { padding: 12px 45px; font-size: 1.1rem; border-radius: 50px; cursor: pointer; font-weight: bold; border: none; }
-        .btn-check { background: var(--primary); color: #fff; }
-        .btn-next { background: #333; color: #fff; }
+        .quiz-wrapper { max-width: 750px; margin: 20px auto; text-align: center; padding: 0 15px; }
+        .ch-display { font-size: 1.5rem; font-weight: bold; margin-bottom: 25px; color: #1e293b; line-height: 1.5; }
+        
+        /* 輸入框美化 */
+        textarea { 
+            width: 100%; height: 140px; font-size: 1.2rem; padding: 20px; 
+            border-radius: 20px; border: 2px solid #e2e8f0; outline: none; 
+            resize: none; transition: 0.3s; background: #fff; box-sizing: border-box;
+            font-family: inherit;
+        }
+        textarea:focus { border-color: var(--primary); box-shadow: 0 10px 15px -3px rgba(11, 118, 209, 0.1); }
+        textarea:disabled { background: #f8fafc; color: #64748b; border-color: #f1f5f9; }
+
+        /* 比對結果區塊美化 */
+        .diff-result-box {
+            display: none;
+            margin-top: 25px;
+            padding: 25px;
+            background: #fff;
+            border-radius: 20px;
+            border: 1px solid #e2e8f0;
+            text-align: left;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+        .diff-title { font-size: 0.85rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 15px; letter-spacing: 1px; }
+        
+        /* 詞彙標籤樣式 */
+        .diff-content { line-height: 2.2; font-size: 1.15rem; }
+        .word { display: inline-block; margin-right: 4px; padding: 2px 4px; border-radius: 6px; }
+        .w-correct { color: #059669; font-weight: 500; } /* 綠色：正確 */
+        .w-missing { color: #dc2626; background: #fee2e2; font-weight: bold; } /* 紅底：漏掉的詞 */
+        .w-extra { color: #d97706; background: #fef3c7; font-weight: bold; } /* 黃底：多打的詞 */
+
+        /* 標準答案完整顯示 */
+        .full-answer { margin-top: 20px; padding-top: 15px; border-top: 1px dashed #e2e8f0; color: #64748b; font-size: 0.95rem; }
+        .full-answer strong { color: #1e293b; display: block; margin-bottom: 4px; }
+
+        .btn-group { margin-top: 30px; display: flex; gap: 15px; justify-content: center; }
+        .btn-action { padding: 14px 50px; font-size: 1.1rem; border-radius: 50px; cursor: pointer; font-weight: bold; border: none; transition: 0.2s; }
+        .btn-check { background: var(--primary); color: #fff; box-shadow: 0 4px 12px rgba(11, 118, 209, 0.2); }
+        .btn-check:hover { transform: translateY(-2px); filter: brightness(1.1); }
+        .btn-next { background: #1e293b; color: #fff; }
+
+        @media (max-width: 600px) {
+            .ch-display { font-size: 1.2rem; }
+            textarea { height: 120px; font-size: 1.1rem; }
+            .btn-group { flex-direction: column; }
+            .btn-action { width: 100%; }
+        }
     </style>
 </head>
 <body>
     <header><div class="logo"><a href="translation.html" class="back-link">⬅</a> 翻譯測驗</div></header>
+
     <div class="page-container quiz-wrapper">
-        <div id="quiz-count" style="margin-bottom:12px; color:#999; font-weight: bold;"></div>
+        <div id="quiz-count" style="margin-bottom:12px; color:#94a3b8; font-weight: 800; font-size: 0.9rem;"></div>
         <div id="ch-text" class="ch-display"></div>
-        <textarea id="user-input" placeholder="輸入翻譯..." spellcheck="false"></textarea>
-        <div id="diff-output" class="diff-result-box" style="display:none; margin-top:20px; text-align:left; padding:15px; background:#f8fafc; border-radius:10px;"></div>
+        
+        <textarea id="user-input" placeholder="請在此輸入英文翻譯句子..." spellcheck="false"></textarea>
+        
+        <!-- 比對結果面板 -->
+        <div id="diff-panel" class="diff-result-box">
+            <div class="diff-title">核對結果 FEEDBACK</div>
+            <div id="diff-content" class="diff-content"></div>
+            <div id="full-answer-box" class="full-answer">
+                <strong>標準答案：</strong>
+                <span id="clean-answer"></span>
+            </div>
+        </div>
+
         <div class="btn-group">
             <button id="btn-check" class="btn-action btn-check">核對答案</button>
-            <button id="btn-next" class="btn-action btn-next" style="display:none;">下一題</button>
+            <button id="btn-next" class="btn-action btn-next" style="display:none;"></button>
         </div>
     </div>
 
     <script>
-        let quizPool = []; let index = 0;
+        let quizPool = [];
+        let index = 0;
 
         function getPossibleSentences(text) {
             const regex = /\(([^)]+)\)/;
             let sentences = [text];
             while (regex.test(sentences[0])) {
-                let newSents = [];
+                let newSentences = [];
                 sentences.forEach(s => {
                     const match = s.match(regex);
                     const options = match[1].split('/');
-                    options.forEach(opt => newSents.push(s.replace(match[0], opt.trim())));
+                    options.forEach(opt => newSentences.push(s.replace(match[0], opt.trim())));
                 });
-                sentences = newSents;
+                sentences = newSentences;
             }
             return sentences;
         }
 
-        function tokenize(t) { return t.replace(/([.,!?;])/g, ' $1 ').split(/\s+/).filter(x => x.length > 0); }
+        function tokenize(text) {
+            // 包含標點符號的拆解
+            return text.replace(/([.,!?;])/g, ' $1 ').split(/\s+/).filter(t => t.length > 0);
+        }
 
         function findBestMatch(userIn, rawAns) {
             const possibilities = getPossibleSentences(rawAns);
-            let bestMatch = possibilities[0]; let maxOverlap = -1;
+            if (possibilities.length === 1) return possibilities[0];
+            let bestMatch = possibilities[0];
+            let maxOverlap = -1;
             const userTokens = new Set(tokenize(userIn.toLowerCase()));
             possibilities.forEach(p => {
                 const overlap = tokenize(p.toLowerCase()).filter(t => userTokens.has(t)).length;
@@ -60,18 +120,36 @@
             return bestMatch;
         }
 
-        function generateDiff(userStr, ansStr) {
-            const user = tokenize(userStr); const ans = tokenize(ansStr);
+        function generateDiffHtml(userStr, ansStr) {
+            const user = tokenize(userStr);
+            const ans = tokenize(ansStr);
             let html = ""; let uIdx = 0, aIdx = 0;
+
             while (aIdx < ans.length || uIdx < user.length) {
-                const uW = user[uIdx] ? user[uIdx].toLowerCase() : null;
-                const aW = ans[aIdx] ? ans[aIdx].toLowerCase() : null;
-                if (uW === aW) { html += `<span class="diff-correct">${ans[aIdx]}</span> `; uIdx++; aIdx++; }
-                else {
-                    let foundLater = false;
-                    for (let i = aIdx; i < ans.length; i++) if (ans[i].toLowerCase() === uW) { foundLater = true; break; }
-                    if (uW && !foundLater) { html += `<span class="diff-extra">${user[uIdx]}</span> `; uIdx++; }
-                    else if (aW) { html += `<span class="diff-missing">${ans[aIdx]}</span> `; aIdx++; }
+                const uWord = user[uIdx] ? user[uIdx].toLowerCase() : null;
+                const aWord = ans[aIdx] ? ans[aIdx].toLowerCase() : null;
+
+                if (uWord === aWord) {
+                    html += `<span class="word w-correct">${ans[aIdx]}</span>`;
+                    uIdx++; aIdx++;
+                } else {
+                    let foundLaterInAns = false;
+                    for (let i = aIdx; i < ans.length; i++) {
+                        if (ans[i].toLowerCase() === uWord) { foundLaterInAns = true; break; }
+                    }
+
+                    if (uWord && !foundLaterInAns) {
+                        html += `<span class="word w-extra">${user[uIdx]}</span>`;
+                        uIdx++;
+                    } else if (aWord) {
+                        html += `<span class="word w-missing">${ans[aIdx]}</span>`;
+                        aIdx++;
+                    } else {
+                        if (user[uIdx]) {
+                            html += `<span class="word w-extra">${user[uIdx]}</span>`;
+                            uIdx++;
+                        }
+                    }
                 }
             }
             return html;
@@ -81,28 +159,54 @@
             const sel = JSON.parse(localStorage.getItem('sel_trans_lessons') || '[]');
             const res = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/english-translation.json');
             const data = await res.json();
-            data.sources.forEach(src => src.lessons.forEach(l => {
-                if (sel.some(s => s.source === src.name && s.lesson === l.lesson)) quizPool.push(...l.pairs);
-            }));
+            
+            data.sources.forEach(src => {
+                src.lessons.forEach(l => {
+                    if (sel.some(s => s.source === src.name && s.lesson === l.lesson)) {
+                        quizPool.push(...l.pairs);
+                    }
+                });
+            });
+
+            if (quizPool.length === 0) {
+                alert("未選擇題目，請返回選課頁面。");
+                location.href = "english.html";
+                return;
+            }
+
             quizPool.sort(() => Math.random() - 0.5);
             render();
         }
 
         function render() {
-            document.getElementById('quiz-count').innerText = `${index + 1} / ${quizPool.length}`;
+            const nextBtn = document.getElementById('btn-next');
+            const isLast = (index === quizPool.length - 1);
+            nextBtn.innerText = isLast ? "結束測驗" : "下一題";
+            if(isLast) nextBtn.style.background = "#dc2626";
+
+            document.getElementById('quiz-count').innerText = `STEP ${index + 1} / ${quizPool.length}`;
             document.getElementById('ch-text').innerText = quizPool[index].ch;
             document.getElementById('user-input').value = "";
             document.getElementById('user-input').disabled = false;
-            document.getElementById('diff-output').style.display = "none";
+            document.getElementById('diff-panel').style.display = "none";
             document.getElementById('btn-next').style.display = "none";
             document.getElementById('btn-check').style.display = "block";
+            
+            if (window.innerWidth > 600) document.getElementById('user-input').focus();
         }
 
         document.getElementById('btn-check').onclick = () => {
             const userIn = document.getElementById('user-input').value.trim();
-            const bestAns = findBestMatch(userIn, quizPool[index].en);
-            document.getElementById('diff-output').innerHTML = generateDiff(userIn, bestAns);
-            document.getElementById('diff-output').style.display = "block";
+            const rawAns = quizPool[index].en;
+            const bestAns = findBestMatch(userIn, rawAns);
+            
+            // 顯示比對結果
+            document.getElementById('diff-content').innerHTML = generateDiffHtml(userIn, bestAns);
+            
+            // 顯示乾淨的標準答案（將 (A/B) 轉為 A/B 粗體顯示）
+            document.getElementById('clean-answer').innerHTML = rawAns.replace(/\(([^)]+)\)/g, '<strong>$1</strong>');
+            
+            document.getElementById('diff-panel').style.display = "block";
             document.getElementById('user-input').disabled = true;
             document.getElementById('btn-check').style.display = "none";
             document.getElementById('btn-next').style.display = "block";
@@ -113,6 +217,7 @@
             if (index >= quizPool.length) location.href = 'translation.html';
             else render();
         };
+
         init();
     </script>
 </body>

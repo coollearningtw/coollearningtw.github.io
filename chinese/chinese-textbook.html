@@ -26,24 +26,33 @@
         .toolbar-label { font-size: 0.85rem; color: #64748b; font-weight: bold; }
         .font-btn-group { display: flex; gap: 5px; }
 
+        /* 課標題樣式 */
+        .lesson-main-title {
+            font-size: 1.6rem;
+            color: var(--primary);
+            margin: 25px 5px 15px;
+            font-weight: 800;
+            border-bottom: 3px solid var(--primary);
+            padding-bottom: 8px;
+            display: block;
+        }
+
         .section-header { margin: 25px 0 10px 5px; padding-left: 10px; border-left: 4px solid var(--primary); font-size: 1.1rem; font-weight: bold; color: #475569; }
         
         .sentence-item { 
             padding: 20px; 
             display: flex; 
-            gap: 10px; /* 縮小間距以利用空間 */
+            gap: 10px; 
             align-items: flex-start;
             position: relative;
         }
         .sentence-item:not(:last-child) { border-bottom: 1px solid #f1f5f9; }
 
-        /* 內容區域：擴展到最大空間 */
         .content-area { 
             flex: 1; 
             width: 100%;
         }
         
-        /* 右側按鈕區：更窄且貼邊 */
         .side-controls { 
             display: flex; 
             flex-direction: column; 
@@ -58,7 +67,6 @@
         .note-wrapper.show { max-height: 500px; opacity: 1; margin-bottom: 12px; }
         .note-label { display: inline-block; font-size: 0.85rem; color: #b91c1c; font-weight: 600; background: #fef2f2; border: 1px solid #f87171; padding: 2px 12px; border-radius: 50px; }
         
-        /* 字體大小定義 */
         .para-text.font-s, .trans-box.font-s { font-size: 1rem; }
         .para-text.font-m, .trans-box.font-m { font-size: 1.2rem; }
         .para-text.font-l, .trans-box.font-l { font-size: 1.45rem; }
@@ -67,7 +75,7 @@
             line-height: 1.8; 
             color: #1e293b; 
             transition: font-size 0.2s ease;
-            width: 100%; /* 確保原文佔滿可用空間 */
+            width: 100%; 
         }
         
         .trans-box { 
@@ -85,7 +93,6 @@
         .anno-popup-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.1); backdrop-filter: blur(1px); display: none; align-items: center; justify-content: center; z-index: 2000; }
         .anno-popup-card { background: #fff; width: 85%; max-width: 320px; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; }
         
-        /* 側邊圖示優化 */
         .action-icon { width: 20px; height: 20px; cursor: pointer; opacity: 0.25; transition: 0.2s; }
         .action-icon:hover { opacity: 1; }
         .action-icon.disabled { opacity: 0.05; cursor: default; }
@@ -158,6 +165,13 @@
             data.sources.forEach(src => src.lessons.forEach(l => {
                 if (sel.some(s => String(s.source) === String(src.name) && String(s.lesson) === String(l.lesson))) {
                     currentAnnotations = currentAnnotations.concat(l.annotations || []);
+                    
+                    // 新增：在每一課最上方插入該課標題
+                    const lessonHeader = document.createElement('h1');
+                    lessonHeader.className = 'lesson-main-title';
+                    lessonHeader.innerText = l.lesson;
+                    root.appendChild(lessonHeader);
+
                     let currentSectionName = null, currentCardBody = null;
 
                     l.content.forEach((c) => {

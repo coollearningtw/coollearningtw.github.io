@@ -26,16 +26,15 @@
         .toolbar-label { font-size: 0.85rem; color: #64748b; font-weight: bold; }
         .font-btn-group { display: flex; gap: 5px; }
 
-        /* 課標題樣式 - 放大並加粗以突出文章名稱 */
+        /* 課標題樣式 - 顯示 JSON 中的完整 l.lesson 內容 */
         .lesson-main-title {
-            font-size: 1.8rem;
+            font-size: 1.7rem;
             color: var(--primary);
-            margin: 35px 5px 20px;
+            margin: 30px 5px 15px;
             font-weight: 800;
             border-bottom: 3px solid var(--primary);
-            padding-bottom: 12px;
+            padding-bottom: 10px;
             display: block;
-            letter-spacing: 2px;
         }
 
         .section-header { margin: 25px 0 10px 5px; padding-left: 10px; border-left: 4px solid var(--primary); font-size: 1.1rem; font-weight: bold; color: #475569; }
@@ -144,26 +143,6 @@
         const fontLevels = ['font-s', 'font-m', 'font-l'];
         let currentFontIdx = localStorage.getItem('lesson_font_idx') ? parseInt(localStorage.getItem('lesson_font_idx')) : 1;
 
-        /**
-         * 格式化標題功能：
-         * 此函式會移除「第X課」、「L1」、「Lesson 1」等前綴
-         * 並返回純粹的文章名稱內容。
-         */
-        function getPureTitle(fullText) {
-            // 1. 移除包含「第」與「課」之間的所有文字（如：第一課、第十二課）
-            // 2. 移除英文課別前綴（如：L1, L2, Lesson 1）
-            // 3. 移除開頭的數字與點（如：1., 01.）
-            let clean = fullText.replace(/第.*課/g, '')
-                                .replace(/L\d+/gi, '')
-                                .replace(/Lesson\s*\d+/gi, '')
-                                .replace(/^[\d\.\s]+/, '')
-                                .trim();
-            
-            // 4. 若標題中仍有空格（例如「師說 韓愈」），通常取第一個詞作為文章標題
-            // 如果您需要顯示全名，可直接 return clean;
-            return clean;
-        }
-
         function applyFontSize(idx) {
             currentFontIdx = idx;
             const level = fontLevels[currentFontIdx];
@@ -187,10 +166,10 @@
                 if (sel.some(s => String(s.source) === String(src.name) && String(s.lesson) === String(l.lesson))) {
                     currentAnnotations = currentAnnotations.concat(l.annotations || []);
                     
-                    // --- 關鍵修改：獲取純標題並顯示 ---
+                    // --- 修改處：在每一課最上方直接顯示 l.lesson 的原始標題文字 ---
                     const lessonHeader = document.createElement('h1');
                     lessonHeader.className = 'lesson-main-title';
-                    lessonHeader.innerText = getPureTitle(l.lesson); 
+                    lessonHeader.innerText = l.lesson; 
                     root.appendChild(lessonHeader);
 
                     let currentSectionName = null, currentCardBody = null;

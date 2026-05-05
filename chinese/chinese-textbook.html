@@ -7,62 +7,41 @@
     <link rel="stylesheet" href="../styles/style.css">
     <link rel="stylesheet" href="../styles/header.css">
     <style>
-        /* 頁面置頂工具列 */
+        /* 基礎版面調整 */
+        body { padding-bottom: 110px; } /* 為永久顯示的控制欄預留空間 */
+
         .page-top-toolbar { 
-            display: flex; 
-            align-items: center; 
-            gap: 12px; 
-            padding: 10px 20px; 
-            background: #fff; 
-            border-bottom: 1px solid #e2e8f0;
-            border-radius: var(--radius);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            max-width: var(--max-width, 980px);
-            margin: 10px auto 18px;
-            box-shadow: var(--shadow);
+            display: flex; align-items: center; gap: 12px; padding: 10px 20px; 
+            background: #fff; border-bottom: 1px solid #e2e8f0; border-radius: var(--radius);
+            position: sticky; top: 0; z-index: 100; max-width: var(--max-width, 980px);
+            margin: 10px auto 18px; box-shadow: var(--shadow);
         }
         .toolbar-label { font-size: 0.85rem; color: #64748b; font-weight: bold; }
         .font-btn-group { display: flex; gap: 5px; }
 
-        /* 課標題樣式：顯示真正的標題 (title) */
         .lesson-main-title {
-            font-size: 1.8rem;
-            color: var(--primary);
-            margin: 30px 5px 15px;
-            font-weight: 800;
-            border-bottom: 3px solid var(--primary);
-            padding-bottom: 10px;
-            display: block;
-            letter-spacing: 1px;
+            font-size: 1.8rem; color: var(--primary); margin: 30px 5px 15px;
+            font-weight: 800; border-bottom: 3px solid var(--primary);
+            padding-bottom: 10px; display: block; letter-spacing: 1px;
         }
 
         .section-header { margin: 25px 0 10px 5px; padding-left: 10px; border-left: 4px solid var(--primary); font-size: 1.1rem; font-weight: bold; color: #475569; }
         
         .sentence-item { 
-            padding: 20px; 
-            display: flex; 
-            gap: 10px; 
-            align-items: flex-start;
-            position: relative;
+            padding: 20px; display: flex; gap: 10px; align-items: flex-start;
+            position: relative; cursor: pointer; transition: 0.2s; border-bottom: 1px solid #f1f5f9;
         }
-        .sentence-item:not(:last-child) { border-bottom: 1px solid #f1f5f9; }
-
-        .content-area { 
-            flex: 1; 
-            width: 100%;
-        }
+        .sentence-item:hover { background-color: #f8fafc; }
         
-        .side-controls { 
-            display: flex; 
-            flex-direction: column; 
-            gap: 15px; 
-            width: 30px; 
-            flex-shrink: 0; 
-            align-items: center;
-            padding-top: 5px;
+        /* 播放中的句子高亮樣式 */
+        .sentence-item.active {
+            background-color: #f0f9ff;
+            border-left: 5px solid var(--primary);
+            box-shadow: inset 5px 0 10px -5px rgba(37, 99, 235, 0.1);
         }
+
+        .content-area { flex: 1; width: 100%; }
+        .side-controls { display: flex; flex-direction: column; gap: 15px; width: 30px; flex-shrink: 0; align-items: center; padding-top: 5px; }
 
         .note-wrapper { max-height: 0; opacity: 0; overflow: hidden; transition: all 0.3s ease; display: flex; flex-wrap: wrap; gap: 8px; }
         .note-wrapper.show { max-height: 500px; opacity: 1; margin-bottom: 12px; }
@@ -72,19 +51,11 @@
         .para-text.font-m, .trans-box.font-m { font-size: 1.2rem; }
         .para-text.font-l, .trans-box.font-l { font-size: 1.45rem; }
         
-        .para-text { 
-            line-height: 1.8; 
-            color: #1e293b; 
-            transition: font-size 0.2s ease;
-            width: 100%; 
-        }
+        .para-text { line-height: 1.8; color: #1e293b; transition: font-size 0.2s ease; width: 100%; }
         
         .trans-box { 
-            max-height: 0; opacity: 0; overflow: hidden; 
-            background: #f8fafc; border-radius: 6px; 
-            color: #64748b; transition: all 0.3s ease; 
-            line-height: 1.6; 
-            width: 100%;
+            max-height: 0; opacity: 0; overflow: hidden; background: #f8fafc; border-radius: 6px; 
+            color: #64748b; transition: all 0.3s ease; line-height: 1.6; width: 100%;
         }
         .trans-box.show { max-height: 2000px; opacity: 1; margin-top: 12px; padding: 12px; border: 1px solid #e2e8f0; }
         
@@ -97,12 +68,27 @@
         .action-icon { width: 20px; height: 20px; cursor: pointer; opacity: 0.25; transition: 0.2s; }
         .action-icon:hover { opacity: 1; }
         .action-icon.disabled { opacity: 0.05; cursor: default; }
-        
-        .btn-tool { padding: 6px 12px; border-radius: 8px; border: 1px solid #cbd5e1; background: #fff; cursor: pointer; font-size: 0.85rem; color: #64748b; font-weight: bold; }
-        .btn-tool.active { background: var(--primary); color: #fff; border-color: var(--primary); }
-        
-        .btn-font { padding: 4px 12px; font-size: 0.85rem; border: 1px solid #cbd5e1; background: #fff; border-radius: 6px; cursor: pointer; color: #64748b; font-weight: bold; }
-        .btn-font.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+        /* 底部控制列：永遠顯示 */
+        .bottom-nav-fixed {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: #ffffff; box-shadow: 0 -4px 15px rgba(0,0,0,0.08);
+            z-index: 1000; padding: 12px 0;
+            border-top: 1px solid #e2e8f0;
+            display: block; /* 始終顯示 */
+        }
+        .bottom-nav-content {
+            display: flex; justify-content: space-around; align-items: center;
+            max-width: var(--max-width, 980px); margin: 0 auto;
+        }
+        .nav-item-btn {
+            background: none; border: none; cursor: pointer;
+            display: flex; flex-direction: column; align-items: center;
+            gap: 4px; color: #64748b; font-size: 0.75rem; font-weight: bold;
+        }
+        .nav-item-btn svg { width: 28px; height: 28px; fill: currentColor; }
+        .nav-item-btn:hover { color: var(--primary); }
+        .nav-item-btn.active { color: var(--primary); }
     </style>
 </head>
 <body>
@@ -127,9 +113,36 @@
             <button class="btn-font" onclick="applyFontSize(1)">中</button>
             <button class="btn-font" onclick="applyFontSize(2)">大</button>
         </div>
+        <span style="font-size: 0.7rem; color: #94a3b8; margin-left: auto;">點擊課文可開始播放</span>
     </div>
 
-    <main class="page-container" id="content-root" style="padding-top: 10px;"></main>
+    <main class="page-container" id="content-root"></main>
+
+    <!-- 底部控制列 -->
+    <div class="bottom-nav-fixed">
+        <div class="bottom-nav-content">
+            <button class="nav-item-btn" onclick="toggleSpeed()">
+                <svg viewBox="0 0 24 24"><path d="M20.38 8.57l-1.23 1.85a8 8 0 0 1-.22 7.58H5.07A8 8 0 0 1 15.58 6.85l1.85-1.23A10 10 0 0 0 3.35 19a2 2 0 0 0 1.72 1h13.85a2 2 0 0 0 1.74-1 10 10 0 0 0-.27-10.44zm-9.79 6.84a2 2 0 0 0 2.83 0l5.66-8.49-8.49 5.66a2 2 0 0 0 0 2.83z"/></svg>
+                <span id="spd-txt">正常速度</span>
+            </button>
+            <button class="nav-item-btn" onclick="playPrev()">
+                <svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+                <span>上一句</span>
+            </button>
+            <button class="nav-item-btn" id="btn-master-play" onclick="togglePlay()">
+                <svg id="icon-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                <span id="txt-play">連續播放</span>
+            </button>
+            <button class="nav-item-btn" onclick="playNext()">
+                <svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+                <span>下一句</span>
+            </button>
+            <button class="nav-item-btn" onclick="stopSpeech()">
+                <svg viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg>
+                <span>停止</span>
+            </button>
+        </div>
+    </div>
 
     <div id="anno-popup" class="anno-popup-overlay">
         <div class="anno-popup-card">
@@ -143,6 +156,24 @@
         let currentAnnotations = [];
         const fontLevels = ['font-s', 'font-m', 'font-l'];
         let currentFontIdx = localStorage.getItem('lesson_font_idx') ? parseInt(localStorage.getItem('lesson_font_idx')) : 1;
+
+        // 朗讀變數
+        let allSentences = [];
+        let currentIdx = 0;
+        let isPlaying = false;
+        let isSlow = false;
+        let selectedVoice = null;
+
+        // 初始化語音
+        function initVoice() {
+            const voices = window.speechSynthesis.getVoices();
+            // 優先順序：Google 國語 > Microsoft 國語 > 任何台灣國語 > 廣東話/簡體
+            selectedVoice = voices.find(v => v.lang.includes('zh-TW') && v.name.includes('Google')) 
+                           || voices.find(v => v.lang.includes('zh-TW') && v.name.includes('Microsoft'))
+                           || voices.find(v => v.lang.includes('zh-TW'))
+                           || voices.find(v => v.lang.includes('zh'));
+        }
+        window.speechSynthesis.onvoiceschanged = initVoice;
 
         function applyFontSize(idx) {
             currentFontIdx = idx;
@@ -164,33 +195,29 @@
             const root = document.getElementById('content-root');
 
             data.sources.forEach(src => src.lessons.forEach(l => {
-                // 這裡的判斷通常還是用 lesson (課號) 來比對選取的項目
                 if (sel.some(s => String(s.source) === String(src.name) && String(s.lesson) === String(l.lesson))) {
                     currentAnnotations = currentAnnotations.concat(l.annotations || []);
                     
-                    // --- 關鍵修正：改為顯示 l.title ---
                     const lessonHeader = document.createElement('h1');
                     lessonHeader.className = 'lesson-main-title';
-                    lessonHeader.innerText = l.title || l.lesson; // 優先顯示 title，若無則顯示 lesson
+                    lessonHeader.innerText = l.title || l.lesson;
                     root.appendChild(lessonHeader);
 
-                    let currentSectionName = null, currentCardBody = null;
-
                     l.content.forEach((c) => {
-                        if (c.sectionName && c.sectionName !== currentSectionName) {
-                            currentSectionName = c.sectionName;
+                        if (c.sectionName && c.sectionName !== root.lastSection) {
                             const secHeader = document.createElement('div');
                             secHeader.className = 'section-header';
-                            secHeader.innerText = currentSectionName;
+                            secHeader.innerText = c.sectionName;
                             root.appendChild(secHeader);
-                            currentCardBody = null; 
+                            root.lastSection = c.sectionName;
+                            root.lastCardBody = null;
                         }
                         
-                        if (!currentCardBody) {
+                        if (!root.lastCardBody) {
                             const card = document.createElement('div'); 
                             card.className = 'std-card';
                             root.appendChild(card); 
-                            currentCardBody = card;
+                            root.lastCardBody = card;
                         }
 
                         const notesArray = Array.isArray(c.note) ? c.note : (c.note ? c.note.split('\n') : []);
@@ -205,17 +232,27 @@
                                 <div class="trans-box">${parseMarkdown(c.translation || '')}</div>
                             </div>
                             <div class="side-controls">
-                                <svg class="action-icon ${notesArray.length===0?'disabled':''}" onclick="toggleRow(this, 'note')" viewBox="0 0 24 24"><path fill="#e11d48" d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2zM7 8h10v2H7V8zm0 7h10v2H7v-2z"/></svg>
-                                <svg class="action-icon ${!c.translation?'disabled':''}" onclick="toggleRow(this, 'trans')" viewBox="0 0 24 24"><path fill="#2563eb" d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0014.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>
+                                <svg class="action-icon ${notesArray.length===0?'disabled':''}" onclick="event.stopPropagation(); toggleRow(this, 'note')" viewBox="0 0 24 24"><path fill="#e11d48" d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2zM7 8h10v2H7V8zm0 7h10v2H7v-2z"/></svg>
+                                <svg class="action-icon ${!c.translation?'disabled':''}" onclick="event.stopPropagation(); toggleRow(this, 'trans')" viewBox="0 0 24 24"><path fill="#2563eb" d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0014.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>
                             </div>
                         `;
-                        currentCardBody.appendChild(item);
+                        
+                        item.onclick = (e) => {
+                            if (e.target.closest('.side-controls') || e.target.closest('.anno-link')) return;
+                            const idx = allSentences.indexOf(item);
+                            startFrom(idx);
+                        };
+
+                        root.lastCardBody.appendChild(item);
                     });
                 }
             }));
 
+            allSentences = Array.from(document.querySelectorAll('.sentence-item'));
             applyFontSize(currentFontIdx);
+            initVoice();
 
+            // 全域控制按鈕
             document.getElementById('global-note').onclick = function() {
                 const active = this.classList.toggle('active');
                 document.querySelectorAll('.note-wrapper').forEach(el => el.classList.toggle('show', active));
@@ -240,6 +277,106 @@
 
             const popup = document.getElementById('anno-popup');
             popup.onclick = (e) => { if(e.target === popup) popup.style.display = 'none'; };
+        }
+
+        // --- 朗讀邏輯 ---
+
+        function startFrom(idx) {
+            window.speechSynthesis.cancel();
+            currentIdx = idx;
+            isPlaying = true;
+            updatePlayBtn(true);
+            playLoop(currentIdx);
+        }
+
+        function togglePlay() {
+            if (isPlaying) {
+                isPlaying = false;
+                window.speechSynthesis.cancel();
+                updatePlayBtn(false);
+            } else {
+                if (allSentences.length === 0) return;
+                isPlaying = true;
+                updatePlayBtn(true);
+                playLoop(currentIdx);
+            }
+        }
+
+        function playLoop(idx) {
+            if (!isPlaying || idx >= allSentences.length) {
+                if (idx >= allSentences.length) stopSpeech();
+                return;
+            }
+            currentIdx = idx;
+            hl(idx);
+            
+            const textEl = allSentences[idx].querySelector('.para-text');
+            const cleanText = getCleanText(textEl);
+            
+            speak(cleanText, () => playLoop(idx + 1));
+        }
+
+        function getCleanText(el) {
+            const clone = el.cloneNode(true);
+            // 移除所有註釋編號 <span>
+            clone.querySelectorAll('.anno-no').forEach(no => no.remove());
+            // 移除 markdown 符號
+            return stripMarkdown(clone.innerText).trim();
+        }
+
+        function speak(t, cb) {
+            window.speechSynthesis.cancel();
+            const u = new SpeechSynthesisUtterance(t);
+            if (selectedVoice) u.voice = selectedVoice;
+            u.lang = 'zh-TW';
+            u.rate = isSlow ? 0.65 : 1.0;
+            if (cb) u.onend = cb;
+            window.speechSynthesis.speak(u);
+        }
+
+        function hl(i) {
+            allSentences.forEach(el => el.classList.remove('active'));
+            const target = allSentences[i];
+            if (target) {
+                target.classList.add('active');
+                target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        function stopSpeech() {
+            isPlaying = false;
+            window.speechSynthesis.cancel();
+            allSentences.forEach(el => el.classList.remove('active'));
+            updatePlayBtn(false);
+        }
+
+        function playNext() {
+            if (currentIdx < allSentences.length - 1) {
+                currentIdx++;
+                if (isPlaying) playLoop(currentIdx);
+                else hl(currentIdx);
+            }
+        }
+
+        function playPrev() {
+            if (currentIdx > 0) {
+                currentIdx--;
+                if (isPlaying) playLoop(currentIdx);
+                else hl(currentIdx);
+            }
+        }
+
+        function toggleSpeed() {
+            isSlow = !isSlow;
+            document.getElementById('spd-txt').innerText = isSlow ? '慢速' : '正常速度';
+            if (isPlaying) playLoop(currentIdx);
+        }
+
+        function updatePlayBtn(on) {
+            const ico = document.getElementById('icon-play');
+            const txt = document.getElementById('txt-play');
+            ico.innerHTML = on ? '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
+            txt.innerText = on ? '暫停' : '連續播放';
         }
 
         function toggleRow(btn, type) {

@@ -35,6 +35,18 @@
         .source-block.expanded > .lesson-container { display: block; }
         .lesson-block { border: 1px solid #e2e8f0; border-radius: 8px; margin-top: 15px; background: #fff; position: relative; }
         .lesson-header { padding: 12px 15px; font-weight: 600; border-bottom: 1px solid #f1f3f5; display: flex; justify-content: space-between; align-items: center; background: #fff; }
+        
+        /* --- 狀態控制項樣式 --- */
+        .status-group { display: flex; align-items: center; gap: 6px; background: #f8fafc; padding: 3px 8px; border-radius: 6px; border: 1px solid #e2e8f0; margin-left: 10px; }
+        .color-dot { width: 14px; height: 14px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: 0.2s; }
+        .color-dot.active { border-color: #0f172a; transform: scale(1.2); }
+        .c-red { background: #e57373; } .c-yellow { background: #ffb74d; } .c-green { background: #81c784; }
+        .status-input { width: 70px; font-size: 11px; border: none; background: transparent; outline: none; font-weight: bold; padding: 0; color: #1e293b; }
+        .status-toggle { font-size: 10px; font-weight: bold; cursor: pointer; padding: 2px 6px; border-radius: 4px; border: none; }
+        .st-on { background: #dcfce7; color: #166534; }
+        .st-off { background: #fee2e2; color: #991b1b; }
+        /* ---------------------- */
+
         .insert-bar { height: 12px; margin: -6px 0; position: relative; z-index: 10; cursor: pointer; display: flex; align-items: center; justify-content: center; opacity: 0; transition: 0.2s; }
         .insert-bar:hover { opacity: 1; height: 24px; margin: -12px 0; }
         .insert-line { height: 1px; background: #94a3b8; flex: 1; }
@@ -150,6 +162,25 @@
 
         function switchTab(m) { currentMode = m; document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.id===`tab-${m}`)); render(); }
 
+        /* --- 修正狀態更新函式：確保物件順序與 100% 寫入 --- */
+        function updateStatus(sIdx, lIdx, field, value, shouldRender) {
+            const lesson = dataStore.sources[sIdx].lessons[lIdx];
+            lesson[field] = value;
+            
+            // 強制重建 Lesson 物件，將狀態欄位放到最前面，方便檢查 JSON
+            dataStore.sources[sIdx].lessons[lIdx] = {
+                lesson: lesson.lesson,
+                title: lesson.title,
+                status: lesson.status || "",
+                statusColor: lesson.statusColor || "yellow",
+                enabled: lesson.enabled !== false,
+                ...lesson
+            };
+
+            sync();
+            if (shouldRender) render();
+        }
+
         function render() {
             const root = document.getElementById('editor-content'); root.innerHTML = '';
             dataStore.sources.forEach((src, sIdx) => {
@@ -161,7 +192,29 @@
                         const lKey = `l-${sIdx}-${lIdx}`;
                         const items = currentMode==='annotations' ? (l.annotations || []) : (l.content || []);
                         const label = currentMode === 'annotations' ? '註釋' : '段落';
-                        return `<div class="lesson-block"><div class="lesson-header" onclick="event.stopPropagation();toggleKey('${lKey}')" style="cursor:pointer"><div style="display:flex;align-items:center;gap:10px">${ICONS.file}<div class="editable-cell" style="width:50px;justify-content:center;border:1px solid #e2e8f0;display:flex;align-items:center;padding:0;" onclick="event.stopPropagation();startEdit(this,${sIdx},${lIdx},-1,'lesson')">${l.lesson}</div><div class="editable-cell" style="font-weight:bold;display:flex;align-items:center;" onclick="event.stopPropagation();startEdit(this,${sIdx},${lIdx},-1,'title')">${l.title}</div></div><button class="btn-action" style="padding:2px 6px;color:#ef4444;border:none" onclick="event.stopPropagation();delLes(${sIdx},${lIdx})">${ICONS.close}</button></div>
+                        return `<div class="lesson-block"><div class="lesson-header" onclick="event.stopPropagation();toggleKey('${lKey}')" style="cursor:pointer">
+                            <div style="display:flex;align-items:center;gap:10px; flex:1">
+                                ${ICONS.file}
+                                <div class="editable-cell" style="width:50px;justify-content:center;border:1px solid #e2e8f0;display:flex;align-items:center;padding:0;" onclick="event.stopPropagation();startEdit(this,${sIdx},${lIdx},-1,'lesson')">${l.lesson}</div>
+                                <div class="editable-cell" style="font-weight:bold;display:flex;align-items:center;" onclick="event.stopPropagation();startEdit(this,${sIdx},${lIdx},-1,'title')">${l.title}</div>
+                                
+                                <!-- --- 狀態控制區 --- -->
+                                <div class="status-group" onclick="event.stopPropagation()">
+                                    <input type="text" class="status-input" placeholder="橫幅文字" value="${l.status || ''}" 
+                                           oninput="updateStatus(${sIdx}, ${lIdx}, 'status', this.value, false)">
+                                    <div class="color-dot c-red ${l.statusColor==='red'?'active':''}" onclick="updateStatus(${sIdx}, ${lIdx}, 'statusColor', 'red', true)"></div>
+                                    <div class="color-dot c-yellow ${(!l.statusColor || l.statusColor==='yellow')?'active':''}" onclick="updateStatus(${sIdx}, ${lIdx}, 'statusColor', 'yellow', true)"></div>
+                                    <div class="color-dot c-green ${l.statusColor==='green'?'active':''}" onclick="updateStatus(${sIdx}, ${lIdx}, 'statusColor', 'green', true)"></div>
+                                    <button class="status-toggle ${l.enabled!==false?'st-on':'st-off'}" 
+                                            onclick="updateStatus(${sIdx}, ${lIdx}, 'enabled', ${l.enabled!==false?false:true}, true)">
+                                            ${l.enabled!==false ? '已上架' : '未開放'}
+                                    </button>
+                                </div>
+                                <!-- ---------------- -->
+
+                            </div>
+                            <button class="btn-action" style="padding:2px 6px;color:#ef4444;border:none" onclick="event.stopPropagation();delLes(${sIdx},${lIdx})">${ICONS.close}</button>
+                        </div>
                         <div style="display:${expandedKeys.has(lKey)?'block':'none'};padding:10px;">
                             ${createInsertBarHtml(sIdx, lIdx, 0)}
                             ${items.map((item, iIdx) => `
@@ -254,8 +307,12 @@
             t.style.height = Math.max(80, (el.offsetHeight + 10)) + "px";
             t.focus();
             t.onblur = () => { 
-                if(i===-1) dataStore.sources[s].lessons[l][f]=t.value; 
-                else items[i][f]=t.value; 
+                const newVal = t.value;
+                if(i===-1) {
+                    if (f === 'lesson') { dataStore.sources[s].lessons[l][f] = isNaN(Number(newVal)) ? newVal : Number(newVal); }
+                    else { dataStore.sources[s].lessons[l][f]=newVal; }
+                } 
+                else items[i][f]=newVal; 
                 sync(); render(); 
             };
         }
@@ -285,8 +342,7 @@
         function addNewSource() { dataStore.sources.push({name:'新版本名稱', lessons:[]}); sync(); render(); }
         function resetDraft() { if(confirm('還原修改？')){ localStorage.removeItem('chinese_draft'); location.reload(); } }
         function showJSON() {
-            const jsonStr = JSON.stringify(dataStore, null, 2);
-            document.getElementById('json-output').value = jsonStr;
+            document.getElementById('json-output').value = JSON.stringify(dataStore, null, 2);
             document.getElementById('json-modal').style.display = 'flex';
         }
         function downloadJSON() { 

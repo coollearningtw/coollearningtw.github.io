@@ -26,19 +26,10 @@
         .version-title { font-size: 1.2rem; font-weight: bold; color: #1e293b; margin-bottom: 15px; padding-left: 12px; border-left: 4px solid #e74c3c; }
         .lesson-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)); gap: 15px; }
         
-        .lesson-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px 10px; text-align: center; cursor: pointer; position: relative; min-height: 110px; display: flex; flex-direction: column; justify-content: center; overflow: visible !important; }
+        .lesson-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px 10px; text-align: center; cursor: pointer; position: relative; min-height: 110px; display: flex; flex-direction: column; justify-content: center; overflow: hidden !important; }
         .lesson-card.selected:not(.manage-mode) { border: 2px solid #e74c3c; background-color: #fffef2f2; color: #b91c1c; }
         
-        /* 標題換行優化 */
-        .lesson-title {
-            font-weight: 700;
-            line-height: 1.4; /* 設定行高，讓多行不擁擠 */
-            margin-bottom: 6px;
-            word-break: break-all; /* 確保長標題能正確斷行 */
-            color: inherit;
-            white-space: pre-line;
-        }
-
+        .lesson-title { font-weight: 700; line-height: 1.4; margin-bottom: 6px; word-break: break-all; color: inherit; white-space: pre-line; }
         .lesson-card.empty:not(.manage-mode) { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
         .lesson-card.empty:not(.manage-mode):hover { transform: none; box-shadow: none; border-color: #e2e8f0; }
 
@@ -47,15 +38,18 @@
         .badge.has-anno { background: #fee2e2; color: #b91c1c; }
         .badge.has-content { background: #e0f2fe; color: #0369a1; }
 
+        /* --- 新增樣式 --- */
+        .status-ribbon { position: absolute; top: 0; left: 0; right: 0; font-size: 0.65rem; padding: 2px 0; font-weight: 900; text-align: center; color: #fff; z-index: 5; }
+        .status-ribbon.red { background-color: #e57373; }
+        .status-ribbon.yellow { background-color: #ffb74d; }
+        .status-ribbon.green { background-color: #81c784; }
+        .lesson-card.is-disabled { opacity: 0.5; filter: grayscale(1); cursor: not-allowed !important; pointer-events: none; }
+        .lesson-card.is-disabled::after { content: "暫未開放"; position: absolute; bottom: 5px; left: 0; right: 0; font-size: 0.6rem; color: #ef4444; font-weight: bold; text-align: center; }
+        /* --- 結束 --- */
+
         .nav-item-btn:disabled { opacity: 0.3; cursor: not-allowed; }
         .nav-item-btn:disabled:hover { background: transparent !important; color: #64748b !important; }
-
-        .manage-btn { 
-            position: absolute; top: -10px; right: -10px; width: 28px; height: 28px; 
-            border-radius: 50%; border: none; color: #fff; 
-            display: none; align-items: center; justify-content: center; 
-            cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.2); z-index: 100;
-        }
+        .manage-btn { position: absolute; top: -10px; right: -10px; width: 28px; height: 28px; border-radius: 50%; border: none; color: #fff; display: none; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.2); z-index: 100; }
         .lesson-card.manage-mode .manage-btn { display: flex; pointer-events: auto; }
         .manage-btn svg { width: 16px; height: 16px; stroke: currentColor; stroke-width: 3.5; fill: none; }
         .manage-btn.add { background: #2ecc71; }
@@ -131,9 +125,10 @@
                 lessons.forEach(l => {
                     const hasAnno = l.annotations && l.annotations.length > 0;
                     const hasContent = l.content && l.content.length > 0;
+                    const isEnabled = l.enabled !== false;
                     
                     const card = document.createElement('div'); 
-                    card.className = `lesson-card std-card ${isManageMode?'manage-mode':''} ${(!hasAnno && !hasContent) ? 'empty' : ''}`;
+                    card.className = `lesson-card std-card ${isManageMode?'manage-mode':''} ${(!hasAnno && !hasContent) ? 'empty' : ''} ${!isEnabled ? 'is-disabled' : ''}`;
                     
                     card.dataset.hasAnno = hasAnno;
                     card.dataset.hasContent = hasContent;
@@ -143,8 +138,11 @@
                         '<svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>' : 
                         '<svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line></svg>';
                     
-                    // 使用 .lesson-title 包裹標題，支援自動換行
+                    let sHtml = '';
+                    if (l.status) sHtml = `<div class="status-ribbon ${l.statusColor || 'yellow'}">${l.status}</div>`;
+
                     card.innerHTML = `
+                        ${sHtml}
                         <div class="lesson-title">${l.title}</div>
                         <div class="card-badges">
                             <span class="badge ${hasAnno ? 'has-anno' : ''}">註釋</span>

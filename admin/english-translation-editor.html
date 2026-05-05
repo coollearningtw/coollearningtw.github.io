@@ -123,6 +123,15 @@
         #json-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.7); display: none; align-items: center; justify-content: center; z-index: 3000; backdrop-filter: blur(8px); }
         .json-box { background: #fff; padding: 35px; border-radius: 20px; width: 90%; max-width: 850px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
         textarea#json-output { width: 100%; height: 480px; font-family: "Fira Code", monospace; background: #1e293b; color: #38bdf8; padding: 20px; border-radius: 12px; resize: none; border: none; font-size: 0.85rem; line-height: 1.5; }
+
+        /* --- 新增狀態控制樣式 --- */
+        .status-ctrl-box { background: #f8fafc; padding: 12px; border-radius: 10px; border: 1px solid #cbd5e1; display: flex; flex-direction: column; gap: 6px; }
+        .color-dot { width: 16px; height: 16px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: 0.2s; }
+        .color-dot.active { border-color: #0f172a; transform: scale(1.2); }
+        .c-red { background: #e57373; } .c-yellow { background: #ffb74d; } .c-green { background: #81c784; }
+        .status-toggle-btn { font-size: 10px; font-weight: bold; cursor: pointer; padding: 4px 8px; border-radius: 4px; border: none; transition: 0.2s; }
+        .st-on { background: #dcfce7; color: #166534; }
+        .st-off { background: #fee2e2; color: #991b1b; }
     </style>
 </head>
 <body>
@@ -244,10 +253,29 @@
             const lesson = source.lessons[lIdx];
             
             document.getElementById('editor-form').innerHTML = `
-                <div style="display:grid; grid-template-columns: 1fr 1fr 100px; gap:20px; margin-bottom:40px; background:#f8fafc; padding:25px; border-radius:15px; border:1px solid #e2e8f0; align-items: flex-end;">
-                    <div class="input-box" style="margin:0;"><label>版本名稱 (Source)</label><input type="text" value="${source.name}" oninput="updateMeta(${sIdx}, 'name', this.value)" style="width:100%; padding:12px; border:1px solid #cbd5e1; border-radius:8px;"></div>
-                    <div class="input-box" style="margin:0;"><label>課次標題 (Title)</label><input type="text" value="${lesson.title}" oninput="updateLessonMeta(${sIdx}, ${lIdx}, 'title', this.value)" style="width:100%; padding:12px; border:1px solid #cbd5e1; border-radius:8px;"></div>
-                    <div class="input-box" style="margin:0;"><label>課次 (Num)</label><input type="number" value="${lesson.lesson}" oninput="updateLessonMeta(${sIdx}, ${lIdx}, 'lesson', parseInt(this.value))" style="width:100%; padding:12px; border:1px solid #cbd5e1; border-radius:8px;"></div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr 60px 220px; gap:15px; margin-bottom:40px; background:#f8fafc; padding:20px; border-radius:15px; border:1px solid #e2e8f0; align-items: flex-end;">
+                    <div class="input-box" style="margin:0;"><label>版本名稱</label><input type="text" value="${source.name}" oninput="updateMeta(${sIdx}, 'name', this.value)" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px;"></div>
+                    <div class="input-box" style="margin:0;"><label>課次標題</label><input type="text" value="${lesson.title}" oninput="updateLessonMeta(${sIdx}, ${lIdx}, 'title', this.value, false)" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px;"></div>
+                    <div class="input-box" style="margin:0;"><label>課次</label><input type="number" value="${lesson.lesson}" oninput="updateLessonMeta(${sIdx}, ${lIdx}, 'lesson', parseInt(this.value), false)" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px;"></div>
+                    
+                    <!-- 狀態控制區 -->
+                    <div class="status-ctrl-box">
+                        <label style="font-size:11px; font-weight:bold; color:#64748b;">橫幅文字與狀態</label>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <input type="text" placeholder="文字" value="${lesson.status || ''}" 
+                                   oninput="updateLessonMeta(${sIdx}, ${lIdx}, 'status', this.value, false)" 
+                                   style="width:70px; padding:4px; font-size:11px; border:1px solid #cbd5e1; border-radius:4px;">
+                            <div style="display:flex; gap:4px;">
+                                <div class="color-dot c-red ${lesson.statusColor==='red'?'active':''}" onclick="updateLessonMeta(${sIdx},${lIdx},'statusColor','red', true)"></div>
+                                <div class="color-dot c-yellow ${(!lesson.statusColor || lesson.statusColor==='yellow')?'active':''}" onclick="updateLessonMeta(${sIdx},${lIdx},'statusColor','yellow', true)"></div>
+                                <div class="color-dot c-green ${lesson.statusColor==='green'?'active':''}" onclick="updateLessonMeta(${sIdx},${lIdx},'statusColor','green', true)"></div>
+                            </div>
+                            <button class="status-toggle-btn ${lesson.enabled!==false?'st-on':'st-off'}" 
+                                    onclick="updateLessonMeta(${sIdx},${lIdx},'enabled',${lesson.enabled!==false?false:true}, true)">
+                                ${lesson.enabled!==false ? '已上架' : '未開放'}
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 <div id="pairs-container"></div>
                 <button class="btn btn-outline" style="width:100%; justify-content:center; border:2px dashed #cbd5e1; margin-top:10px; padding:20px; color:#3b82f6;" onclick="addPair(${sIdx}, ${lIdx})">+ 新增翻譯對句</button>
@@ -258,7 +286,6 @@
             renderPairs();
         }
 
-        // 當輸入框獲得焦點時，禁止卡片拖拽
         function setDraggable(pIdx, status) {
             const card = document.getElementById(`pair-card-${pIdx}`);
             if (card) card.setAttribute('draggable', status.toString());
@@ -301,9 +328,7 @@
             `).join('');
         }
 
-        // 拖拽邏輯
         function handleDragStart(e, idx) {
-            // 只有在 draggable 為 true 時才會觸發 (即非 Focus 狀態)
             draggedPairIdx = idx;
             e.target.classList.add('dragging');
             e.dataTransfer.effectAllowed = "move";
@@ -321,24 +346,40 @@
             e.preventDefault();
             const [sIdx, lIdx] = activeKey.split('-').map(Number);
             const pairs = dataStore.sources[sIdx].lessons[lIdx].pairs;
-            
             const [movedItem] = pairs.splice(draggedPairIdx, 1);
             pairs.splice(targetIdx, 0, movedItem);
-            
             renderPairs();
             sync();
         }
 
-        // 資料同步
         function updateMeta(sIdx, f, v) { dataStore.sources[sIdx][f] = v; renderList(); sync(); }
-        function updateLessonMeta(sIdx, lIdx, f, v) { dataStore.sources[sIdx].lessons[lIdx][f] = v; renderList(); sync(); }
+
+        /* --- 修正狀態更新函式：確保欄位順序與強制寫入 --- */
+        function updateLessonMeta(sIdx, lIdx, f, v, shouldRender) {
+            const lesson = dataStore.sources[sIdx].lessons[lIdx];
+            lesson[f] = v;
+
+            // 重建 Lesson 物件，將狀態放在 JSON 最上方
+            dataStore.sources[sIdx].lessons[lIdx] = {
+                lesson: lesson.lesson,
+                title: lesson.title,
+                status: lesson.status || "",
+                statusColor: lesson.statusColor || "yellow",
+                enabled: lesson.enabled !== false,
+                ...lesson
+            };
+
+            if(f === 'title' || f === 'lesson') renderList();
+            sync(); 
+            if(shouldRender) selectLesson(sIdx, lIdx);
+        }
+
         function updatePair(sIdx, lIdx, pIdx, f, v) { dataStore.sources[sIdx].lessons[lIdx].pairs[pIdx][f] = v; sync(); }
 
         function addPair(sIdx, lIdx) {
             dataStore.sources[sIdx].lessons[lIdx].pairs.push({ ch: "", en: "" });
             renderPairs();
             sync();
-            // 自動滾動到底部
             const main = document.querySelector('.editor-main');
             main.scrollTop = main.scrollHeight;
         }
@@ -356,7 +397,8 @@
             const sIdx = 0;
             dataStore.sources[sIdx].lessons.push({ 
                 lesson: dataStore.sources[sIdx].lessons.length + 1, 
-                title: "新課次名稱", pairs: [{ ch: "", en: "" }] 
+                title: "新課次名稱", pairs: [{ ch: "", en: "" }],
+                enabled: true
             });
             renderList();
             selectLesson(sIdx, dataStore.sources[sIdx].lessons.length - 1);

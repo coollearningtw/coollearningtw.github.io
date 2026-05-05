@@ -28,19 +28,24 @@
         .version-group { margin-bottom: 30px; }
         .version-title { font-size: 1.3rem; font-weight: bold; color: var(--primary); margin-bottom: 15px; border-left: 5px solid var(--primary); padding-left: 10px; }
         .lesson-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; }
-        .lesson-card { background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 20px 10px; text-align: center; cursor: pointer; transition: all 0.2s ease; user-select: none; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: bold; color: #555; box-shadow: 0 2px 8px rgba(0,0,0,0.02); min-height: 95px; position: relative; }
+        .lesson-card { background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 30px 10px 15px; text-align: center; cursor: pointer; transition: all 0.2s ease; user-select: none; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: bold; color: #555; box-shadow: 0 2px 8px rgba(0,0,0,0.02); min-height: 95px; position: relative; overflow: hidden; }
         .lesson-card.selected:not(.manage-mode) { border: 2.5px solid var(--primary); background-color: var(--primary-light); color: var(--primary); transform: translateY(-2px); }
         
-        /* 若課程完全沒內容，禁用 hover 與點擊 */
-        .lesson-card.empty:not(.manage-mode) { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
-        .lesson-card.empty:not(.manage-mode):hover { transform: none; box-shadow: none; border-color: #eee; }
+        /* --- 新增樣式 --- */
+        .status-ribbon { position: absolute; top: 0; left: 0; right: 0; font-size: 0.65rem; padding: 2px 0; font-weight: 900; text-align: center; color: #fff; z-index: 5; }
+        .status-ribbon.red { background-color: #e57373; }
+        .status-ribbon.yellow { background-color: #ffb74d; }
+        .status-ribbon.green { background-color: #81c784; }
+        .lesson-card.is-disabled { opacity: 0.5; filter: grayscale(1); cursor: not-allowed !important; pointer-events: none; }
+        .lesson-card.is-disabled::after { content: "暫未開放"; position: absolute; bottom: 5px; font-size: 0.6rem; color: #ef4444; font-weight: bold; }
+        /* --- 結束 --- */
 
+        .lesson-card.empty:not(.manage-mode) { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
         .card-badges { display: flex; gap: 4px; margin-top: 6px; }
         .badge { font-size: 0.65rem; padding: 2px 5px; border-radius: 4px; background: #eee; color: #aaa; }
         .badge.has-data { background: #d1fae5; color: #065f46; }
         .badge.is-trans { background: #f3e5f5; color: #8e44ad; }
 
-        /* 修正底部按鈕禁用狀態的 hover 顏色 */
         .nav-item-btn:disabled { opacity: 0.3; cursor: not-allowed; }
         .nav-item-btn:disabled:hover { background: transparent !important; color: #64748b !important; }
 
@@ -48,7 +53,6 @@
         .lesson-card.manage-mode .manage-btn { display: flex; pointer-events: auto; }
         .manage-btn.add { background-color: #2ecc71; }
         .manage-btn.remove { background-color: #e74c3c; }
-
         .section-header { margin: 60px 0 20px; border-bottom: 2px solid #eee; color: #888; font-weight: bold; font-size: 1.1rem; padding-bottom: 5px; }
     </style>
 </head>
@@ -130,12 +134,9 @@
                 tab.innerHTML = `${s.name}${isManageMode ? ' <span style="font-size:10px;">✎</span>' : ''}`;
                 tab.onclick = () => {
                     if (isManageMode) {
-                        const newN = prompt('修改書架名稱（留空刪除）:', s.name);
-                        if (newN === null) return;
-                        if (newN === '') {
-                            shelves = shelves.filter(x => x.id !== s.id);
-                            if (activeShelfId === s.id) activeShelfId = 'all';
-                        } else { s.name = n; }
+                        const newN = prompt('修改名稱:', s.name);
+                        if (newN === '') { shelves = shelves.filter(x => x.id !== s.id); if (activeShelfId === s.id) activeShelfId = 'all'; }
+                        else if (newN) { s.name = newN; }
                         saveShelves(); renderTabs(); renderLessons();
                     } else { switchShelf(s.id); }
                 };
@@ -178,14 +179,19 @@
             const grid = group.querySelector('.lesson-grid');
             
             src.lessons.forEach(l => {
+                const isEnabled = l.enabled !== false;
                 const card = document.createElement('div');
-                card.className = `lesson-card ${isManageMode ? 'manage-mode' : ''} ${type === 'trans' ? 'trans-logic' : 'normal-logic'} ${(!l.hasWords && !l.hasText && type!=='trans') ? 'empty' : ''}`;
+                card.className = `lesson-card ${isManageMode ? 'manage-mode' : ''} ${type === 'trans' ? 'trans-logic' : 'normal-logic'} ${(!l.hasWords && !l.hasText && type!=='trans') ? 'empty' : ''} ${!isEnabled ? 'is-disabled' : ''}`;
                 
                 card.dataset.hasWords = l.hasWords || false;
                 card.dataset.hasText = l.hasText || false;
                 card.dataset.source = src.name; card.dataset.lesson = l.lesson;
 
+                let sHtml = '';
+                if (l.status) sHtml = `<div class="status-ribbon ${l.statusColor || 'yellow'}">${l.status}</div>`;
+
                 card.innerHTML = `
+                    ${sHtml}
                     <div>${l.title}</div>
                     <div class="card-badges">
                         ${type === 'normal' ? 

@@ -38,14 +38,14 @@
         .badge.has-anno { background: #fee2e2; color: #b91c1c; }
         .badge.has-content { background: #e0f2fe; color: #0369a1; }
 
-        /* --- 新增樣式 --- */
+        /* --- 狀態樣式 --- */
         .status-ribbon { position: absolute; top: 0; left: 0; right: 0; font-size: 0.65rem; padding: 2px 0; font-weight: 900; text-align: center; color: #fff; z-index: 5; }
         .status-ribbon.red { background-color: #e57373; }
         .status-ribbon.yellow { background-color: #ffb74d; }
         .status-ribbon.green { background-color: #81c784; }
-        .lesson-card.is-disabled { opacity: 0.5; filter: grayscale(1); cursor: not-allowed !important; pointer-events: none; }
-        .lesson-card.is-disabled::after { content: "暫未開放"; position: absolute; bottom: 5px; left: 0; right: 0; font-size: 0.6rem; color: #ef4444; font-weight: bold; text-align: center; }
-        /* --- 結束 --- */
+        /* 禁用狀態：保持顏色正常，僅透明度降低並禁用點擊 */
+        .lesson-card.is-disabled { opacity: 0.6; cursor: not-allowed !important; pointer-events: none; }
+        /* -------------- */
 
         .nav-item-btn:disabled { opacity: 0.3; cursor: not-allowed; }
         .nav-item-btn:disabled:hover { background: transparent !important; color: #64748b !important; }
@@ -129,15 +129,9 @@
                     
                     const card = document.createElement('div'); 
                     card.className = `lesson-card std-card ${isManageMode?'manage-mode':''} ${(!hasAnno && !hasContent) ? 'empty' : ''} ${!isEnabled ? 'is-disabled' : ''}`;
-                    
-                    card.dataset.hasAnno = hasAnno;
-                    card.dataset.hasContent = hasContent;
                     card.dataset.source = src.name; card.dataset.lesson = l.lesson;
+                    card.dataset.hasAnno = hasAnno; card.dataset.hasContent = hasContent;
 
-                    const btnIcon = activeShelfId==='all' ? 
-                        '<svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>' : 
-                        '<svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line></svg>';
-                    
                     let sHtml = '';
                     if (l.status) sHtml = `<div class="status-ribbon ${l.statusColor || 'yellow'}">${l.status}</div>`;
 
@@ -148,7 +142,9 @@
                             <span class="badge ${hasAnno ? 'has-anno' : ''}">註釋</span>
                             <span class="badge ${hasContent ? 'has-content' : ''}">課文</span>
                         </div>
-                        <button class="manage-btn ${activeShelfId==='all'?'add':'remove'}" onclick="handleManage('${src.name}', ${l.lesson}, event)">${btnIcon}</button>
+                        <button class="manage-btn ${activeShelfId==='all'?'add':'remove'}" onclick="handleManage('${src.name}', ${l.lesson}, event)">
+                            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        </button>
                     `;
                     card.onclick = () => { if(!isManageMode) { card.classList.toggle('selected'); updateUI(); } };
                     grid.appendChild(card);
@@ -178,12 +174,10 @@
         function updateUI() {
             const selectedCards = document.querySelectorAll('.lesson-card.selected');
             let canAnno = false, canContent = false;
-            
             selectedCards.forEach(c => {
                 if(c.dataset.hasAnno === 'true') canAnno = true;
                 if(c.dataset.hasContent === 'true') canContent = true;
             });
-
             document.getElementById('btn-anno').disabled = !canAnno;
             document.getElementById('btn-textbook').disabled = !canContent;
         }

@@ -31,14 +31,13 @@
         .lesson-card { background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 30px 10px 15px; text-align: center; cursor: pointer; transition: all 0.2s ease; user-select: none; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: bold; color: #555; box-shadow: 0 2px 8px rgba(0,0,0,0.02); min-height: 95px; position: relative; overflow: hidden; }
         .lesson-card.selected:not(.manage-mode) { border: 2.5px solid var(--primary); background-color: var(--primary-light); color: var(--primary); transform: translateY(-2px); }
         
-        /* --- 新增樣式 --- */
+        /* --- 狀態樣式 --- */
         .status-ribbon { position: absolute; top: 0; left: 0; right: 0; font-size: 0.65rem; padding: 2px 0; font-weight: 900; text-align: center; color: #fff; z-index: 5; }
         .status-ribbon.red { background-color: #e57373; }
         .status-ribbon.yellow { background-color: #ffb74d; }
         .status-ribbon.green { background-color: #81c784; }
-        .lesson-card.is-disabled { opacity: 0.5; filter: grayscale(1); cursor: not-allowed !important; pointer-events: none; }
-        .lesson-card.is-disabled::after { content: "暫未開放"; position: absolute; bottom: 5px; font-size: 0.6rem; color: #ef4444; font-weight: bold; }
-        /* --- 結束 --- */
+        .lesson-card.is-disabled { opacity: 0.6; cursor: not-allowed !important; pointer-events: none; }
+        /* -------------- */
 
         .lesson-card.empty:not(.manage-mode) { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
         .card-badges { display: flex; gap: 4px; margin-top: 6px; }
@@ -89,10 +88,7 @@
         let mergedData = [], transData = [];
         let shelves = [], activeShelfId = 'all', isManageMode = false;
 
-        const loadShelves = () => {
-            const data = localStorage.getItem('course_shelves');
-            shelves = data ? JSON.parse(data) : [];
-        };
+        const loadShelves = () => { const data = localStorage.getItem('course_shelves'); shelves = data ? JSON.parse(data) : []; };
         const saveShelves = () => localStorage.setItem('course_shelves', JSON.stringify(shelves));
 
         async function init() {
@@ -102,7 +98,6 @@
                     fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/english-textbook.json').then(r => r.json()),
                     fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/english-translation.json').then(r => r.json())
                 ]);
-                
                 mergedData = wordRes.sources.map(src => {
                     const textSrc = textRes.sources.find(ts => ts.name === src.name);
                     src.lessons.forEach(l => {
@@ -112,11 +107,8 @@
                     });
                     return src;
                 });
-
                 transData = transRes.sources;
-                loadShelves();
-                renderTabs();
-                renderLessons();
+                loadShelves(); renderTabs(); renderLessons();
             } catch (e) { console.error("資料載入失敗", e); }
         }
 
@@ -124,10 +116,8 @@
             const root = document.getElementById('shelf-tabs'); root.innerHTML = '';
             const allTab = document.createElement('div');
             allTab.className = `shelf-tab ${activeShelfId === 'all' ? 'active' : ''}`;
-            allTab.textContent = '全部課程';
-            allTab.onclick = () => { if(!isManageMode) switchShelf('all'); };
+            allTab.textContent = '全部課程'; allTab.onclick = () => { if(!isManageMode) switchShelf('all'); };
             root.appendChild(allTab);
-
             shelves.forEach(s => {
                 const tab = document.createElement('div');
                 tab.className = `shelf-tab ${activeShelfId === s.id ? 'active' : ''}`;
@@ -142,7 +132,6 @@
                 };
                 root.appendChild(tab);
             });
-
             const addTab = document.createElement('div');
             addTab.className = 'shelf-tab add-btn'; addTab.textContent = '+ 新增書架';
             addTab.onclick = () => {
@@ -156,51 +145,34 @@
             const nRoot = document.getElementById('normal-lessons-root');
             const tRoot = document.getElementById('trans-lessons-root');
             nRoot.innerHTML = ''; tRoot.innerHTML = '';
-
             const shelf = shelves.find(s => s.id === activeShelfId);
             const filterData = (data) => {
                 if (activeShelfId === 'all') return data;
                 if (!shelf) return [];
-                return data.map(src => ({
-                    ...src,
-                    lessons: src.lessons.filter(l => shelf.courses.some(c => c.source === src.name && c.lesson === l.lesson))
-                })).filter(src => src.lessons.length > 0);
+                return data.map(src => ({ ...src, lessons: src.lessons.filter(l => shelf.courses.some(c => c.source === src.name && c.lesson === l.lesson)) })).filter(src => src.lessons.length > 0);
             };
-
             filterData(mergedData).forEach(src => nRoot.appendChild(createVersionBlock(src, 'normal')));
             filterData(transData).forEach(src => tRoot.appendChild(createVersionBlock(src, 'trans')));
             updateUI();
         }
 
         function createVersionBlock(src, type) {
-            const group = document.createElement('div');
-            group.className = 'version-group';
+            const group = document.createElement('div'); group.className = 'version-group';
             group.innerHTML = `<div class="version-title">${src.name}</div><div class="lesson-grid"></div>`;
             const grid = group.querySelector('.lesson-grid');
-            
             src.lessons.forEach(l => {
                 const isEnabled = l.enabled !== false;
                 const card = document.createElement('div');
                 card.className = `lesson-card ${isManageMode ? 'manage-mode' : ''} ${type === 'trans' ? 'trans-logic' : 'normal-logic'} ${(!l.hasWords && !l.hasText && type!=='trans') ? 'empty' : ''} ${!isEnabled ? 'is-disabled' : ''}`;
-                
-                card.dataset.hasWords = l.hasWords || false;
-                card.dataset.hasText = l.hasText || false;
+                card.dataset.hasWords = l.hasWords || false; card.dataset.hasText = l.hasText || false;
                 card.dataset.source = src.name; card.dataset.lesson = l.lesson;
-
-                let sHtml = '';
-                if (l.status) sHtml = `<div class="status-ribbon ${l.statusColor || 'yellow'}">${l.status}</div>`;
-
+                let sHtml = ''; if(l.status) sHtml = `<div class="status-ribbon ${l.statusColor || 'yellow'}">${l.status}</div>`;
                 card.innerHTML = `
-                    ${sHtml}
-                    <div>${l.title}</div>
+                    ${sHtml}<div>${l.title}</div>
                     <div class="card-badges">
-                        ${type === 'normal' ? 
-                            `<span class="badge ${l.hasWords ? 'has-data' : ''}">單字</span><span class="badge ${l.hasText ? 'has-data' : ''}">課文</span>` : 
-                            '<span class="badge is-trans">翻譯</span>'}
+                        ${type === 'normal' ? `<span class="badge ${l.hasWords ? 'has-data' : ''}">單字</span><span class="badge ${l.hasText ? 'has-data' : ''}">課文</span>` : '<span class="badge is-trans">翻譯</span>'}
                     </div>
-                    <button class="manage-btn ${activeShelfId === 'all' ? 'add' : 'remove'}" onclick="handleManageClick('${src.name}', ${l.lesson}, event)">
-                        ${activeShelfId === 'all' ? '+' : '-'}
-                    </button>
+                    <button class="manage-btn ${activeShelfId === 'all' ? 'add' : 'remove'}" onclick="handleManageClick('${src.name}', ${l.lesson}, event)">${activeShelfId === 'all' ? '+' : '-'}</button>
                 `;
                 card.onclick = (e) => { if (isManageMode) return; card.classList.toggle('selected'); updateUI(); };
                 grid.appendChild(card);
@@ -214,11 +186,7 @@
                 if (shelves.length === 0) { alert('請先新增一個書架'); return; }
                 const list = shelves.map((s, i) => `${i + 1}. ${s.name}`).join('\n');
                 const idx = parseInt(prompt(`要加入到哪個書架？\n${list}`)) - 1;
-                if (shelves[idx]) {
-                    if (!shelves[idx].courses.some(c => c.source === source && c.lesson === lesson)) {
-                        shelves[idx].courses.push({ source, lesson }); saveShelves(); alert('已加入');
-                    } else alert('已包含此課程');
-                }
+                if (shelves[idx]) { if (!shelves[idx].courses.some(c => c.source === source && c.lesson === lesson)) { shelves[idx].courses.push({ source, lesson }); saveShelves(); alert('已加入'); } }
             } else {
                 const s = shelves.find(x => x.id === activeShelfId);
                 if (s) { s.courses = s.courses.filter(c => !(c.source === source && c.lesson === lesson)); saveShelves(); renderLessons(); }
@@ -228,33 +196,17 @@
         function updateUI() {
             const nSels = document.querySelectorAll('.normal-logic.selected');
             const tSels = document.querySelectorAll('.trans-logic.selected');
-            
             let anyWords = false, anyText = false;
-            nSels.forEach(c => {
-                if(c.dataset.hasWords === 'true') anyWords = true;
-                if(c.dataset.hasText === 'true') anyText = true;
-            });
-
+            nSels.forEach(c => { if(c.dataset.hasWords === 'true') anyWords = true; if(c.dataset.hasText === 'true') anyText = true; });
             document.getElementById('btn-words').disabled = !anyWords;
             document.getElementById('btn-recall').disabled = !anyWords;
             document.getElementById('btn-quiz').disabled = !anyWords;
             document.getElementById('btn-textbook').disabled = !anyText;
-
-            const recallBtn = document.getElementById('btn-recall');
-            const transBtn = document.getElementById('btn-translation');
-            if (tSels.length > 0) {
-                recallBtn.style.display = 'none'; transBtn.style.display = 'flex'; transBtn.disabled = false;
-            } else {
-                recallBtn.style.display = 'flex'; transBtn.style.display = 'none';
-            }
+            const recallBtn = document.getElementById('btn-recall'), transBtn = document.getElementById('btn-translation');
+            if (tSels.length > 0) { recallBtn.style.display = 'none'; transBtn.style.display = 'flex'; transBtn.disabled = false; } else { recallBtn.style.display = 'flex'; transBtn.style.display = 'none'; }
         }
 
-        function switchShelf(id) {
-            activeShelfId = id;
-            document.querySelectorAll('.lesson-card.selected').forEach(c => c.classList.remove('selected'));
-            renderTabs(); renderLessons();
-        }
-
+        function switchShelf(id) { activeShelfId = id; document.querySelectorAll('.lesson-card.selected').forEach(c => c.classList.remove('selected')); renderTabs(); renderLessons(); }
         function toggleManage() { isManageMode = document.getElementById('manage-toggle').checked; renderTabs(); renderLessons(); }
         function goTo(page) {
             const isT = page === 'translation';

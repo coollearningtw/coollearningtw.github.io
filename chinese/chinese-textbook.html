@@ -41,6 +41,17 @@
         }
 
         .content-area { flex: 1; width: 100%; }
+        
+        /* --- 文字對齊功能 --- */
+        .text-align-left { text-align: left; }
+        .text-align-center { text-align: center; }
+        .text-align-right { text-align: right; }
+        
+        /* 當文字對齊時，註記標籤也要跟著移動 */
+        .text-align-center .note-wrapper { justify-content: center; }
+        .text-align-right .note-wrapper { justify-content: flex-end; }
+        /* ------------------ */
+
         .side-controls { display: flex; flex-direction: column; gap: 15px; width: 30px; flex-shrink: 0; align-items: center; padding-top: 5px; }
 
         .note-wrapper { max-height: 0; opacity: 0; overflow: hidden; transition: all 0.3s ease; display: flex; flex-wrap: wrap; gap: 8px; }
@@ -75,7 +86,7 @@
             background: #ffffff; box-shadow: 0 -4px 15px rgba(0,0,0,0.08);
             z-index: 1000; padding: 12px 0;
             border-top: 1px solid #e2e8f0;
-            display: block; /* 始終顯示 */
+            display: block; 
         }
         .bottom-nav-content {
             display: flex; justify-content: space-around; align-items: center;
@@ -167,7 +178,6 @@
         // 初始化語音
         function initVoice() {
             const voices = window.speechSynthesis.getVoices();
-            // 優先順序：Google 國語 > Microsoft 國語 > 任何台灣國語 > 廣東話/簡體
             selectedVoice = voices.find(v => v.lang.includes('zh-TW') && v.name.includes('Google')) 
                            || voices.find(v => v.lang.includes('zh-TW') && v.name.includes('Microsoft'))
                            || voices.find(v => v.lang.includes('zh-TW'))
@@ -223,10 +233,13 @@
                         const notesArray = Array.isArray(c.note) ? c.note : (c.note ? c.note.split('\n') : []);
                         const notesHtml = notesArray.filter(n => n.trim()!=='').map(n => `<div class="note-label">${n}</div>`).join('');
 
+                        // --- 取得對齊類別 ---
+                        const alignClass = c.align ? `text-align-${c.align}` : 'text-align-left';
+
                         const item = document.createElement('div');
                         item.className = 'sentence-item';
                         item.innerHTML = `
-                            <div class="content-area">
+                            <div class="content-area ${alignClass}">
                                 <div class="note-wrapper">${notesHtml}</div>
                                 <div class="para-text">${parseMarkdown(c.text)}</div>
                                 <div class="trans-box">${parseMarkdown(c.translation || '')}</div>
@@ -318,9 +331,7 @@
 
         function getCleanText(el) {
             const clone = el.cloneNode(true);
-            // 移除所有註釋編號 <span>
             clone.querySelectorAll('.anno-no').forEach(no => no.remove());
-            // 移除 markdown 符號
             return stripMarkdown(clone.innerText).trim();
         }
 

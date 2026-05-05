@@ -45,7 +45,13 @@
         .status-toggle { font-size: 10px; font-weight: bold; cursor: pointer; padding: 2px 6px; border-radius: 4px; border: none; }
         .st-on { background: #dcfce7; color: #166534; }
         .st-off { background: #fee2e2; color: #991b1b; }
-        /* ---------------------- */
+        
+        /* --- 對齊工具列樣式 --- */
+        .align-toolbar { display: flex; gap: 4px; background: #f1f5f9; padding: 2px; border-radius: 4px; width: fit-content; }
+        .align-btn { padding: 4px; border: 1px solid transparent; background: none; cursor: pointer; border-radius: 3px; color: #94a3b8; display: flex; align-items: center; }
+        .align-btn:hover { background: #e2e8f0; color: #475569; }
+        .align-btn.active { background: #fff; color: #0f172a; border-color: #cbd5e1; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .align-btn svg { width: 16px; height: 16px; fill: currentColor; }
 
         .insert-bar { height: 12px; margin: -6px 0; position: relative; z-index: 10; cursor: pointer; display: flex; align-items: center; justify-content: center; opacity: 0; transition: 0.2s; }
         .insert-bar:hover { opacity: 1; height: 24px; margin: -12px 0; }
@@ -149,7 +155,12 @@
             file: '<svg class="svg-icon" style="color:#94a3b8" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>',
             drag: '<svg class="svg-icon" viewBox="0 0 24 24"><path d="M11 18c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm-2-8c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6 4c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>',
             close: '<svg class="svg-icon" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>',
-            plus: '<svg class="svg-icon" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>'
+            plus: '<svg class="svg-icon" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>',
+            
+            // --- 優化後的對齊圖示 ---
+            alignLeft: '<svg viewBox="0 0 24 24"><path d="M3 3h18v2H3zm0 4h12v2H3zm0 4h18v2H3zm0 4h12v2H3zm0 4h18v2H3z"/></svg>',
+            alignCenter: '<svg viewBox="0 0 24 24"><path d="M3 3h18v2H3zm4 4h10v2H7zm-4 4h18v2H3zm4 4h10v2H7zm-4 4h18v2H3z"/></svg>',
+            alignRight: '<svg viewBox="0 0 24 24"><path d="M3 3h18v2H3zm6 4h12v2H9zm-6 4h18v2H3zm6 4h12v2H9zm-6 4h18v2H3z"/></svg>'
         };
 
         async function init() {
@@ -162,23 +173,19 @@
 
         function switchTab(m) { currentMode = m; document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.id===`tab-${m}`)); render(); }
 
-        /* --- 修正狀態更新函式：確保物件順序與 100% 寫入 --- */
         function updateStatus(sIdx, lIdx, field, value, shouldRender) {
             const lesson = dataStore.sources[sIdx].lessons[lIdx];
             lesson[field] = value;
-            
-            // 強制重建 Lesson 物件，將狀態欄位放到最前面，方便檢查 JSON
             dataStore.sources[sIdx].lessons[lIdx] = {
-                lesson: lesson.lesson,
-                title: lesson.title,
-                status: lesson.status || "",
-                statusColor: lesson.statusColor || "yellow",
-                enabled: lesson.enabled !== false,
-                ...lesson
+                lesson: lesson.lesson, title: lesson.title, status: lesson.status || "",
+                statusColor: lesson.statusColor || "yellow", enabled: lesson.enabled !== false, ...lesson
             };
+            sync(); if (shouldRender) render();
+        }
 
-            sync();
-            if (shouldRender) render();
+        function updateItemAlign(s, l, i, align) {
+            dataStore.sources[s].lessons[l].content[i].align = align;
+            sync(); render();
         }
 
         function render() {
@@ -197,33 +204,20 @@
                                 ${ICONS.file}
                                 <div class="editable-cell" style="width:50px;justify-content:center;border:1px solid #e2e8f0;display:flex;align-items:center;padding:0;" onclick="event.stopPropagation();startEdit(this,${sIdx},${lIdx},-1,'lesson')">${l.lesson}</div>
                                 <div class="editable-cell" style="font-weight:bold;display:flex;align-items:center;" onclick="event.stopPropagation();startEdit(this,${sIdx},${lIdx},-1,'title')">${l.title}</div>
-                                
-                                <!-- --- 狀態控制區 --- -->
                                 <div class="status-group" onclick="event.stopPropagation()">
-                                    <input type="text" class="status-input" placeholder="橫幅文字" value="${l.status || ''}" 
-                                           oninput="updateStatus(${sIdx}, ${lIdx}, 'status', this.value, false)">
+                                    <input type="text" class="status-input" placeholder="橫幅文字" value="${l.status || ''}" oninput="updateStatus(${sIdx}, ${lIdx}, 'status', this.value, false)">
                                     <div class="color-dot c-red ${l.statusColor==='red'?'active':''}" onclick="updateStatus(${sIdx}, ${lIdx}, 'statusColor', 'red', true)"></div>
                                     <div class="color-dot c-yellow ${(!l.statusColor || l.statusColor==='yellow')?'active':''}" onclick="updateStatus(${sIdx}, ${lIdx}, 'statusColor', 'yellow', true)"></div>
                                     <div class="color-dot c-green ${l.statusColor==='green'?'active':''}" onclick="updateStatus(${sIdx}, ${lIdx}, 'statusColor', 'green', true)"></div>
-                                    <button class="status-toggle ${l.enabled!==false?'st-on':'st-off'}" 
-                                            onclick="updateStatus(${sIdx}, ${lIdx}, 'enabled', ${l.enabled!==false?false:true}, true)">
-                                            ${l.enabled!==false ? '已上架' : '未開放'}
-                                    </button>
+                                    <button class="status-toggle ${l.enabled!==false?'st-on':'st-off'}" onclick="updateStatus(${sIdx}, ${lIdx}, 'enabled', ${l.enabled!==false?false:true}, true)">${l.enabled!==false ? '已上架' : '未開放'}</button>
                                 </div>
-                                <!-- ---------------- -->
-
                             </div>
                             <button class="btn-action" style="padding:2px 6px;color:#ef4444;border:none" onclick="event.stopPropagation();delLes(${sIdx},${lIdx})">${ICONS.close}</button>
                         </div>
                         <div style="display:${expandedKeys.has(lKey)?'block':'none'};padding:10px;">
                             ${createInsertBarHtml(sIdx, lIdx, 0)}
                             ${items.map((item, iIdx) => `
-                            <div class="data-item" 
-                                 draggable="true" 
-                                 ondragstart="handleDragStart(event, ${sIdx}, ${lIdx}, ${iIdx})"
-                                 ondragover="handleDragOver(event)"
-                                 ondragleave="handleDragLeave(event)"
-                                 ondrop="handleDrop(event, ${sIdx}, ${lIdx}, ${iIdx})">
+                            <div class="data-item" draggable="true" ondragstart="handleDragStart(event, ${sIdx}, ${lIdx}, ${iIdx})" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, ${sIdx}, ${lIdx}, ${iIdx})">
                                 <div class="drag-handle">${ICONS.drag}</div>
                                 <div style="flex:1">
                                     ${currentMode==='annotations' ? 
@@ -234,12 +228,19 @@
                                     </div>` : 
                                     `<div class="content-grid">
                                         <div class="cell-row"><span class="cell-label">段落名稱</span><div class="editable-cell cell-secname" style="flex:1" onclick="startEdit(this,${sIdx},${lIdx},${iIdx},'sectionName')">${parseMarkdown(item.sectionName) || '(選填)'}</div></div>
-                                        <div class="cell-row"><span class="cell-label">本文</span><div class="editable-cell" style="flex:1" onclick="startEdit(this,${sIdx},${lIdx},${iIdx},'text')">${parseMarkdown(item.text)||(item.text?item.text:'(原文段落)')}</div></div>
-                                        <div class="cell-row"><span class="cell-label">註記</span>
-                                            <div class="note-editor-container">
-                                                ${renderNoteChips(item.note, sIdx, lIdx, iIdx)}
+                                        
+                                        <!-- 對齊工具列 -->
+                                        <div class="cell-row">
+                                            <span class="cell-label">對齊方式</span>
+                                            <div class="align-toolbar">
+                                                <button title="置左" class="align-btn ${(!item.align || item.align==='left')?'active':''}" onclick="updateItemAlign(${sIdx},${lIdx},${iIdx},'left')">${ICONS.alignLeft}</button>
+                                                <button title="置中" class="align-btn ${item.align==='center'?'active':''}" onclick="updateItemAlign(${sIdx},${lIdx},${iIdx},'center')">${ICONS.alignCenter}</button>
+                                                <button title="置右" class="align-btn ${item.align==='right'?'active':''}" onclick="updateItemAlign(${sIdx},${lIdx},${iIdx},'right')">${ICONS.alignRight}</button>
                                             </div>
                                         </div>
+
+                                        <div class="cell-row"><span class="cell-label">本文</span><div class="editable-cell" style="flex:1" onclick="startEdit(this,${sIdx},${lIdx},${iIdx},'text')">${parseMarkdown(item.text)||(item.text?item.text:'(原文段落)')}</div></div>
+                                        <div class="cell-row"><span class="cell-label">註記</span><div class="note-editor-container">${renderNoteChips(item.note, sIdx, lIdx, iIdx)}</div></div>
                                         <div class="cell-row"><span class="cell-label">翻譯</span><div class="editable-cell cell-trans" style="flex:1" onclick="startEdit(this,${sIdx},${lIdx},${iIdx},'translation')">${parseMarkdown(item.translation)||(item.translation?item.translation:'(翻譯)')}</div></div>
                                     </div>`}
                                 </div>
@@ -256,11 +257,9 @@
             updateUIStatus();
         }
 
-        function handleDragStart(e, s, l, i) {
-            draggedItemInfo = { sIdx: s, lIdx: l, iIdx: i };
-            e.target.classList.add('dragging');
-            e.dataTransfer.effectAllowed = "move";
-        }
+        // --- 拖曳、編輯、註記、JSON 等邏輯 (維持不變) ---
+
+        function handleDragStart(e, s, l, i) { draggedItemInfo = { sIdx: s, lIdx: l, iIdx: i }; e.target.classList.add('dragging'); e.dataTransfer.effectAllowed = "move"; }
         function handleDragOver(e) { e.preventDefault(); const item = e.target.closest('.data-item'); if (item) item.classList.add('drag-over'); }
         function handleDragLeave(e) { const item = e.target.closest('.data-item'); if (item) item.classList.remove('drag-over'); }
         function handleDrop(e, s, l, toIndex) {
@@ -274,20 +273,11 @@
 
         function renderNoteChips(note, s, l, i) {
             const notes = Array.isArray(note) ? note : (note ? [note] : []);
-            let html = notes.map((n, nIdx) => `
-                <div class="note-chip">
-                    <input type="text" value="${n}" onchange="updateNote(${s},${l},${i},${nIdx},this.value)" onfocus="this.select()">
-                    <span class="note-delete" onclick="removeNote(${s},${l},${i},${nIdx})">×</span>
-                </div>
-            `).join('');
+            let html = notes.map((n, nIdx) => `<div class="note-chip"><input type="text" value="${n}" onchange="updateNote(${s},${l},${i},${nIdx},this.value)" onfocus="this.select()"><span class="note-delete" onclick="removeNote(${s},${l},${i},${nIdx})">×</span></div>`).join('');
             html += `<button class="btn-add-note" onclick="addNote(${s},${l},${i})">+ 新增</button>`;
             return html;
         }
-        function addNote(s, l, i) {
-            const item = dataStore.sources[s].lessons[l].content[i];
-            if (!Array.isArray(item.note)) item.note = item.note ? [item.note] : [];
-            item.note.push("新註記"); sync(); render();
-        }
+        function addNote(s, l, i) { const item = dataStore.sources[s].lessons[l].content[i]; if (!Array.isArray(item.note)) item.note = item.note ? [item.note] : []; item.note.push("新註記"); sync(); render(); }
         function updateNote(s, l, i, nIdx, val) { dataStore.sources[s].lessons[l].content[i].note[nIdx] = val; sync(); }
         function removeNote(s, l, i, nIdx) { dataStore.sources[s].lessons[l].content[i].note.splice(nIdx, 1); sync(); render(); }
 
@@ -298,10 +288,8 @@
             if(el.querySelector('textarea')) return;
             const items = i === -1 ? null : (currentMode==='annotations'?dataStore.sources[s].lessons[l].annotations : dataStore.sources[s].lessons[l].content);
             const rawVal = i === -1 ? dataStore.sources[s].lessons[l][f] : (items[i][f] || '');
-            
             const parentItem = el.closest('.data-item');
             if (parentItem) parentItem.setAttribute('draggable', 'false');
-
             el.innerHTML = `<textarea class="inline-textarea">${rawVal}</textarea>`;
             const t = el.querySelector('textarea'); 
             t.style.height = Math.max(80, (el.offsetHeight + 10)) + "px";
@@ -311,18 +299,13 @@
                 if(i===-1) {
                     if (f === 'lesson') { dataStore.sources[s].lessons[l][f] = isNaN(Number(newVal)) ? newVal : Number(newVal); }
                     else { dataStore.sources[s].lessons[l][f]=newVal; }
-                } 
-                else items[i][f]=newVal; 
+                } else items[i][f]=newVal; 
                 sync(); render(); 
             };
         }
 
-        function sync() { 
-            localStorage.setItem('chinese_draft', JSON.stringify(dataStore)); 
-            updateUIStatus('💾 已自動暫存');
-        }
+        function sync() { localStorage.setItem('chinese_draft', JSON.stringify(dataStore)); updateUIStatus('💾 已自動暫存'); }
         function updateUIStatus(msg = '就緒') { document.getElementById('status').innerText = msg; }
-
         function editSrc(s) { const n=prompt('名稱:', dataStore.sources[s].name); if(n){ dataStore.sources[s].name=n; sync(); render(); }}
         function delSrc(s) { if(confirm('刪除版本？')){ dataStore.sources.splice(s,1); sync(); render(); }}
         function addLes(s) { dataStore.sources[s].lessons.push({lesson: dataStore.sources[s].lessons.length+1, title:'新單元', annotations:[], content:[]}); sync(); render(); }
@@ -332,23 +315,14 @@
             if (!lesson.annotations) lesson.annotations = [];
             if (!lesson.content) lesson.content = [];
             const arr = currentMode === 'annotations' ? lesson.annotations : lesson.content;
-            const newItem = currentMode === 'annotations' ? {id:'0',term:'',meaning:''} : {sectionName:'', text:'',note:[],translation:''};
+            const newItem = currentMode === 'annotations' ? {id:'0',term:'',meaning:''} : {sectionName:'', text:'',note:[],translation:'', align:'left'};
             arr.splice(atIndex, 0, newItem); sync(); render();
         }
-        function delItem(s, l, i) { 
-            const arr = currentMode === 'annotations' ? dataStore.sources[s].lessons[l].annotations : dataStore.sources[s].lessons[l].content; 
-            arr.splice(i,1); sync(); render(); 
-        }
+        function delItem(s, l, i) { const arr = currentMode === 'annotations' ? dataStore.sources[s].lessons[l].annotations : dataStore.sources[s].lessons[l].content; arr.splice(i,1); sync(); render(); }
         function addNewSource() { dataStore.sources.push({name:'新版本名稱', lessons:[]}); sync(); render(); }
         function resetDraft() { if(confirm('還原修改？')){ localStorage.removeItem('chinese_draft'); location.reload(); } }
-        function showJSON() {
-            document.getElementById('json-output').value = JSON.stringify(dataStore, null, 2);
-            document.getElementById('json-modal').style.display = 'flex';
-        }
-        function downloadJSON() { 
-            const b = new Blob([JSON.stringify(dataStore,null,2)],{type:'application/json'}); 
-            const a = document.createElement('a'); a.href=URL.createObjectURL(b); a.download='chinese.json'; a.click(); 
-        }
+        function showJSON() { document.getElementById('json-output').value = JSON.stringify(dataStore, null, 2); document.getElementById('json-modal').style.display = 'flex'; }
+        function downloadJSON() { const b = new Blob([JSON.stringify(dataStore,null,2)],{type:'application/json'}); const a = document.createElement('a'); a.href=URL.createObjectURL(b); a.download='chinese.json'; a.click(); }
 
         init();
     </script>

@@ -1,6 +1,6 @@
 /**
  * 通用 Markdown 解析器 (顯示用)
- * 支援: **粗體**, *斜體*, ==螢光筆==, ~~刪除線~~, __底線__, \n換行
+ * 支援: **粗體**, *斜體*, ==螢光筆==, ~~刪除線**, __底線__, ~w()w~書名號, \n換行
  */
 function escapeHtml(text) {
     if (!text) return "";
@@ -36,6 +36,9 @@ function parseMarkdown(text) {
   // 7. 底線 __text__（修正為非跨行匹配，適合地名）
   html = html.replace(/__(.*?)__/g, '<span class="md-underline">$1</span>');
 
+  // --- 新增：書名號 ~w(text)w~ ---
+  html = html.replace(/~w\((.*?)\)w~/g, '<span class="md-bookname">$1</span>');
+
   // 8. 最後統一處理換行：這一步最重要
   html = html.replace(/\n/g, '<br>');
 
@@ -53,7 +56,8 @@ function stripMarkdown(text) {
       .replace(/\*(.*?)\*/g, '$1')
       .replace(/==(.*?)==/g, '$1')
       .replace(/~~(.*?)~~/g, '$1')
-      .replace(/__(.*?)__/g, '$1');
+      .replace(/__(.*?)__/g, '$1')
+      .replace(/~w\((.*?)\)w~/g, '$1'); // 同步新增書名號清除邏輯
 }
 
 // 監測網路狀態變化
@@ -61,5 +65,3 @@ window.addEventListener('offline', () => {
     // 當網路斷開時，直接導向離線頁面
     window.location.href = '/offline.html'; // 請確保路徑正確，如果是子目錄請調整
 });
-
-// 如果在離線頁面中恢復連線，自動跳回 (這部分你已經寫在 offline.html 裡了)

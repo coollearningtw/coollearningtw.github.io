@@ -126,6 +126,15 @@ body {
     color: #005fa3;
     text-decoration: underline;
 }
+/* 書名號專用波浪線樣式 */
+.md-bookname {
+    text-decoration: underline;
+    text-decoration-style: wavy;      /* 設定為波浪狀 */
+    text-decoration-color: #2c3e50;   /* 可依需求調整波浪顏色 */
+    text-underline-offset: 4px;       /* 避免波浪線重疊到文字底端 */
+    -webkit-text-decoration-style: wavy; /* 確保 Safari 瀏覽器相容 */
+}
+
 
 /* 翻譯測驗比對專用樣式 */
 /* --- 柔化版翻譯比對樣式 --- */

@@ -26,15 +26,16 @@
         .toolbar-label { font-size: 0.85rem; color: #64748b; font-weight: bold; }
         .font-btn-group { display: flex; gap: 5px; }
 
-        /* 課標題樣式 - 顯示 JSON 中的完整 l.lesson 內容 */
+        /* 課標題樣式：顯示真正的標題 (title) */
         .lesson-main-title {
-            font-size: 1.7rem;
+            font-size: 1.8rem;
             color: var(--primary);
             margin: 30px 5px 15px;
             font-weight: 800;
             border-bottom: 3px solid var(--primary);
             padding-bottom: 10px;
             display: block;
+            letter-spacing: 1px;
         }
 
         .section-header { margin: 25px 0 10px 5px; padding-left: 10px; border-left: 4px solid var(--primary); font-size: 1.1rem; font-weight: bold; color: #475569; }
@@ -163,13 +164,14 @@
             const root = document.getElementById('content-root');
 
             data.sources.forEach(src => src.lessons.forEach(l => {
+                // 這裡的判斷通常還是用 lesson (課號) 來比對選取的項目
                 if (sel.some(s => String(s.source) === String(src.name) && String(s.lesson) === String(l.lesson))) {
                     currentAnnotations = currentAnnotations.concat(l.annotations || []);
                     
-                    // --- 修改處：在每一課最上方直接顯示 l.lesson 的原始標題文字 ---
+                    // --- 關鍵修正：改為顯示 l.title ---
                     const lessonHeader = document.createElement('h1');
                     lessonHeader.className = 'lesson-main-title';
-                    lessonHeader.innerText = l.lesson; 
+                    lessonHeader.innerText = l.title || l.lesson; // 優先顯示 title，若無則顯示 lesson
                     root.appendChild(lessonHeader);
 
                     let currentSectionName = null, currentCardBody = null;

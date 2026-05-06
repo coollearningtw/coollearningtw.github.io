@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>國文科 - 作者介紹</title>
+    <link rel="stylesheet" href="../styles/style.css">
+    <link rel="stylesheet" href="../styles/header.css">
+    <style>
+        .author-container { max-width: 800px; margin: 30px auto; padding: 0 20px; }
+        .author-card { padding: 45px 35px; margin-bottom: 35px; line-height: 1.8; position: relative; }
+        
+        .lesson-tag { color: var(--primary); font-weight: 800; font-size: 0.85rem; margin-bottom: 15px; display: block; letter-spacing: 1px; }
+
+        .author-header { text-align: center; margin-bottom: 35px; }
+        .author-name { font-size: 2.6rem; font-weight: 900; color: #1e293b; margin: 0 0 25px; letter-spacing: 2px; }
+
+        /* 圖片容器 */
+        .author-img-wrapper { text-align: center; margin-bottom: 35px; }
+        .author-img { max-width: 100%; height: auto; display: inline-block; transition: 0.3s; }
+        .img-border { border: 1px solid #e2e8f0; box-shadow: 0 4px 20px rgba(0,0,0,0.06); padding: 12px; border-radius: 12px; }
+        .bg-white { background-color: #ffffff; }
+        .bg-transparent { background-color: transparent; }
+
+        /* --- 優化後的簡介區 (Details) --- */
+        .details-section { 
+            background: #f8fafc; 
+            border-radius: 16px; 
+            padding: 30px; 
+            margin-bottom: 40px; 
+            border: 1px solid #eef2f6;
+        }
+        .details-grid { 
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); 
+            gap: 12px 30px;
+        }
+        .detail-item { 
+            display: flex; 
+            align-items: baseline; 
+            padding: 8px 0;
+            border-bottom: 1px solid #f1f5f9; /* 加入淺色分隔線增加對齊感 */
+        }
+        .detail-label { 
+            font-weight: 900; 
+            color: #64748b; /* 標籤使用穩重的灰色 */
+            white-space: nowrap; 
+            min-width: 5em; /* 確保標籤寬度一致 */
+            font-size: 0.95rem;
+        }
+        .detail-label::after {
+            content: "："; /* 自動補上冒號，不需要手動輸入 */
+        }
+        .detail-value { 
+            color: #1e293b; 
+            font-weight: 500; 
+            flex: 1; 
+            line-height: 1.5;
+            font-size: 1.05rem;
+        }
+        /* 取消簡介內容中的 Markdown 底線樣式（如果有的話）以免干擾 */
+        .detail-value .md-underline { text-decoration: none; border-bottom: 2px solid #cbd5e1; }
+
+        /* --- 生平介紹區 (Bio) --- */
+        .section-title { 
+            font-size: 1.3rem; font-weight: 900; color: #1e293b; 
+            display: flex; align-items: center; gap: 10px; margin-bottom: 25px;
+            border-left: 6px solid var(--primary); padding-left: 15px;
+        }
+        .body-text { font-size: 1.18rem; color: #334155; text-align: justify; word-break: break-all; }
+        .body-text p { margin-bottom: 1.6rem; }
+
+        @media (max-width: 600px) {
+            .author-card { padding: 35px 20px; }
+            .author-name { font-size: 2.2rem; }
+            .details-grid { grid-template-columns: 1fr; }
+            .details-section { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <a href="chinese.html" class="back-link">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            </a>
+            <img src="../images/logo.png" alt="Logo" height="40">
+            <span style="font-weight:bold; color:var(--primary);">作者介紹</span>
+        </div>
+    </header>
+
+    <div class="page-container author-container" id="author-root">
+        <!-- 資料載入中... -->
+    </div>
+
+    <script src="../scripts/utils.js"></script>
+    <script>
+        async function init() {
+            const sel = JSON.parse(localStorage.getItem('sel_chinese_lessons') || '[]');
+            const root = document.getElementById('author-root');
+            
+            if (sel.length === 0) {
+                root.innerHTML = '<p style="text-align:center; padding:100px 0; color:#64748b;">請先在選課頁面選取課次。</p>';
+                return;
+            }
+
+            try {
+                const res = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/chinese.json');
+                const data = await res.json();
+                root.innerHTML = '';
+
+                data.sources.forEach(src => src.lessons.forEach(l => {
+                    const isMatch = sel.some(s => String(s.source) === String(src.name) && String(s.lesson) === String(l.lesson));
+                    
+                    if (isMatch && (l.authorName || l.authorIntro)) {
+                        const card = document.createElement('div');
+                        card.className = 'std-card author-card';
+                        
+                        let imgHtml = '';
+                        if (l.authorImg) {
+                            const borderClass = l.authorImgBorder !== false ? 'img-border' : '';
+                            const bgClass = l.authorImgBg === 'transparent' ? 'bg-transparent' : 'bg-white';
+                            imgHtml = `
+                                <div class="author-img-wrapper">
+                                    <img src="${l.authorImg}" class="author-img ${borderClass} ${bgClass}" alt="${l.authorName}">
+                                </div>
+                            `;
+                        }
+
+                        let detailsHtml = '';
+                        if (l.authorDetails && l.authorDetails.length > 0) {
+                            const items = l.authorDetails.map(d => `
+                                <div class="detail-item">
+                                    <span class="detail-label">${d.title}</span>
+                                    <span class="detail-value">${parseMarkdown(d.content)}</span>
+                                </div>
+                            `).join('');
+                            // 包裹在 details-section 內使排版更集中
+                            detailsHtml = `<div class="details-section"><div class="details-grid">${items}</div></div>`;
+                        }
+
+                        card.innerHTML = `
+                            <span class="lesson-tag">${src.name}</span>
+                            
+                            <div class="author-header">
+                                <h1 class="author-name">${l.authorName || l.title}</h1>
+                                ${imgHtml}
+                            </div>
+
+                            ${detailsHtml}
+
+                            <div class="bio-section">
+                                <div class="section-title">作者介紹</div>
+                                <div class="body-text">${parseMarkdown(l.authorIntro || '暫無詳細介紹')}</div>
+                            </div>
+                        `;
+                        root.appendChild(card);
+                    }
+                }));
+
+                if (root.innerHTML === '') {
+                    root.innerHTML = '<div style="text-align:center; padding:100px 0; color:#64748b;"><p>暫無作者介紹資料。</p></div>';
+                }
+
+            } catch (err) {
+                console.error(err);
+                root.innerHTML = '<p style="text-align:center; padding:100px 0; color:red;">資料載入失敗。</p>';
+            }
+        }
+        init();
+    </script>
+</body>
+</html>

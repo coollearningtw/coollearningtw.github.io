@@ -26,32 +26,27 @@
         .version-title { font-size: 1.2rem; font-weight: bold; color: #1e293b; margin-bottom: 15px; padding-left: 12px; border-left: 4px solid #e74c3c; }
         .lesson-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)); gap: 15px; }
         
-        .lesson-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px 10px; text-align: center; cursor: pointer; position: relative; min-height: 110px; display: flex; flex-direction: column; justify-content: center; overflow: hidden !important; }
-        .lesson-card.selected:not(.manage-mode) { border: 2px solid #e74c3c; background-color: #fffef2f2; color: #b91c1c; }
+        .lesson-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 22px 10px 15px; text-align: center; cursor: pointer; position: relative; min-height: 115px; display: flex; flex-direction: column; justify-content: center; overflow: hidden !important; transition: 0.2s; }
+        .lesson-card.selected:not(.manage-mode) { border: 2.5px solid #e74c3c; background-color: #fff5f5; color: #b91c1c; transform: translateY(-2px); }
         
-        .lesson-title { font-weight: 700; line-height: 1.4; margin-bottom: 6px; word-break: break-all; color: inherit; white-space: pre-line; }
+        .lesson-title { font-weight: 700; line-height: 1.4; margin-bottom: 8px; word-break: break-all; color: inherit; white-space: pre-line; }
         .lesson-card.empty:not(.manage-mode) { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
-        .lesson-card.empty:not(.manage-mode):hover { transform: none; box-shadow: none; border-color: #e2e8f0; }
 
-        .card-badges { display: flex; gap: 4px; justify-content: center; margin-top: 4px; }
-        .badge { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; background: #f1f5f9; color: #94a3b8; font-weight: 600; }
+        .card-badges { display: flex; gap: 3px; justify-content: center; flex-wrap: wrap; }
+        .badge { font-size: 0.6rem; padding: 1px 5px; border-radius: 4px; background: #f1f5f9; color: #94a3b8; font-weight: 700; }
         .badge.has-anno { background: #fee2e2; color: #b91c1c; }
         .badge.has-content { background: #e0f2fe; color: #0369a1; }
+        .badge.has-extra { background: #fef3c7; color: #92400e; }
 
-        /* --- 狀態樣式 --- */
         .status-ribbon { position: absolute; top: 0; left: 0; right: 0; font-size: 0.65rem; padding: 2px 0; font-weight: 900; text-align: center; color: #fff; z-index: 5; }
         .status-ribbon.red { background-color: #e57373; }
         .status-ribbon.yellow { background-color: #ffb74d; }
         .status-ribbon.green { background-color: #81c784; }
-        /* 禁用狀態：保持顏色正常，僅透明度降低並禁用點擊 */
         .lesson-card.is-disabled { opacity: 0.6; cursor: not-allowed !important; pointer-events: none; }
-        /* -------------- */
 
-        .nav-item-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-        .nav-item-btn:disabled:hover { background: transparent !important; color: #64748b !important; }
+        .nav-item-btn:disabled { opacity: 0.25; cursor: not-allowed; filter: grayscale(1); }
         .manage-btn { position: absolute; top: -10px; right: -10px; width: 28px; height: 28px; border-radius: 50%; border: none; color: #fff; display: none; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.2); z-index: 100; }
         .lesson-card.manage-mode .manage-btn { display: flex; pointer-events: auto; }
-        .manage-btn svg { width: 16px; height: 16px; stroke: currentColor; stroke-width: 3.5; fill: none; }
         .manage-btn.add { background: #2ecc71; }
         .manage-btn.remove { background: #e74c3c; }
     </style>
@@ -60,7 +55,7 @@
     <header>
         <div class="logo">
             <a href="../index.html" class="back-link">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
             </a>
             <img src="../images/logo.png" alt="Logo" height="40">
             <span style="font-weight:bold; color:var(--primary);">國文科選課</span>
@@ -78,30 +73,48 @@
         <div id="lessons-root"></div>
     </div>
 
+    <!-- 底部導航：新增作者與賞析 -->
     <div class="bottom-nav-fixed">
         <div class="bottom-nav-content">
-            <button class="nav-item-btn" id="btn-anno" onclick="goTo('annotations')" disabled><svg viewBox="0 0 24 24"><path d="M3 13h12v-2H3v2zm0 4h12v-2H3v2zm0-8h12V7H3v2zm14 4h4v-2h-4v2zm0 4h4v-2h-4v2zM17 7v2h4V7h-4z"/></svg><span>註釋</span></button>
-            <button class="nav-item-btn" id="btn-textbook" onclick="goTo('chinese-textbook')" disabled><svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg><span>課文</span></button>
+            <button class="nav-item-btn" id="btn-author" onclick="goTo('chinese-author')" disabled>
+                <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                <span>作者</span>
+            </button>
+            <button class="nav-item-btn" id="btn-anno" onclick="goTo('annotations')" disabled>
+                <svg viewBox="0 0 24 24"><path d="M3 13h12v-2H3v2zm0 4h12v-2H3v2zm0-8h12V7H3v2zm14 4h4v-2h-4v2zm0 4h4v-2h-4v2zM17 7v2h4V7h-4z"/></svg>
+                <span>註釋</span>
+            </button>
+            <button class="nav-item-btn" id="btn-textbook" onclick="goTo('chinese-textbook')" disabled>
+                <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+                <span>課文</span>
+            </button>
+            <button class="nav-item-btn" id="btn-appreciation" onclick="goTo('chinese-appreciation')" disabled>
+                <svg viewBox="0 0 24 24"><path d="M12 2l-5.5 9h11L12 2zm0 3.84L13.93 9h-3.87L12 5.84zM17.5 13c-2.49 0-4.5 2.01-4.5 4.5s2.01 4.5 4.5 4.5 4.5-2.01 4.5-4.5-2.01-4.5-4.5-4.5zm0 7c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5zM3 21.5h8v-8H3v8zm2-6h4v4H5v-4z"/></svg>
+                <span>賞析</span>
+            </button>
         </div>
     </div>
 
     <script>
         let chineseData = [], shelves = [], activeShelfId = 'all', isManageMode = false;
+
         async function init() {
             try {
-                const res = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/chinese.json'); const data = await res.json();
-                chineseData = data.sources; shelves = JSON.parse(localStorage.getItem('chinese_shelves') || '[]');
+                const res = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/chinese.json'); 
+                const data = await res.json();
+                chineseData = data.sources; 
+                shelves = JSON.parse(localStorage.getItem('chinese_shelves') || '[]');
                 renderTabs(); renderLessons();
             } catch (e) { console.error("資料載入失敗", e); }
         }
+
         function renderTabs() {
             const root = document.getElementById('shelf-tabs');
             root.innerHTML = `<div class="shelf-tab ${activeShelfId==='all'?'active':''}" onclick="switchShelf('all')">全部課程</div>`;
             shelves.forEach(s => {
                 const tab = document.createElement('div');
                 tab.className = `shelf-tab ${activeShelfId===s.id?'active':''}`;
-                const editIcon = ` <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-left:4px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`;
-                tab.innerHTML = s.name + (isManageMode ? editIcon : '');
+                tab.innerHTML = s.name + (isManageMode ? ' ✎' : '');
                 tab.onclick = () => isManageMode ? editShelf(s) : switchShelf(s.id);
                 root.appendChild(tab);
             });
@@ -113,6 +126,7 @@
             };
             root.appendChild(add);
         }
+
         function renderLessons() {
             const root = document.getElementById('lessons-root'); root.innerHTML = '';
             const shelf = shelves.find(s => s.id === activeShelfId);
@@ -122,28 +136,38 @@
                 const group = document.createElement('div'); group.className = 'version-group';
                 group.innerHTML = `<div class="version-title">${src.name}</div><div class="lesson-grid"></div>`;
                 const grid = group.querySelector('.lesson-grid');
+                
                 lessons.forEach(l => {
                     const hasAnno = l.annotations && l.annotations.length > 0;
                     const hasContent = l.content && l.content.length > 0;
+                    const hasAuthor = l.author && l.author.trim() !== '';
+                    const hasAppr = l.appreciation && l.appreciation.trim() !== '';
                     const isEnabled = l.enabled !== false;
                     
                     const card = document.createElement('div'); 
-                    card.className = `lesson-card std-card ${isManageMode?'manage-mode':''} ${(!hasAnno && !hasContent) ? 'empty' : ''} ${!isEnabled ? 'is-disabled' : ''}`;
-                    card.dataset.source = src.name; card.dataset.lesson = l.lesson;
-                    card.dataset.hasAnno = hasAnno; card.dataset.hasContent = hasContent;
+                    card.className = `lesson-card std-card ${isManageMode?'manage-mode':''} ${!isEnabled ? 'is-disabled' : ''}`;
+                    
+                    // 寫入 dataset 用於後續按鈕檢測
+                    card.dataset.source = src.name; 
+                    card.dataset.lesson = l.lesson;
+                    card.dataset.hasAnno = hasAnno; 
+                    card.dataset.hasContent = hasContent;
+                    card.dataset.hasAuthor = hasAuthor;
+                    card.dataset.hasAppr = hasAppr;
 
-                    let sHtml = '';
-                    if (l.status) sHtml = `<div class="status-ribbon ${l.statusColor || 'yellow'}">${l.status}</div>`;
+                    let sHtml = l.status ? `<div class="status-ribbon ${l.statusColor || 'yellow'}">${l.status}</div>` : '';
 
                     card.innerHTML = `
                         ${sHtml}
                         <div class="lesson-title">${l.title}</div>
                         <div class="card-badges">
-                            <span class="badge ${hasAnno ? 'has-anno' : ''}">註釋</span>
-                            <span class="badge ${hasContent ? 'has-content' : ''}">課文</span>
+                            <span class="badge ${hasAnno ? 'has-anno' : ''}">註</span>
+                            <span class="badge ${hasContent ? 'has-content' : ''}">文</span>
+                            <span class="badge ${hasAuthor ? 'has-extra' : ''}">作</span>
+                            <span class="badge ${hasAppr ? 'has-extra' : ''}">賞</span>
                         </div>
                         <button class="manage-btn ${activeShelfId==='all'?'add':'remove'}" onclick="handleManage('${src.name}', ${l.lesson}, event)">
-                            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                         </button>
                     `;
                     card.onclick = () => { if(!isManageMode) { card.classList.toggle('selected'); updateUI(); } };
@@ -153,7 +177,9 @@
             });
             updateUI();
         }
+
         function switchShelf(id) { activeShelfId = id; renderTabs(); renderLessons(); }
+
         function handleManage(src, les, e) {
             e.stopPropagation();
             if (activeShelfId === 'all') {
@@ -171,30 +197,42 @@
                 save(); renderLessons();
             }
         }
+
         function updateUI() {
             const selectedCards = document.querySelectorAll('.lesson-card.selected');
-            let canAnno = false, canContent = false;
+            let canAnno = false, canContent = false, canAuthor = false, canAppr = false;
+            
             selectedCards.forEach(c => {
                 if(c.dataset.hasAnno === 'true') canAnno = true;
                 if(c.dataset.hasContent === 'true') canContent = true;
+                if(c.dataset.hasAuthor === 'true') canAuthor = true;
+                if(c.dataset.hasAppr === 'true') canAppr = true;
             });
+
             document.getElementById('btn-anno').disabled = !canAnno;
             document.getElementById('btn-textbook').disabled = !canContent;
+            document.getElementById('btn-author').disabled = !canAuthor;
+            document.getElementById('btn-appreciation').disabled = !canAppr;
         }
+
         function save() { localStorage.setItem('chinese_shelves', JSON.stringify(shelves)); }
+
         function editShelf(s) {
             const n = prompt('修改名稱 (留空則刪除書架):', s.name);
             if(n === '') { shelves = shelves.filter(x => x.id !== s.id); activeShelfId = 'all'; }
             else if(n) { s.name = n; }
             save(); renderTabs(); renderLessons();
         }
+
         document.getElementById('manage-toggle').onchange = (e) => { isManageMode = e.target.checked; renderTabs(); renderLessons(); };
+
         function goTo(page) {
             const selectedCards = document.querySelectorAll('.lesson-card.selected');
             const data = Array.from(selectedCards).map(c => ({ source: c.dataset.source, lesson: parseInt(c.dataset.lesson) }));
             localStorage.setItem('sel_chinese_lessons', JSON.stringify(data));
             window.location.href = page + '.html';
         }
+
         init();
     </script>
 </body>

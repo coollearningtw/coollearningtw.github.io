@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>國文科 - 課文賞析</title>
+    <link rel="stylesheet" href="../styles/style.css">
+    <link rel="stylesheet" href="../styles/header.css">
+    <style>
+        /* 賞析頁面專屬排版 */
+        .appreciation-container { max-width: 800px; margin: 30px auto; padding: 0 20px; }
+        .appr-card { padding: 45px 35px; margin-bottom: 30px; line-height: 2.2; }
+        
+        .lesson-tag { 
+            color: var(--primary); 
+            font-weight: 800; 
+            font-size: 0.9rem; 
+            margin-bottom: 12px; 
+            display: block; 
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .main-title { 
+            font-size: 1.85rem; 
+            margin-bottom: 35px; 
+            color: #1e293b;
+            border-bottom: 3px solid #f1f5f9; 
+            padding-bottom: 20px; 
+            font-weight: 900;
+            letter-spacing: 1px;
+        }
+
+        /* 內容文本樣式優化 */
+        .body-text { 
+            font-size: 1.18rem; 
+            color: #334155; 
+            text-align: justify;
+            word-break: break-all;
+            letter-spacing: 0.5px;
+        }
+        
+        .body-text p { margin-bottom: 1.8rem; }
+        
+        /* 針對 Markdown 產生的特殊標籤進行微調 */
+        .body-text .md-bold { color: #0f172a; font-weight: 900; }
+        .body-text .md-highlight { padding: 2px 6px; }
+
+        /* 響應式微調 */
+        @media (max-width: 600px) {
+            .appr-card { padding: 30px 20px; }
+            .main-title { font-size: 1.5rem; }
+            .body-text { font-size: 1.1rem; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <a href="chinese.html" class="back-link">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            </a>
+            <img src="../images/logo.png" alt="Logo" height="40">
+            <span style="font-weight:bold; color:var(--primary);">課文賞析</span>
+        </div>
+    </header>
+
+    <div class="page-container appreciation-container" id="appr-root">
+        <!-- 資料載入中... -->
+    </div>
+
+    <script src="../scripts/utils.js"></script>
+    <script>
+        async function init() {
+            // 1. 取得使用者選擇的課次
+            const sel = JSON.parse(localStorage.getItem('sel_chinese_lessons') || '[]');
+            const root = document.getElementById('appr-root');
+            
+            if (sel.length === 0) {
+                root.innerHTML = '<p style="text-align:center; padding:100px 0; color:#94a3b8;">請先在選課頁面選取課次。</p>';
+                return;
+            }
+
+            try {
+                // 2. 獲取資料
+                const res = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/chinese.json');
+                const data = await res.json();
+                root.innerHTML = ''; // 清空預設內容
+
+                // 3. 遍歷並比對資料
+                data.sources.forEach(src => src.lessons.forEach(l => {
+                    const isMatch = sel.some(s => String(s.source) === String(src.name) && String(s.lesson) === String(l.lesson));
+                    
+                    // 4. 渲染含有賞析內容的課次
+                    if (isMatch && l.appreciation && l.appreciation.trim() !== '') {
+                        const card = document.createElement('div');
+                        card.className = 'std-card appr-card';
+                        
+                        card.innerHTML = `
+                            <span class="lesson-tag">${src.name}</span>
+                            <h1 class="main-title">${l.title} - 課文賞析</h1>
+                            <div class="body-text">${parseMarkdown(l.appreciation)}</div>
+                        `;
+                        root.appendChild(card);
+                    }
+                }));
+
+                // 5. 處理無資料情況
+                if (root.innerHTML === '') {
+                    root.innerHTML = `
+                        <div style="text-align:center; padding:100px 0; color:#64748b;">
+                            <svg style="width:64px; height:64px; fill:#e2e8f0; margin-bottom:20px;" viewBox="0 0 24 24"><path d="M13 13h-2V7h2v6zm0 4h-2v-2h2v2zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/></svg>
+                            <p>目前選取的課次暫無賞析資料。</p>
+                        </div>`;
+                }
+
+            } catch (err) {
+                console.error("資料載入失敗:", err);
+                root.innerHTML = '<p style="text-align:center; padding:100px 0; color:#ef4444; font-weight:bold;">資料載入失敗，請檢查網路連線後再試。</p>';
+            }
+        }
+
+        // 執行初始化
+        init();
+    </script>
+</body>
+</html>

@@ -37,8 +37,8 @@
         .diff-content { line-height: 2.2; font-size: 1.15rem; }
         .word { display: inline-block; margin-right: 4px; padding: 2px 4px; border-radius: 6px; }
         .w-correct { color: #059669; font-weight: 500; } /* 綠色：正確 */
-        .w-missing { color: #dc2626; background: #fee2e2; font-weight: bold; } /* 紅底：漏掉的詞 */
-        .w-extra { color: #d97706; background: #fef3c7; font-weight: bold; } /* 黃底：多打的詞 */
+        .w-missing { color: #dc2626; background: #fee2e2; font-weight: bold; } /* 紅底：標準答案中漏掉的詞 */
+        .w-extra { color: #d97706; background: #fef3c7; font-weight: bold; } /* 黃底：使用者多打的詞 */
 
         /* 標準答案完整顯示 */
         .full-answer { margin-top: 20px; padding-top: 15px; border-top: 1px dashed #e2e8f0; color: #64748b; font-size: 0.95rem; }
@@ -67,7 +67,6 @@
         
         <textarea id="user-input" placeholder="請在此輸入英文翻譯句子..." spellcheck="false"></textarea>
         
-        <!-- 比對結果面板 -->
         <div id="diff-panel" class="diff-result-box">
             <div class="diff-title">核對結果 FEEDBACK</div>
             <div id="diff-content" class="diff-content"></div>
@@ -103,8 +102,58 @@
         }
 
         function tokenize(text) {
-            // 包含標點符號的拆解
+            // 包含標點符號的拆解，並過濾掉空白
             return text.replace(/([.,!?;])/g, ' $1 ').split(/\s+/).filter(t => t.length > 0);
+        }
+
+        /**
+         * 改良版比對演算法：使用動態規劃 (Levenshtein Distance)
+         * 確保以「改動最少」的方式呈現結果
+         */
+        function generateDiffHtml(userStr, ansStr) {
+            const user = tokenize(userStr);
+            const ans = tokenize(ansStr);
+            
+            const m = user.length;
+            const n = ans.length;
+            
+            // 建立 DP 矩陣
+            const dp = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
+            
+            for (let i = 0; i <= m; i++) dp[i][0] = i;
+            for (let j = 0; j <= n; j++) dp[0][j] = j;
+            
+            for (let i = 1; i <= m; i++) {
+                for (let j = 1; j <= n; j++) {
+                    if (user[i - 1].toLowerCase() === ans[j - 1].toLowerCase()) {
+                        dp[i][j] = dp[i - 1][j - 1];
+                    } else {
+                        // 比較 刪除(左)、插入(上)、替換(左上) 的成本
+                        dp[i][j] = Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]) + 1;
+                    }
+                }
+            }
+            
+            // 從右下角回溯路徑
+            let i = m, j = n;
+            let htmlStack = [];
+            
+            while (i > 0 || j > 0) {
+                if (i > 0 && j > 0 && user[i - 1].toLowerCase() === ans[j - 1].toLowerCase()) {
+                    htmlStack.unshift(`<span class="word w-correct">${ans[j - 1]}</span>`);
+                    i--; j--;
+                } else if (j > 0 && (i === 0 || dp[i][j - 1] <= dp[i - 1][j] && dp[i][j - 1] <= dp[i - 1][j - 1])) {
+                    // 標準答案有的詞，但使用者沒打 (Missing)
+                    htmlStack.unshift(`<span class="word w-missing">${ans[j - 1]}</span>`);
+                    j--;
+                } else if (i > 0) {
+                    // 使用者多打的詞 (Extra)
+                    htmlStack.unshift(`<span class="word w-extra">${user[i - 1]}</span>`);
+                    i--;
+                }
+            }
+            
+            return htmlStack.join("");
         }
 
         function findBestMatch(userIn, rawAns) {
@@ -120,43 +169,9 @@
             return bestMatch;
         }
 
-        function generateDiffHtml(userStr, ansStr) {
-            const user = tokenize(userStr);
-            const ans = tokenize(ansStr);
-            let html = ""; let uIdx = 0, aIdx = 0;
-
-            while (aIdx < ans.length || uIdx < user.length) {
-                const uWord = user[uIdx] ? user[uIdx].toLowerCase() : null;
-                const aWord = ans[aIdx] ? ans[aIdx].toLowerCase() : null;
-
-                if (uWord === aWord) {
-                    html += `<span class="word w-correct">${ans[aIdx]}</span>`;
-                    uIdx++; aIdx++;
-                } else {
-                    let foundLaterInAns = false;
-                    for (let i = aIdx; i < ans.length; i++) {
-                        if (ans[i].toLowerCase() === uWord) { foundLaterInAns = true; break; }
-                    }
-
-                    if (uWord && !foundLaterInAns) {
-                        html += `<span class="word w-extra">${user[uIdx]}</span>`;
-                        uIdx++;
-                    } else if (aWord) {
-                        html += `<span class="word w-missing">${ans[aIdx]}</span>`;
-                        aIdx++;
-                    } else {
-                        if (user[uIdx]) {
-                            html += `<span class="word w-extra">${user[uIdx]}</span>`;
-                            uIdx++;
-                        }
-                    }
-                }
-            }
-            return html;
-        }
-
         async function init() {
             const sel = JSON.parse(localStorage.getItem('sel_trans_lessons') || '[]');
+            // 這裡是原本的資料獲取邏輯
             const res = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/english-translation.json');
             const data = await res.json();
             
@@ -200,10 +215,10 @@
             const rawAns = quizPool[index].en;
             const bestAns = findBestMatch(userIn, rawAns);
             
-            // 顯示比對結果
+            // 使用改良後的 generateDiffHtml 顯示結果
             document.getElementById('diff-content').innerHTML = generateDiffHtml(userIn, bestAns);
             
-            // 顯示乾淨的標準答案（將 (A/B) 轉為 A/B 粗體顯示）
+            // 顯示乾淨的標準答案
             document.getElementById('clean-answer').innerHTML = rawAns.replace(/\(([^)]+)\)/g, '<strong>$1</strong>');
             
             document.getElementById('diff-panel').style.display = "block";

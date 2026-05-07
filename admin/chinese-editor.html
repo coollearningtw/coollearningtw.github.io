@@ -30,14 +30,14 @@
         
         .source-block { background: #fff; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 25px; overflow: hidden; }
         .accordion-header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: #fff; border-bottom: 1px solid #f1f3f5; }
+        .lesson-container { display: none; padding: 0 15px 20px; background: #f8fafc; }
+        .source-block.expanded .lesson-container { display: block; }
+        
         .lesson-block { border: 1px solid #e2e8f0; border-radius: 8px; margin-top: 15px; background: #fff; overflow: hidden; }
         .lesson-header { padding: 12px 15px; font-weight: 600; border-bottom: 1px solid #f1f3f5; display: flex; justify-content: space-between; align-items: center; background: #fff; }
         
         /* 狀態控制項 */
         .status-group { display: flex; align-items: center; gap: 6px; background: #f8fafc; padding: 3px 8px; border-radius: 6px; border: 1px solid #e2e8f0; margin-left: 10px; }
-        .color-dot { width: 14px; height: 14px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: 0.2s; }
-        .color-dot.active { border-color: #0f172a; transform: scale(1.2); }
-        .c-red { background: #e57373; } .c-yellow { background: #ffb74d; } .c-green { background: #81c784; }
         .status-input { width: 70px; font-size: 11px; border: none; background: transparent; outline: none; font-weight: bold; padding: 0; color: #1e293b; }
         .status-toggle { font-size: 10px; font-weight: bold; cursor: pointer; padding: 2px 6px; border-radius: 4px; border: none; }
         .st-on { background: #dcfce7; color: #166534; }
@@ -46,18 +46,38 @@
         /* --- 編輯表單元素 --- */
         .form-row { margin-bottom: 25px; padding: 0 15px; }
         .cell-label { font-size: 0.75rem; font-weight: bold; color: #94a3b8; margin-bottom: 8px; display: block; text-transform: uppercase; }
-        
+        .cell-row { display: flex; align-items: flex-start; margin-bottom: 10px; }
+        .cell-row .cell-label { width: 60px; margin-bottom: 0; margin-top: 12px; flex-shrink: 0; }
+
         /* 點擊編輯框 */
         .editable-display-box { 
             padding: 12px 15px; border: 1px solid #f1f3f5; border-radius: 8px; 
             background: #fff; cursor: text; transition: 0.2s; min-height: 44px;
-            font-size: 1rem; color: #334155; line-height: 1.6;
+            font-size: 1rem; color: #334155; line-height: 1.6; width: 100%; box-sizing: border-box;
         }
         .editable-display-box:hover { background: #f8fafc; border-color: #cbd5e1; }
         .long-text { min-height: 120px; }
 
-        .single-line-input { width: 100%; padding: 8px 10px; border: 2px solid #0b76d1; border-radius: 6px; outline: none; font-size: 1rem; }
-        .inline-textarea { width: 100%; padding: 10px; border: 2px solid #0b76d1; border-radius: 6px; outline: none; font-family: inherit; resize: vertical; min-height: 150px; font-size: 1rem; }
+        /* 輸入控件 */
+        .single-line-input { width: 100%; padding: 8px 10px; border: 2px solid #0b76d1; border-radius: 6px; outline: none; font-size: 1rem; box-sizing: border-box; }
+        .inline-textarea { width: 100%; padding: 10px; border: 2px solid #0b76d1; border-radius: 6px; outline: none; font-family: inherit; resize: vertical; min-height: 100px; font-size: 1rem; box-sizing: border-box; }
+
+        /* 內容佈局 */
+        .anno-grid { display: grid; grid-template-columns: 60px 150px 1fr; gap: 10px; align-items: flex-start; }
+        .data-item { padding: 15px; border-bottom: 1px solid #f1f5f9; position: relative; display: flex; gap: 10px; align-items: flex-start; }
+        .data-item:last-child { border-bottom: none; }
+
+        /* 插入列 */
+        .insert-bar { height: 20px; margin: -10px 0; position: relative; z-index: 10; cursor: pointer; display: flex; align-items: center; justify-content: center; opacity: 0; transition: 0.2s; }
+        .insert-bar:hover { opacity: 1; }
+        .insert-line { height: 1px; background: #0b76d1; flex: 1; }
+        .insert-btn-text { background: #0b76d1; color: #fff; font-size: 11px; padding: 2px 10px; border-radius: 10px; font-weight: bold; margin: 0 10px; }
+
+        /* 註記標籤 */
+        .note-chip { display: inline-flex; align-items: center; background: #fef2f2; border: 1px solid #fecaca; padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; color: #b91c1c; margin-right: 5px; margin-bottom: 5px; }
+        .note-chip input { border: none; background: transparent; outline: none; color: inherit; width: 70px; font-weight: bold; }
+        .note-delete { margin-left: 5px; cursor: pointer; opacity: 0.5; }
+        .btn-add-note { padding: 4px 8px; border-radius: 6px; border: 1px dashed #cbd5e1; background: #fff; cursor: pointer; font-size: 0.8rem; }
 
         /* 作者簡介 Details 編輯器 */
         .details-edit-row { display: flex; gap: 10px; margin-bottom: 10px; align-items: flex-start; }
@@ -135,7 +155,6 @@
 
     <script>
         let currentMode = 'annotations', dataStore = { sources: [] }, expandedKeys = new Set();
-        let draggedItemInfo = null; 
 
         async function init() {
             const draft = localStorage.getItem('chinese_draft');
@@ -157,7 +176,7 @@
                 const srcKey = `source-${sIdx}`;
                 const srcEl = document.createElement('div'); srcEl.className = `source-block ${expandedKeys.has(srcKey)?'expanded':''}`;
                 srcEl.innerHTML = `<div class="accordion-header" onclick="toggleKey('${srcKey}')">
-                    <div style="font-weight:600;">${src.name}</div>
+                    <div style="font-weight:600; font-size: 1.1rem;">${src.name}</div>
                     <div style="display:flex;gap:5px;">
                         <button class="btn-action" style="padding:4px 8px" onclick="event.stopPropagation();editSrc(${sIdx})">改名</button>
                         <button class="btn-action" style="padding:4px 8px;color:#ef4444" onclick="event.stopPropagation();delSrc(${sIdx})">刪除</button>
@@ -169,14 +188,14 @@
                         return `<div class="lesson-block">
                             <div class="lesson-header" onclick="event.stopPropagation();toggleKey('${lKey}')" style="cursor:pointer">
                                 <div style="display:flex;align-items:center;gap:10px; flex:1">
-                                    <div class="editable-display-box" style="min-height:unset; padding:2px 8px;" onclick="event.stopPropagation();startEdit(this,${sIdx},${lIdx},-1,'lesson')">${l.lesson}</div>
-                                    <div class="editable-display-box" style="min-height:unset; padding:2px 8px; font-weight:bold;" onclick="event.stopPropagation();startEdit(this,${sIdx},${lIdx},-1,'title')">${l.title}</div>
+                                    <div class="editable-display-box" style="min-height:unset; padding:4px 10px; width:45px; text-align:center;" onclick="event.stopPropagation();startEdit(this,${sIdx},${lIdx},-1,'lesson')">${l.lesson}</div>
+                                    <div class="editable-display-box" style="min-height:unset; padding:4px 12px; font-weight:bold; width:auto; flex:1;" onclick="event.stopPropagation();startEdit(this,${sIdx},${lIdx},-1,'title')">${l.title}</div>
                                     <div class="status-group" onclick="event.stopPropagation()">
                                         <input type="text" class="status-input" placeholder="橫幅" value="${l.status || ''}" oninput="updateStatus(${sIdx}, ${lIdx}, 'status', this.value, false)">
                                         <button class="status-toggle ${l.enabled!==false?'st-on':'st-off'}" onclick="updateStatus(${sIdx}, ${lIdx}, 'enabled', ${l.enabled!==false?false:true}, true)">${l.enabled!==false ? '已上架' : '未開放'}</button>
                                     </div>
                                 </div>
-                                <button class="btn-action" style="padding:2px 6px;color:#ef4444;border:none" onclick="event.stopPropagation();delLes(${sIdx},${lIdx})">✕</button>
+                                <button class="btn-action" style="padding:2px 6px;color:#ef4444;border:none; margin-left:15px;" onclick="event.stopPropagation();delLes(${sIdx},${lIdx})">✕</button>
                             </div>
                             <div style="display:${expandedKeys.has(lKey)?'block':'none'};">
                                 ${ currentMode === 'author' ? renderAuthorEditor(sIdx, lIdx, l) : 
@@ -192,16 +211,16 @@
 
         function renderAuthorEditor(sIdx, lIdx, l) {
             return `
-                <div class="form-row" style="margin-top:15px;">
+                <div class="form-row" style="margin-top:20px;">
                     <span class="cell-label">作者名稱</span>
                     <div class="editable-display-box" onclick="startEditStandalone(this, ${sIdx}, ${lIdx}, 'authorName')">${l.authorName || '點擊輸入名稱...'}</div>
                 </div>
                 <div class="form-row">
                     <span class="cell-label">圖片連結與設定</span>
                     <div class="editable-display-box" onclick="startEditStandalone(this, ${sIdx}, ${lIdx}, 'authorImg')">${l.authorImg || '點擊輸入圖片連結...'}</div>
-                    <div style="display:flex; gap:10px; margin-top:8px; background:#f8fafc; padding:8px; border-radius:8px; border:1px solid #e2e8f0;">
-                        <label style="font-size:12px; cursor:pointer;"><input type="checkbox" ${l.authorImgBorder!==false?'checked':''} onchange="updateLessonField(${sIdx}, ${lIdx}, 'authorImgBorder', this.checked); refreshAuthorPreview(${sIdx}, ${lIdx})"> 顯示邊框</label>
-                        <select style="font-size:12px;" onchange="updateLessonField(${sIdx}, ${lIdx}, 'authorImgBg', this.value); refreshAuthorPreview(${sIdx}, ${lIdx})">
+                    <div style="display:flex; gap:15px; margin-top:10px; background:#f8fafc; padding:10px; border-radius:8px; border:1px solid #e2e8f0;">
+                        <label style="font-size:13px; cursor:pointer;"><input type="checkbox" ${l.authorImgBorder!==false?'checked':''} onchange="updateLessonField(${sIdx}, ${lIdx}, 'authorImgBorder', this.checked); refreshAuthorPreview(${sIdx}, ${lIdx})"> 顯示邊框</label>
+                        <select style="font-size:13px;" onchange="updateLessonField(${sIdx}, ${lIdx}, 'authorImgBg', this.value); refreshAuthorPreview(${sIdx}, ${lIdx})">
                             <option value="white" ${l.authorImgBg==='white'?'selected':''}>白色背景</option>
                             <option value="transparent" ${l.authorImgBg==='transparent'?'selected':''}>透明背景</option>
                         </select>
@@ -213,20 +232,20 @@
                     </div>
                 </div>
                 <div class="form-row">
-                    <span class="cell-label">簡介清單 (標題與內容，支援 Markdown)</span>
+                    <span class="cell-label">簡介清單 (標題與內容)</span>
                     <div id="details-list-${sIdx}-${lIdx}">
                         ${(l.authorDetails || []).map((d, di) => `
                             <div class="details-edit-row">
-                                <div class="editable-display-box" style="width:120px;" onclick="startEditDetail(this, ${sIdx}, ${lIdx}, ${di}, 'title')">${d.title || '標題'}</div>
+                                <div class="editable-display-box" style="width:140px; flex-shrink:0;" onclick="startEditDetail(this, ${sIdx}, ${lIdx}, ${di}, 'title')">${d.title || '標題'}</div>
                                 <div class="editable-display-box" style="flex:1;" onclick="startEditDetail(this, ${sIdx}, ${lIdx}, ${di}, 'content')">${parseMarkdown(d.content) || '內容'}</div>
-                                <button class="btn-action" style="border:none; color:red;" onclick="removeAuthorDetail(${sIdx}, ${lIdx}, ${di})">✕</button>
+                                <button class="btn-action" style="border:none; color:red; padding:10px;" onclick="removeAuthorDetail(${sIdx}, ${lIdx}, ${di})">✕</button>
                             </div>
                         `).join('')}
                     </div>
                     <button class="btn-add-detail" onclick="addAuthorDetail(${sIdx}, ${lIdx})">+ 新增簡介項</button>
                 </div>
                 <div class="form-row">
-                    <span class="cell-label">詳細生平/導讀 (支援 Markdown)</span>
+                    <span class="cell-label">詳細生平/導讀</span>
                     <div class="editable-display-box long-text" onclick="startEditStandalone(this, ${sIdx}, ${lIdx}, 'authorIntro')">${parseMarkdown(l.authorIntro) || '點擊開始編寫...'}</div>
                 </div>
             `;
@@ -234,7 +253,7 @@
 
         function renderAppreciationEditor(sIdx, lIdx, l) {
             return `
-                <div class="form-row" style="margin-top:15px;">
+                <div class="form-row" style="margin-top:20px;">
                     <span class="cell-label">賞析內容 (支援 Markdown)</span>
                     <div class="editable-display-box long-text" onclick="startEditStandalone(this, ${sIdx}, ${lIdx}, 'appreciation')">${parseMarkdown(l.appreciation) || '點擊開始編寫...'}</div>
                 </div>
@@ -250,44 +269,36 @@
                     <div style="flex:1">
                         ${currentMode==='annotations' ? 
                         `<div class="anno-grid">
-                            <div class="editable-display-box" style="width:50px; text-align:center;" onclick="startEdit(this,${sIdx},${lIdx},${iIdx},'id')">${item.id||'0'}</div>
+                            <div class="editable-display-box" style="text-align:center; padding:10px 5px; color:#b91c1c; font-weight:bold; background:#fef2f2;" onclick="startEdit(this,${sIdx},${lIdx},${iIdx},'id')">${item.id||'0'}</div>
                             <div class="editable-display-box" style="font-weight:bold;" onclick="startEdit(this,${sIdx},${lIdx},${iIdx},'term')">${parseMarkdown(item.term)||(item.term?item.term:'詞目')}</div>
                             <div class="editable-display-box" onclick="startEdit(this,${sIdx},${lIdx},${iIdx},'meaning')">${parseMarkdown(item.meaning)||(item.meaning?item.meaning:'解釋')}</div>
                         </div>` : 
                         `<div class="content-grid">
-                            <div class="cell-row"><span class="cell-label" style="width:60px;">段落</span><div class="editable-display-box" style="flex:1;" onclick="startEdit(this,${sIdx},${lIdx},${iIdx},'sectionName')">${parseMarkdown(item.sectionName) || '(選填)'}</div></div>
-                            <div class="cell-row"><span class="cell-label" style="width:60px;">對齊</span><select onchange="updateItemAlign(${sIdx},${lIdx},${iIdx},this.value)"><option value="left" ${item.align==='left'?'selected':''}>左</option><option value="center" ${item.align==='center'?'selected':''}>中</option><option value="right" ${item.align==='right'?'selected':''}>右</option></select></div>
-                            <div class="cell-row"><span class="cell-label" style="width:60px;">本文</span><div class="editable-display-box" style="flex:1;" onclick="startEdit(this,${sIdx},${lIdx},${iIdx},'text')">${parseMarkdown(item.text)||(item.text?item.text:'原文')}</div></div>
-                            <div class="cell-row"><span class="cell-label" style="width:60px;">註記</span><div style="flex:1">${renderNoteChips(item.note, sIdx, lIdx, iIdx)}</div></div>
-                            <div class="cell-row"><span class="cell-label" style="width:60px;">翻譯</span><div class="editable-display-box" style="flex:1;" onclick="startEdit(this,${sIdx},${lIdx},${iIdx},'translation')">${parseMarkdown(item.translation)||(item.translation?item.translation:'翻譯')}</div></div>
+                            <div class="cell-row"><span class="cell-label">段落</span><div class="editable-display-box" style="font-weight:bold; background:#f8fafc;" onclick="startEdit(this,${sIdx},${lIdx},${iIdx},'sectionName')">${parseMarkdown(item.sectionName) || '(選填)'}</div></div>
+                            <div class="cell-row"><span class="cell-label">對齊</span><select style="padding:8px; border-radius:6px; border:1px solid #ddd;" onchange="updateItemAlign(${sIdx},${lIdx},${iIdx},this.value)"><option value="left" ${item.align==='left'?'selected':''}>置左對齊</option><option value="center" ${item.align==='center'?'selected':''}>置中對齊</option><option value="right" ${item.align==='right'?'selected':''}>置右對齊</option></select></div>
+                            <div class="cell-row"><span class="cell-label">本文</span><div class="editable-display-box" onclick="startEdit(this,${sIdx},${lIdx},${iIdx},'text')">${parseMarkdown(item.text)||(item.text?item.text:'原文內容')}</div></div>
+                            <div class="cell-row"><span class="cell-label">註記</span><div style="flex:1">${renderNoteChips(item.note, sIdx, lIdx, iIdx)}</div></div>
+                            <div class="cell-row"><span class="cell-label">翻譯</span><div class="editable-display-box" style="background:#f0f9ff; border-color:#bae6fd;" onclick="startEdit(this,${sIdx},${lIdx},${iIdx},'translation')">${parseMarkdown(item.translation)||(item.translation?item.translation:'翻譯內容')}</div></div>
                         </div>`}
                     </div>
-                    <button class="btn-action" style="border:none;color:#ef4444" onclick="delItem(${sIdx},${lIdx},${iIdx})">✕</button>
+                    <button class="btn-action" style="border:none;color:#ef4444; padding:10px;" onclick="delItem(${sIdx},${lIdx},${iIdx})">✕</button>
                 </div>
                 ${createInsertBarHtml(sIdx, lIdx, iIdx + 1)}`).join('')}
             </div>`;
         }
 
-        // --- 核心編輯邏輯 (Standalone 欄位) ---
+        // --- 編輯邏輯 ---
         function startEditStandalone(el, sIdx, lIdx, field) {
             if (el.querySelector('textarea, input')) return;
             const lesson = dataStore.sources[sIdx].lessons[lIdx];
             const rawVal = lesson[field] || '';
             const isLong = field === 'authorIntro' || field === 'appreciation';
-
-            el.innerHTML = isLong 
-                ? `<textarea class="inline-textarea">${rawVal}</textarea>` 
-                : `<input type="text" class="single-line-input" value="${rawVal}">`;
-            
+            el.innerHTML = isLong ? `<textarea class="inline-textarea">${rawVal}</textarea>` : `<input type="text" class="single-line-input" value="${rawVal}">`;
             const input = el.querySelector('textarea, input');
             input.focus();
-            if(isLong) input.style.height = el.offsetHeight + 'px';
-
             input.onblur = () => {
-                const newVal = input.value;
-                lesson[field] = newVal;
-                // 退出後顯示 Markdown 預覽
-                el.innerHTML = (field === 'authorImg' || field === 'authorName') ? newVal : (parseMarkdown(newVal) || '點擊編輯...');
+                lesson[field] = input.value;
+                el.innerHTML = (field === 'authorImg' || field === 'authorName') ? input.value : (parseMarkdown(input.value) || '點擊編輯...');
                 if (field === 'authorImg') refreshAuthorPreview(sIdx, lIdx);
                 sync();
             };
@@ -307,26 +318,24 @@
             };
         }
 
-        // --- 原有的列表編輯邏輯 ---
         function startEdit(el, s, l, i, f) {
             if(el.querySelector('textarea, input')) return;
             const les = dataStore.sources[s].lessons[l];
             const items = i === -1 ? null : (currentMode==='annotations' ? les.annotations : les.content);
             const rawVal = i === -1 ? les[f] : items[i][f];
             const isLong = f === 'text' || f === 'translation' || f === 'meaning';
-
-            el.innerHTML = isLong ? `<textarea class="inline-textarea" style="min-height:80px;">${rawVal||''}</textarea>` : `<input type="text" class="single-line-input" value="${rawVal||''}">`;
+            el.innerHTML = isLong ? `<textarea class="inline-textarea">${rawVal||''}</textarea>` : `<input type="text" class="single-line-input" value="${rawVal||''}">`;
             const t = el.querySelector('textarea, input'); t.focus();
             t.onblur = () => { 
                 const v = t.value;
                 if(i===-1) les[f] = (f==='lesson' && !isNaN(v)) ? Number(v) : v;
                 else items[i][f] = v;
-                el.innerHTML = parseMarkdown(v) || (f==='id'?'0':'點擊編輯...');
+                el.innerHTML = (f === 'id' || f === 'lesson' || f === 'title') ? v : (parseMarkdown(v) || '點擊編輯...');
                 sync();
             };
         }
 
-        // --- 資料與同步函式 ---
+        // --- 資料同步與操作 ---
         function updateStatus(s, l, f, v, r) { dataStore.sources[s].lessons[l][f] = v; sync(); if(r) render(); }
         function updateItemAlign(s, l, i, v) { dataStore.sources[s].lessons[l].content[i].align = v; sync(); }
         function updateLessonField(s, l, f, v) { dataStore.sources[s].lessons[l][f] = v; sync(); }
@@ -351,7 +360,7 @@
             h += `<button class="btn-add-note" onclick="if(!Array.isArray(dataStore.sources[${s}].lessons[${l}].content[${i}].note)) dataStore.sources[${s}].lessons[${l}].content[${i}].note=[]; dataStore.sources[${s}].lessons[${l}].content[${i}].note.push('新註記');render();sync()">+</button>`;
             return h;
         }
-        function createInsertBarHtml(s, l, at) { return `<div class="insert-bar" onclick="addItem(${s},${l},${at})"><div class="insert-line"></div><div class="insert-btn-text">+</div><div class="insert-line"></div></div>`; }
+        function createInsertBarHtml(s, l, at) { return `<div class="insert-bar" onclick="addItem(${s},${l},${at})"><div class="insert-line"></div><div class="insert-btn-text">+ 在此插入</div><div class="insert-line"></div></div>`; }
 
         init();
     </script>

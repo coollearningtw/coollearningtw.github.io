@@ -93,6 +93,17 @@
             color: var(--primary);
         }
 
+        .card-tag {
+            position: absolute;
+            top: 10px;
+            right: -25px;
+            color: white;
+            padding: 2px 30px;
+            font-size: 0.7rem;
+            transform: rotate(45deg);
+            font-weight: bold;
+        }
+
         @media (max-width: 768px) {
             .subject-card.top-row, .subject-card.bottom-row {
                 width: 100%;
@@ -128,6 +139,7 @@
         <section class="subjects-section">
             <div class="subject-grid">
                 <a href="chinese/chinese.html" class="subject-card top-row">
+                    <div class="card-tag" style="background: #e74c3c;">NEW</div>
                     <div class="subject-icon">
                         <svg viewBox="0 0 24 24" fill="#e74c3c"><path d="M3 3v17a1 1 0 001 1h17v-2H5V3H3m15.25 6.75c.41-.41.41-1.09 0-1.5l-1.5-1.5c-.41-.41-1.09-.41-1.5 0l-8.25 8.25V18h2.25l8.25-8.25m-8.5 5l-3 3 3 3h10v-6h-10z"/></svg>
                     </div>
@@ -149,6 +161,7 @@
                 </a>
 
                 <a href="science/science.html" class="subject-card bottom-row">
+                    <div class="card-tag" style="background: #2ecc71;">NEW</div>
                     <div class="subject-icon">
                         <svg viewBox="0 0 24 24" fill="#2ecc71"><path d="M20.8 18.4L15 5.86V4h1v-2H8v2h1v1.86L3.2 18.4A3.28 3.28 0 006 22h12a3.28 3.28 0 002.8-3.6zM18.5 19l-3.3-5H8.8l-3.3 5H18.5z"/></svg>
                     </div>
@@ -164,6 +177,22 @@
             </div>
         </section>
     </div>
+    <!-- 原本的 main-layout 結束後，加入新的區塊 -->
+
+    <div class="main-layout" style="margin-top: 0;">
+        <!-- 橫向佔滿的工具列 -->
+        <div style="width: 100%; display: flex; gap: 20px; flex-wrap: wrap;">
+            <!-- 虛擬筆記本卡片 -->
+            <a href="tools/notebook.html" class="subject-card" style="flex: 1; min-width: 250px; flex-direction: row; justify-content: flex-start; gap: 20px; height: auto; padding: 25px;">
+                <div class="card-tag" style="background: #db2777;">NEW</div>
+                <div class="subject-icon" style="background: #fdf2f8; padding: 15px; border-radius: 16px; margin: 0;">
+                    <svg viewBox="0 0 24 24" fill="#db2777" style="width:40px; height:40px; margin:0;"><path d="M3 3v18h18V3H3zm16 16H5V5h14v14zm-2-8H7v-2h10v2zm-4 4H7v-2h6v2z"/></svg>
+                </div>
+                <div style="text-align: left;">
+                    <div style="font-size: 1.3rem; font-weight: bold; color: #db2777; margin-bottom: 5px;">虛擬筆記本</div>
+                    <div style="color: #64748b; font-size: 0.95rem;">自訂紙張、隨心筆記，支援匯出圖檔與Word</div>
+                </div>
+            </a>
 
     <!-- 懸浮回報按鈕 -->
     <button id="feedback-fab" title="問題回報與建議">

@@ -68,13 +68,56 @@
         .form-section { max-width: 800px; margin: 0 auto; }
         .form-group { margin-bottom: 24px; }
         .form-group label { display: block; font-weight: 700; margin-bottom: 8px; color: #475569; font-size: 0.9rem; }
-        input[type="text"], input[type="date"], textarea { width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; transition: border-color 0.2s, box-shadow 0.2s; box-sizing: border-box; font-family: inherit; }
+        input[type="text"], input[type="date"], select, textarea { width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; transition: border-color 0.2s, box-shadow 0.2s; box-sizing: border-box; font-family: inherit; }
         textarea { height: 120px; resize: vertical; line-height: 1.6; }
-        input:focus, textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+        
+        /* 顏色選擇器樣式 */
+        .color-swatch-group { display: flex; gap: 12px; align-items: center; height: 46px; }
+        .color-swatch {
+            width: 32px; height: 32px; border-radius: 50%;
+            cursor: pointer; border: 3px solid #fff;
+            box-shadow: 0 0 0 1px #cbd5e1; transition: all 0.2s;
+            position: relative;
+        }
+        .color-swatch:hover { transform: scale(1.1); }
+        .color-swatch.active { 
+            transform: scale(1.1); 
+            box-shadow: 0 0 0 2px #1e293b; 
+        }
+        .color-swatch.active::after {
+            content: '✓'; color: #fff; position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%); font-size: 14px; font-weight: bold;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+
         .block-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; margin-bottom: 24px; position: relative; }
         .block-ctrl { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
 
-        /* 右側預覽 */
+        /* ========== 右側預覽標籤專屬樣式 (需與前台 announcement.css 同步) ========== */
+        .anno-tag {
+            display: inline-block;
+            padding: 4px 12px;      /* 增加內邊距 */
+            border-radius: 8px;     /* 較大的圓角矩形 */
+            color: #fff;
+            font-size: 0.95rem;     /* 放大字體，接近標題大小 */
+            font-weight: 800;
+            margin-right: 12px;
+            vertical-align: middle; /* 確保與標題文字對齊 */
+            line-height: 1.2;
+            letter-spacing: 1px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .anno-title { 
+            display: flex; 
+            align-items: center; 
+            flex-wrap: wrap; 
+            gap: 2px;
+            font-size: 1.4rem; 
+            line-height: 1.4;
+        }
+
+        /* 右側預覽容器 */
         .preview-panel { background: #f1f5f9; display: flex; flex-direction: column; align-items: center; padding: 40px 20px; overflow-y: auto; }
         .phone-mockup { width: 360px; height: 640px; border: 12px solid #1e293b; border-radius: 40px; background: #fff; overflow: hidden; position: relative; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); flex-shrink: 0; }
         .phone-mockup .anno-card { width: 100%; height: 100%; position: relative; animation: none; box-shadow: none; border-radius: 0; }
@@ -169,6 +212,9 @@
         let currentIndex = -1;
         const STORAGE_KEY = 'cool_learning_anno_draft';
         const JSON_PATH = 'https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/announcements.json';
+        
+        // 定義可用顏色
+        const COLOR_PALETTE = ['#ef4444', '#0b76d1', '#2ecc71', '#f59e0b', '#64748b'];
 
         async function init() {
             const draft = localStorage.getItem(STORAGE_KEY);
@@ -228,11 +274,34 @@
             const anno = allAnnouncements[index];
             const formEl = document.getElementById('editor-form');
             
+            // 建立顏色選擇器的 HTML
+            const colorPickerHtml = COLOR_PALETTE.map(c => `
+                <div class="color-swatch ${anno.tagColor === c ? 'active' : ''}" 
+                     style="background-color: ${c}" 
+                     onclick="pickColor(this, '${c}')"
+                     title="${c}"></div>
+            `).join('');
+
             formEl.innerHTML = `
                 <div class="form-group">
                     <label>公告標題</label>
                     <input type="text" id="edit-title" value="${anno.title || ''}" oninput="syncData()">
                 </div>
+                
+                <div class="form-group" style="display:flex; gap:30px; align-items:flex-start;">
+                    <div style="flex:1">
+                        <label>標籤文字 (選填)</label>
+                        <input type="text" id="edit-tag" value="${anno.tag || ''}" oninput="syncData()" placeholder="如：重要、更新">
+                    </div>
+                    <div>
+                        <label>標籤顏色</label>
+                        <div class="color-swatch-group" id="tag-color-picker">
+                            ${colorPickerHtml}
+                        </div>
+                        <input type="hidden" id="edit-tag-color" value="${anno.tagColor || '#0b76d1'}">
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label>發布日期</label>
                     <input type="date" id="edit-date" value="${anno.date || ''}" oninput="syncData()">
@@ -255,10 +324,20 @@
             updatePreview();
         }
 
+        // 處理顏色選擇點擊
+        function pickColor(el, colorHex) {
+            document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+            el.classList.add('active');
+            document.getElementById('edit-tag-color').value = colorHex;
+            syncData();
+        }
+
         function syncData() {
             if (currentIndex === -1) return;
             const anno = allAnnouncements[currentIndex];
             anno.title = document.getElementById('edit-title').value;
+            anno.tag = document.getElementById('edit-tag').value;
+            anno.tagColor = document.getElementById('edit-tag-color').value;
             anno.date = document.getElementById('edit-date').value;
             anno.cover = document.getElementById('edit-cover').value;
             
@@ -314,7 +393,6 @@
 
             let blocksHtml = '';
             (anno.blocks || []).forEach(b => {
-                // 使用 utils.js 提供的 parseMarkdown
                 blocksHtml += `
                     <div class="anno-block">
                         ${b.subtitle ? `<div class="anno-subtitle">${parseMarkdown(b.subtitle)}</div>` : ''}
@@ -324,10 +402,13 @@
                 `;
             });
 
+            // 標題與標籤合成
+            const tagHtml = anno.tag ? `<span class="anno-tag" style="background-color: ${anno.tagColor}">${anno.tag}</span>` : '';
+
             wrapper.innerHTML = `
                 ${anno.cover ? `<img src="${anno.cover}" class="anno-cover">` : ''}
                 <div class="anno-body">
-                    <h2 class="anno-title">${anno.title || '（未輸入標題）'}</h2>
+                    <h2 class="anno-title">${tagHtml}${anno.title || '（未輸入標題）'}</h2>
                     <div class="anno-date">${anno.date || '（日期）'}</div>
                     ${blocksHtml}
                 </div>
@@ -335,7 +416,14 @@
         }
 
         function createNewAnnouncement() {
-            const newAnno = { title: "新公告", date: new Date().toISOString().split('T')[0], cover: "", blocks: [{ subtitle: "", text: "", image: "" }] };
+            const newAnno = { 
+                title: "新公告", 
+                tag: "", 
+                tagColor: "#0b76d1", 
+                date: new Date().toISOString().split('T')[0], 
+                cover: "", 
+                blocks: [{ subtitle: "", text: "", image: "" }] 
+            };
             allAnnouncements.unshift(newAnno);
             selectAnno(0);
             autoSave();

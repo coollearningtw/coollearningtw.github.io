@@ -1,21 +1,19 @@
+// --- scripts/announcement.js ---
+
 document.addEventListener("DOMContentLoaded", () => {
     const JSON_PATH = 'https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/announcements.json';
     const STORAGE_KEY = 'anno_hide_date'; 
 
-    // 1. 檢查是否為「直接進入」(非返回)
+    // 1. 檢查是否為返回操作
     const navEntry = performance.getEntriesByType("navigation")[0];
-    if (navEntry && navEntry.type === 'back_forward') {
-        return; 
-    }
+    if (navEntry && navEntry.type === 'back_forward') return; 
 
     // 2. 檢查今日不再顯示
     const todayStr = new Date().toISOString().split('T')[0];
-    if (localStorage.getItem(STORAGE_KEY) === todayStr) {
-        return;
-    }
+    if (localStorage.getItem(STORAGE_KEY) === todayStr) return;
 
-    // 3. 載入並渲染
-    fetch(JSON_PATH)
+    // 3. 載入資料
+    fetch(JSON_PATH + '?t=' + Date.now())
         .then(r => r.json())
         .then(data => {
             const validAnnos = filterValidAnnouncements(data.announcements);
@@ -32,20 +30,18 @@ function filterValidAnnouncements(list) {
     return list.filter(item => {
         const startDate = new Date(item.date);
         const endDate = new Date(startDate);
-        endDate.setDate(startDate.getDate() + 7); // 截止日期 = date + 7天
-        return now <= endDate; // 在截止日期之前都顯示
+        endDate.setDate(startDate.getDate() + 7); // 顯示 7 天
+        return now <= endDate;
     });
 }
 
-// 使用 Class 封裝邏輯
 class AnnouncementModal {
     constructor(annos) {
         this.annos = annos;
         this.currentIndex = 0;
         this.timer = null;
-        this.progressTimer = null;
         this.isExpanded = false;
-        this.autoPlayTime = 5000; // 5秒
+        this.autoPlayTime = 5000;
         
         this.createDOM();
         this.renderContent(0, 'init');
@@ -120,21 +116,21 @@ class AnnouncementModal {
             });
         }
 
-        const startDate = new Date(data.date);
-        const endDate = new Date(startDate);
-        endDate.setDate(startDate.getDate() + 7);
+        // 標籤處理
+        const tagHtml = data.tag ? `<span class="anno-tag" style="background-color: ${data.tagColor || '#0b76d1'}">${data.tag}</span>` : '';
 
         const contentHTML = `
             ${data.cover ? `<img src="${data.cover}" class="anno-cover">` : ''}
             <div class="anno-body">
-                <h2 class="anno-title">${data.title}</h2>
-                <div class="anno-date">(${index + 1}/${this.annos.length})</div>
+                <h2 class="anno-title">${tagHtml}${data.title}</h2>
+                <div class="anno-date">(${index + 1}/${this.annos.length}) 發布日期：${data.date}</div>
                 ${blocksHtml}
             </div>
         `;
 
         this.wrapper.innerHTML = contentHTML;
         
+        // 觸發動畫
         this.wrapper.classList.remove('slide-in-right', 'slide-in-left');
         void this.wrapper.offsetWidth;
 
@@ -181,7 +177,6 @@ class AnnouncementModal {
 
     manualSwitch(direction) {
         this.stopAutoPlay();
-        
         if (direction === 1) {
             this.currentIndex = (this.currentIndex + 1) % this.annos.length;
             this.renderContent(this.currentIndex, 'next');
@@ -189,10 +184,7 @@ class AnnouncementModal {
             this.currentIndex = (this.currentIndex - 1 + this.annos.length) % this.annos.length;
             this.renderContent(this.currentIndex, 'prev');
         }
-
-        if (!this.isExpanded) {
-            this.startAutoPlay();
-        }
+        if (!this.isExpanded) this.startAutoPlay();
     }
 
     close() {
@@ -207,8 +199,9 @@ class AnnouncementModal {
     }
 }
 
-// 簡單的 Markdown 轉換器 (可依需求擴充)
+// 簡單 Markdown 轉換
 function parseMarkdown(text) {
+    if (!text) return "";
     return text
         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
         .replace(/\*(.*?)\*/g, '<em>$1</em>');

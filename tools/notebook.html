@@ -59,7 +59,37 @@
         .t-select, .t-color {
             border: 1px solid #cbd5e1; border-radius: 6px; padding: 5px; cursor: pointer;
         }
-        
+
+        /* 顏色選單容器 */
+        .color-menu { position: relative; list-style: none; }
+        .color-menu summary { list-style: none; cursor: pointer; outline: none; }
+        .color-menu summary::-webkit-details-marker { display: none; }
+
+        /* 浮動面板 */
+        .color-palette {
+            position: absolute;
+            top: 100%; left: 0;
+            margin-top: 8px;
+            padding: 10px;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            width: 140px;
+            z-index: 200;
+        }
+
+        /* 之前定義的立體按鈕樣式 */
+        .color-btn {
+            width: 28px; height: 18px;
+            border: 1px solid #000;
+            cursor: pointer; padding: 0;
+        }
+        .color-btn:hover { transform: scale(1.1); filter: brightness(1.1); }
+                
         /* 筆記本紙張樣式 */
         .pages-container { display: flex; flex-direction: column; align-items: center; gap: 30px; padding-bottom: 50px; }
         .page-wrapper {
@@ -163,7 +193,22 @@
                 <button class="t-btn" onclick="execCmd('italic')" title="斜體"><i>I</i></button>
                 <button class="t-btn" onclick="execCmd('underline')" title="底線"><u>U</u></button>
                 <button class="t-btn" onclick="execCmd('strikeThrough')" title="刪除線"><s>S</s></button>
-                <input type="color" class="t-color" onchange="execCmd('foreColor', this.value)" title="文字顏色">
+                <div class="toolbar-group">
+                    <details class="color-menu">
+                        <summary class="t-btn" style="width: 60px; text-align: center;">顏色</summary>
+                        <div class="color-palette">
+                            <!-- 預設顏色陣列 -->
+                            <button class="color-btn" style="background:#ef4444;" onclick="execCmd('foreColor', '#ef4444')"></button>
+                            <button class="color-btn" style="background:#d97706;" onclick="execCmd('foreColor', '#d97706')"></button>
+                            <button class="color-btn" style="background:#10b981;" onclick="execCmd('foreColor', '#10b981')"></button>
+                            <button class="color-btn" style="background:#0b76d1;" onclick="execCmd('foreColor', '#0b76d1')"></button>
+                            <button class="color-btn" style="background:#d4c643;" onclick="execCmd('foreColor', '#d4c643')"></button>
+                            <button class="color-btn" style="background:#1e293b;" onclick="execCmd('foreColor', '#1e293b')"></button>
+                            <!-- 額外加入原生拾色器 -->
+                            <input type="color" onchange="execCmd('foreColor', this.value)" title="更多顏色" style="width:22px; height:22px; cursor:pointer; border:none; background:none;">
+                        </div>
+                    </details>
+                </div>
                 <select class="t-select" onchange="execCmd('fontName', this.value)" title="字體">
                     <option value="Noto Sans TC">預設字體</option>
                     <option value="標楷體">標楷體</option>

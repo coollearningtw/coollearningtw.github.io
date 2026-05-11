@@ -19,7 +19,7 @@
             line-height: 1.5;
         }
         .en-txt.show { display: block; }
-        /* 讓粗體顏色與主色調一致或稍微加深 */
+        /* 粗體樣式：同時處理 (A/B) 與 [text] */
         .en-txt strong { color: #074a86; font-weight: 800; } 
         .btn-quiz { background: #e3f2fd; color: var(--primary); border: 2px solid var(--primary); padding: 8px 16px; border-radius: 50px; font-weight: bold; cursor: pointer; }
     </style>
@@ -46,9 +46,11 @@
                             const card = document.createElement('div');
                             card.className = 'std-card trans-item';
 
-                            // --- 核心修改：將 (A/B/C) 轉換為 <strong>A/B/C</strong> ---
-                            // 這個正則會尋找所有被括號包圍的內容，並把內容抓出來放在 strong 標籤裡
-                            const displayEn = p.en.replace(/\(([^)]+)\)/g, '<strong>$1</strong>');
+                            // --- 核心修改 ---
+                            // 1. 將 (A/B) 轉為 <strong>(A/B)</strong>
+                            // 2. 將[text] 轉為 <strong>(text)</strong>
+                            let displayEn = p.en.replace(/\(([^)]+)\)/g, '<strong>($1)</strong>');
+                            displayEn = displayEn.replace(/\[([^\]]+)\]/g, '<strong>($1)</strong>');
                             
                             card.innerHTML = `<div class="ch-txt">${p.ch}</div><div class="en-txt">${displayEn}</div>`;
                             card.onclick = () => card.querySelector('.en-txt').classList.toggle('show');

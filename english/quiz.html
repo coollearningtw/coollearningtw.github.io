@@ -15,7 +15,7 @@
             padding-top: 20px;
             border-top: 2px dashed #eee;
             text-align: center;
-            display: none; /* 預設隱藏 */
+            display: none; 
             animation: fadeIn 0.5s ease;
         }
         #mistake-btn {
@@ -37,6 +37,85 @@
             font-size: 1.1rem;
         }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* === 修正：積木填空樣式與對齊 === */
+        
+        /* 1. 作答區容器改為靠左 */
+        .quiz-spell-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: flex-start; /* 改為靠左 */
+            gap: 10px;
+            margin: 20px 0;
+            padding: 10px 15px; /* 增加左側內邊距 */
+            min-height: 80px;
+        }
+
+        /* 2. 顯示文字樣式 */
+        .quiz-text-block {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #334155;
+            user-select: none;
+        }
+
+        /* 3. 調整積木輸入框，使其與原本 .spell-input 樣式一致 */
+        .quiz-input-blank {
+            border: 1px solid #e2e8f0; /* 統一邊框 */
+            border-radius: 8px;
+            width: 140px;
+            text-align: left; /* 配合輸入英文的對齊方向 */
+            padding: 12px 15px;
+            font-size: 1.2rem;
+            outline: none;
+            background: #f8fafc; /* 與原輸入框背景色一致 */
+            color: #334155;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+            transition: all 0.2s ease;
+        }
+
+        .quiz-input-blank:focus {
+            border-color: var(--primary);
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(11, 118, 209, 0.1);
+        }
+
+        /* 答錯時晃動紅框 */
+        .quiz-input-blank.wrong {
+            border-color: #ef4444 !important;
+            background-color: #fef2f2 !important;
+            animation: shake 0.4s ease;
+        }
+
+        /* 確保原本的 .spell-input 也是靠左 */
+        .spell-input {
+            text-align: left !important;
+            padding-left: 15px !important;
+            margin-left: 15px !important;
+        }
+
+        /* 片語積木輸入框樣式：縮短為 80px (約為原本 150px-160px 的一半) */
+.spell-input.phrasal-block {
+    width: 160px !important; 
+    display: inline-block !important;
+    margin: 0 !important;
+    padding: 10px 12px !important;
+    flex: 0 1 auto !important; 
+    text-align: center !important; /* 填空題置中對齊較美觀 */
+}
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        @media screen and (max-width: 768px) {
+            .spell-input.phrasal-block {
+                width: 120px !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -88,7 +167,6 @@
             <div class="panel" style="border:none; background:none; box-shadow:none; padding:0;">
                 <button id="start-btn" class="btn" style="width:100%; font-size:1.2rem; padding:12px;">開始新測驗</button>
                 
-                <!-- 錯題訂正顯示於此 (原本結果頁功能移至此處) -->
                 <div id="mistake-area">
                     <div id="last-score-info">上次得分：--</div>
                     <button id="mistake-btn" class="btn">錯題訂正 (0)</button>
@@ -105,7 +183,7 @@
             </div>
 
             <div id="question-area" class="question-area std-card">
-                <!-- JS 動態填入 -->
+                <!-- 由 english-quiz.js 動態填入 -->
             </div>
 
             <div class="controls">
@@ -128,6 +206,7 @@
       </div>
     </div>
 
+    <!-- 載入核心邏輯腳本 -->
     <script src="../scripts/english-quiz.js"></script>
 </body>
 </html>

@@ -9,89 +9,52 @@
     <style>
         .quiz-wrapper { max-width: 750px; margin: 20px auto; text-align: center; padding: 0 15px; }
         .ch-display { font-size: 1.5rem; font-weight: bold; margin-bottom: 25px; color: #1e293b; line-height: 1.5; }
-        
-        textarea { 
-            width: 100%; height: 140px; font-size: 1.2rem; padding: 20px; 
-            border-radius: 20px; border: 2px solid #e2e8f0; outline: none; 
-            resize: none; transition: 0.3s; background: #fff; box-sizing: border-box;
-            font-family: inherit;
-        }
+        textarea { width: 100%; height: 140px; font-size: 1.2rem; padding: 20px; border-radius: 20px; border: 2px solid #e2e8f0; outline: none; resize: none; transition: 0.3s; background: #fff; box-sizing: border-box; font-family: inherit; }
         textarea:focus { border-color: var(--primary); box-shadow: 0 10px 15px -3px rgba(11, 118, 209, 0.1); }
         textarea:disabled { background: #f8fafc; color: #64748b; border-color: #f1f5f9; }
-
-        .diff-result-box {
-            display: none;
-            margin-top: 25px;
-            padding: 25px;
-            background: #fff;
-            border-radius: 20px;
-            border: 1px solid #e2e8f0;
-            text-align: left;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-        }
+        .diff-result-box { display: none; margin-top: 25px; padding: 25px; background: #fff; border-radius: 20px; border: 1px solid #e2e8f0; text-align: left; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
         .diff-title { font-size: 0.85rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 15px; letter-spacing: 1px; }
-        
         .diff-content { line-height: 2.2; font-size: 1.15rem; }
         .word { display: inline-block; margin-right: 4px; padding: 2px 4px; border-radius: 6px; }
         .w-correct { color: #059669; font-weight: 500; }
         .w-missing { color: #dc2626; background: #fee2e2; font-weight: bold; }
         .w-extra { color: #d97706; background: #fef3c7; font-weight: bold; }
-
         .full-answer { margin-top: 20px; padding-top: 15px; border-top: 1px dashed #e2e8f0; color: #64748b; font-size: 0.95rem; }
         .full-answer strong { color: #1e293b; display: inline; margin-bottom: 4px; }
-
         .btn-group { margin-top: 30px; display: flex; gap: 15px; justify-content: center; }
         .btn-action { padding: 14px 50px; font-size: 1.1rem; border-radius: 50px; cursor: pointer; font-weight: bold; border: none; transition: 0.2s; }
         .btn-check { background: var(--primary); color: #fff; box-shadow: 0 4px 12px rgba(11, 118, 209, 0.2); }
         .btn-check:hover { transform: translateY(-2px); filter: brightness(1.1); }
         .btn-next { background: #1e293b; color: #fff; }
-
-        @media (max-width: 600px) {
-            .ch-display { font-size: 1.2rem; }
-            textarea { height: 120px; font-size: 1.1rem; }
-            .btn-group { flex-direction: column; }
-            .btn-action { width: 100%; }
-        }
     </style>
 </head>
 <body>
     <header><div class="logo"><a href="translation.html" class="back-link">⬅</a> 翻譯測驗</div></header>
-
     <div class="page-container quiz-wrapper">
         <div id="quiz-count" style="margin-bottom:12px; color:#94a3b8; font-weight: 800; font-size: 0.9rem;"></div>
         <div id="ch-text" class="ch-display"></div>
-        
         <textarea id="user-input" placeholder="請在此輸入英文翻譯句子..." spellcheck="false"></textarea>
-        
         <div id="diff-panel" class="diff-result-box">
             <div class="diff-title">核對結果 FEEDBACK</div>
             <div id="diff-content" class="diff-content"></div>
             <div id="full-answer-box" class="full-answer">
-                <strong>標準答案：</strong>
-                <span id="clean-answer"></span>
+                <strong>標準答案：</strong><span id="clean-answer"></span>
             </div>
         </div>
-
         <div class="btn-group">
             <button id="btn-check" class="btn-action btn-check">核對答案</button>
             <button id="btn-next" class="btn-action btn-next" style="display:none;"></button>
         </div>
     </div>
-
     <script>
-        let quizPool = [];
-        let index = 0;
+        let quizPool =[]; let index = 0;
 
         function getPossibleSentences(text) {
-            const regex = /\(([^)]+)\)/;
             let sentences = [text];
-            while (regex.test(sentences[0])) {
+            while (/\(([^)]+)\)/.test(sentences[0])) {
+                let match = sentences[0].match(/\(([^)]+)\)/);
                 let newSentences = [];
-                sentences.forEach(s => {
-                    const match = s.match(regex);
-                    const options = match[1].split('/');
-                    options.forEach(opt => newSentences.push(s.replace(match[0], opt.trim())));
-                });
+                match[1].split('/').forEach(opt => newSentences.push(sentences[0].replace(match[0], opt.trim())));
                 sentences = newSentences;
             }
             return sentences;
@@ -101,41 +64,29 @@
             return text.replace(/([.,!?;])/g, ' $1 ').split(/\s+/).filter(t => t.length > 0);
         }
 
-        /**
-         * 改良版比對演算法
-         * 使用 LCS (最長公共子序列) 概念優化，確保相同單字儘可能顯示為綠色
-         */
         function generateDiffHtml(userStr, ansStr) {
+            const optionalMatches = [...ansStr.matchAll(/\[([^\]]+)\]/g)];
+            const optionalWords = new Set(optionalMatches.map(m => m[1].toLowerCase().split(/\s+/)).flat());
+            const cleanAnsStr = ansStr.replace(/[\[\]]/g, '');
             const user = tokenize(userStr);
-            const ans = tokenize(ansStr);
-            const m = user.length;
-            const n = ans.length;
+            const ans = tokenize(cleanAnsStr);
             
-            const dp = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
-            
-            for (let i = 1; i <= m; i++) {
-                for (let j = 1; j <= n; j++) {
-                    if (user[i - 1].toLowerCase() === ans[j - 1].toLowerCase()) {
-                        dp[i][j] = dp[i - 1][j - 1] + 1;
-                    } else {
-                        dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
-                    }
+            const dp = Array.from({ length: user.length + 1 }, () => Array(ans.length + 1).fill(0));
+            for (let i = 1; i <= user.length; i++) {
+                for (let j = 1; j <= ans.length; j++) {
+                    dp[i][j] = (user[i - 1].toLowerCase() === ans[j - 1].toLowerCase()) ? dp[i - 1][j - 1] + 1 : Math.max(dp[i - 1][j], dp[i][j - 1]);
                 }
             }
             
-            let i = m, j = n;
-            let results = [];
-            
+            let i = user.length, j = ans.length, results =[];
             while (i > 0 || j > 0) {
                 if (i > 0 && j > 0 && user[i - 1].toLowerCase() === ans[j - 1].toLowerCase()) {
-                    results.unshift(`<span class="word w-correct">${ans[j - 1]}</span>`);
-                    i--; j--;
+                    results.unshift(`<span class="word w-correct">${ans[j - 1]}</span>`); i--; j--;
                 } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
-                    results.unshift(`<span class="word w-missing">${ans[j - 1]}</span>`);
-                    j--;
+                    if (optionalWords.has(ans[j - 1].toLowerCase())) { j--; } 
+                    else { results.unshift(`<span class="word w-missing">${ans[j - 1]}</span>`); j--; }
                 } else {
-                    results.unshift(`<span class="word w-extra">${user[i - 1]}</span>`);
-                    i--;
+                    results.unshift(`<span class="word w-extra">${user[i - 1]}</span>`); i--;
                 }
             }
             return results.join("");
@@ -155,61 +106,38 @@
 
         async function init() {
             const sel = JSON.parse(localStorage.getItem('sel_trans_lessons') || '[]');
-            try {
-                const res = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/english-translation.json');
-                const data = await res.json();
-                data.sources.forEach(src => {
-                    src.lessons.forEach(l => {
-                        if (sel.some(s => s.source === src.name && s.lesson === l.lesson)) {
-                            quizPool.push(...l.pairs);
-                        }
-                    });
-                });
-            } catch (e) { console.error("Data load failed", e); }
-
-            if (quizPool.length === 0) {
-                alert("未選擇題目，請返回選課頁面。");
-                location.href = "english.html";
-                return;
-            }
+            const res = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/english-translation.json');
+            const data = await res.json();
+            data.sources.forEach(src => src.lessons.forEach(l => { if (sel.some(s => s.source === src.name && s.lesson === l.lesson)) quizPool.push(...l.pairs); }));
             quizPool.sort(() => Math.random() - 0.5);
             render();
         }
 
         function render() {
-            const nextBtn = document.getElementById('btn-next');
             const isLast = (index === quizPool.length - 1);
-            nextBtn.innerText = isLast ? "結束測驗" : "下一題";
-            if(isLast) nextBtn.style.background = "#dc2626";
-
+            document.getElementById('btn-next').innerText = isLast ? "結束測驗" : "下一題";
             document.getElementById('quiz-count').innerText = `STEP ${index + 1} / ${quizPool.length}`;
             document.getElementById('ch-text').innerText = quizPool[index].ch;
-            document.getElementById('user-input').value = "";
-            document.getElementById('user-input').disabled = false;
+            document.getElementById('user-input').value = ""; document.getElementById('user-input').disabled = false;
             document.getElementById('diff-panel').style.display = "none";
             document.getElementById('btn-next').style.display = "none";
             document.getElementById('btn-check').style.display = "block";
-            if (window.innerWidth > 600) document.getElementById('user-input').focus();
         }
 
         document.getElementById('btn-check').onclick = () => {
             const userIn = document.getElementById('user-input').value.trim();
             const rawAns = quizPool[index].en;
-            const bestAns = findBestMatch(userIn, rawAns);
-            document.getElementById('diff-content').innerHTML = generateDiffHtml(userIn, bestAns);
-            document.getElementById('clean-answer').innerHTML = rawAns.replace(/\(([^)]+)\)/g, '<strong>$1</strong>');
+            // 關鍵：使用處理過的 bestMatch 進行比對
+            const bestMatch = findBestMatch(userIn, rawAns);
+            document.getElementById('diff-content').innerHTML = generateDiffHtml(userIn, bestMatch);
+            document.getElementById('clean-answer').innerHTML = rawAns.replace(/\(([^)]+)\)/g, '<strong>($1)</strong>').replace(/\[([^\]]+)\]/g, '<strong>[$1]</strong>');
             document.getElementById('diff-panel').style.display = "block";
             document.getElementById('user-input').disabled = true;
             document.getElementById('btn-check').style.display = "none";
             document.getElementById('btn-next').style.display = "block";
         };
 
-        document.getElementById('btn-next').onclick = () => {
-            index++;
-            if (index >= quizPool.length) location.href = 'translation.html';
-            else render();
-        };
-
+        document.getElementById('btn-next').onclick = () => { index++; if (index >= quizPool.length) location.href = 'translation.html'; else render(); };
         init();
     </script>
 </body>

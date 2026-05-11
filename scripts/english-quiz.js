@@ -55,7 +55,6 @@ document.addEventListener('DOMContentLoaded', () => {
         src.lessons.forEach(l => {
           if (selLessons.some(s => s.source === src.name && s.lesson === l.lesson)) {
             (l.vocabulary||[]).forEach(v => {
-              // 這裡會讀入 standard_ans 等所有屬性
               loadedWords.push({ ...v, lesson: l.lesson, title: l.title, source: src.name });
             });
           }
@@ -247,21 +246,58 @@ document.addEventListener('DOMContentLoaded', () => {
         startTimer(10, t=>timerEl.textContent=`剩餘 ${t}s`, onTimeout);
 
     } else {
+        // --- 拼字模式 (Spell) ---
         const h = mkHeader(q.chinese, q.pos, speakBtnHtml);
         questionArea.appendChild(h); bindSpeak(h);
-        const inp = document.createElement('input'); inp.className='spell-input'; inp.placeholder='輸入英文'; inp.autocomplete='off';
-        questionArea.appendChild(inp);
-        showAnswerBtn.style.display='inline-block';
         
-        inp.onkeydown = (e) => { if(e.key==='Enter') { if(!revealed) { showAnswerBtn.disabled=true; revealAnswer(true); } } };
+        if (q.blocks && q.blocks.length > 0) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'quiz-spell-wrapper'; 
+            q.blocks.forEach(b => {
+                if (b.type === 'text') {
+                    const span = document.createElement('span');
+                    span.className = 'quiz-text-block';
+                    span.textContent = b.content;
+                    wrapper.appendChild(span);
+                } else {
+                    const inp = document.createElement('input');
+                    inp.type = 'text';
+                    // 套用通用 Class 與 積木 Class
+                    inp.className = 'spell-input phrasal-block'; 
+                    inp.dataset.answer = b.answer;
+                    inp.autocomplete = 'off';
+                    inp.spellcheck = false;
+                    inp.onkeydown = (e) => { if(e.key === 'Enter') handleSpellSubmit(); };
+                    wrapper.appendChild(inp);
+                }
+            });
+            questionArea.appendChild(wrapper);
+        } else {
+            const inp = document.createElement('input'); 
+            inp.className = 'spell-input'; 
+            inp.placeholder = '輸入英文'; 
+            inp.autocomplete = 'off';
+            inp.onkeydown = (e) => { if(e.key === 'Enter') handleSpellSubmit(); };
+            questionArea.appendChild(inp);
+        }
+
+        showAnswerBtn.style.display = 'inline-block';
+        
+        function handleSpellSubmit() {
+            if(!revealed) { showAnswerBtn.disabled = true; revealAnswer(true); }
+        }
         
         const defaultSpellTime = 25;
         const spellTime = (typeof q['time-spell'] === 'number' && q['time-spell'] > 0) 
                           ? q['time-spell'] 
                           : defaultSpellTime;
 
-        startTimer(spellTime, t=>timerEl.textContent=`剩餘 ${t}s`, onTimeout);
-        setTimeout(() => { inp.focus(); }, 50);
+        startTimer(spellTime, t => timerEl.textContent = `剩餘 ${t}s`, onTimeout);
+        
+        setTimeout(() => { 
+            const firstInp = questionArea.querySelector('input');
+            if(firstInp) firstInp.focus(); 
+        }, 50);
     }
   }
 
@@ -284,21 +320,34 @@ document.addEventListener('DOMContentLoaded', () => {
     
     let isCorrect = false;
     if (currentType === 'spell') {
-        const inp = document.querySelector('.spell-input');
-        const val = inp ? inp.value.trim().toLowerCase() : '';
-        const correctStr = currentQuestion.word;
-        
-        const possibleAnswers = correctStr.split(/[\/,]+/).map(s => s.trim().toLowerCase());
-        isCorrect = possibleAnswers.includes(val);
+        const phrasalInputs = document.querySelectorAll('.phrasal-block');
+        if (phrasalInputs.length > 0) {
+            let allOk = true;
+            phrasalInputs.forEach(input => {
+                const userVal = input.value.trim().toLowerCase();
+                const correctVal = input.dataset.answer.trim().toLowerCase();
+                if (userVal !== correctVal) {
+                    allOk = false;
+                    input.classList.add('wrong'); 
+                } else {
+                    // 正確時保持原樣，不強制變色
+                }
+            });
+            isCorrect = allOk;
+        } else {
+            const inp = document.querySelector('.spell-input');
+            const val = inp ? inp.value.trim().toLowerCase() : '';
+            const correctStr = currentQuestion.word;
+            const possibleAnswers = correctStr.split(/[\/,]+/).map(s => s.trim().toLowerCase());
+            isCorrect = possibleAnswers.includes(val);
+        }
 
         const div = document.createElement('div');
         div.className = 'answer-display ' + (isCorrect ? 'correct' : 'wrong');
         
-        // --- 修改處：決定顯示的答案 ---
-        // 如果有設定 standard_ans，就顯示它；否則顯示原本的 word (可能包含斜線)
         const displayAnswer = currentQuestion.standard_ans 
                               ? currentQuestion.standard_ans 
-                              : correctStr;
+                              : currentQuestion.word;
 
         div.textContent = displayAnswer;
         questionArea.appendChild(div);

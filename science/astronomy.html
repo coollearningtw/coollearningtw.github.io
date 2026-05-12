@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>四季與星空模擬 - 酷學習</title>
+    <link rel="stylesheet" href="../styles/style.css">
+    <link rel="stylesheet" href="../styles/header.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
+
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #050810; color: #fff; }
+        header { position: absolute; width: calc(100% - 36px); z-index: 100; background: rgba(15, 23, 42, 0.6) !important; backdrop-filter: blur(10px); }
+
+        #canvas-container { position: absolute; top: 0; left: 0; width: 100%; height: 100vh; }
+
+        /* 左側控制面板 */
+        .control-panel {
+            position: absolute; left: 20px; top: 90px; width: 280px;
+            background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px;
+            padding: 20px; z-index: 10; box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+        }
+        .panel-title { font-size: 1.2rem; font-weight: 800; color: #fbbf24; margin: 0 0 15px; display: flex; align-items: center; gap: 8px; }
+        
+        .season-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .btn-season {
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2);
+            color: #cbd5e1; padding: 12px; border-radius: 10px; cursor: pointer;
+            font-size: 0.9rem; transition: 0.2s; font-weight: bold;
+        }
+        .btn-season:hover { background: rgba(251, 191, 36, 0.2); border-color: #fbbf24; }
+        .btn-season.active { background: #fbbf24; color: #000; border-color: #fbbf24; }
+
+        /* 右側資訊卡 */
+        .info-card {
+            position: absolute; right: 20px; top: 90px; width: 240px;
+            background: rgba(15, 23, 42, 0.8); border-radius: 20px;
+            padding: 20px; border-left: 4px solid #fbbf24; z-index: 10;
+        }
+        .info-item { margin-bottom: 15px; }
+        .info-label { font-size: 0.75rem; color: #94a3b8; font-weight: bold; text-transform: uppercase; }
+        .info-value { font-size: 1.1rem; font-weight: 800; color: #f8fafc; }
+
+        .toggle-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 0.9rem; }
+        
+        /* 自定義切換開關 */
+        .switch { position: relative; display: inline-block; width: 34px; height: 20px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #475569; transition: .3s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background: white; transition: .3s; border-radius: 50%; }
+        input:checked + .slider { background: #fbbf24; }
+        input:checked + .slider:before { transform: translateX(14px); }
+
+        #loading { position: fixed; inset: 0; background: #050810; z-index: 999; display: flex; align-items: center; justify-content: center; color: #fbbf24; font-weight: bold; }
+
+        @media (max-width: 768px) {
+            .control-panel { width: calc(100% - 40px); bottom: 20px; top: auto; height: auto; }
+            .info-card { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div id="loading">啟動天體觀測儀...</div>
+
+    <header>
+        <div class="logo">
+            <a href="earth-science.html" class="back-link">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            </a>
+            <span class="header-title-area">四季成因模擬</span>
+        </div>
+    </header>
+
+    <div id="canvas-container"></div>
+
+    <div class="control-panel">
+        <div class="panel-title">📅 季節切換</div>
+        <div class="season-grid">
+            <button class="btn-season" onclick="setSeason('spring')" id="btn-spring">春分</button>
+            <button class="btn-season" onclick="setSeason('summer')" id="btn-summer">夏至</button>
+            <button class="btn-season" onclick="setSeason('autumn')" id="btn-autumn">秋分</button>
+            <button class="btn-season" onclick="setSeason('winter')" id="btn-winter">冬至</button>
+        </div>
+
+        <div class="panel-title">⚙️ 顯示選項</div>
+        <label class="toggle-row">地軸 (23.5°) <div class="switch"><input type="checkbox" id="check-axis" checked><span class="slider"></span></div></label>
+        <label class="toggle-row">回歸線與赤道 <div class="switch"><input type="checkbox" id="check-lines" checked><span class="slider"></span></div></label>
+        <label class="toggle-row">太陽直射光線 <div class="switch"><input type="checkbox" id="check-ray" checked><span class="slider"></span></div></label>
+    </div>
+
+    <div class="info-card">
+        <div class="info-item">
+            <div class="info-label">目前節氣</div>
+            <div class="info-value" id="val-season">春分</div>
+        </div>
+        <div class="info-item">
+            <div class="info-label">太陽直射緯度</div>
+            <div class="info-value" id="val-lat">赤道 (0°)</div>
+        </div>
+        <div class="info-item">
+            <div class="info-label">晝夜特性</div>
+            <div class="info-value" id="val-desc">全球晝夜等長</div>
+        </div>
+    </div>
+
+    <script>
+        const IMG_BASE = "https://raw.githubusercontent.com/coollearningtw/img/refs/heads/main/earth-science/models/planets/";
+        
+        let scene, camera, renderer, controls, earthGroup, earthMesh, sun, pivot, rayLine, axisLine;
+        let currentTargetAngle = 0; // 追蹤目前角度，確保永遠往同方向增加
+
+        // 重新定義季節對應的軌道進度 (0 ~ 1)
+        const SEASON_CONFIG = {
+            spring: { step: 0, lat: "赤道 (0°)", desc: "全球晝夜等長", title: "春分" },
+            summer: { step: 0.25, lat: "北回歸線 (23.5°N)", desc: "北半球晝長夜短", title: "夏至" },
+            autumn: { step: 0.5, lat: "赤道 (0°)", desc: "全球晝夜等長", title: "秋分" },
+            winter: { step: 0.75, lat: "南回歸線 (23.5°S)", desc: "北半球晝短夜長", title: "冬至" }
+        };
+
+        init();
+        animate();
+
+        function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 2000);
+            camera.position.set(40, 30, 40);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+            const loader = new THREE.TextureLoader();
+            loader.setCrossOrigin('anonymous');
+
+            // 1. 太陽 (光源中心)
+            const sunGeo = new THREE.SphereGeometry(6, 32, 32);
+            const sunMat = new THREE.MeshBasicMaterial({ 
+                map: loader.load(IMG_BASE + 'sun.jpg'),
+                color: 0xffdd44 
+            });
+            sun = new THREE.Mesh(sunGeo, sunMat);
+            scene.add(sun);
+
+            const pointLight = new THREE.PointLight(0xffffff, 2, 1000);
+            scene.add(pointLight);
+            scene.add(new THREE.AmbientLight(0x444444));
+
+            // 2. 公轉軸心
+            pivot = new THREE.Group();
+            scene.add(pivot);
+
+            // 3. 地球 Tilt 群組 (固定 23.5 度)
+            earthGroup = new THREE.Group();
+            earthGroup.rotation.z = THREE.MathUtils.degToRad(23.5);
+            earthGroup.position.x = 35; // 軌道半徑
+            pivot.add(earthGroup);
+
+            const earthGeo = new THREE.SphereGeometry(5, 64, 64);
+            const earthMat = new THREE.MeshStandardMaterial({ 
+                map: loader.load(IMG_BASE + 'earth.jpg'),
+                metalness: 0.1,
+                roughness: 0.8
+            });
+            earthMesh = new THREE.Mesh(earthGeo, earthMat);
+            earthGroup.add(earthMesh);
+
+            // 4. 輔助線 (地軸)
+            const axisGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 8, 0), new THREE.Vector3(0, -8, 0)]);
+            const axisMat = new THREE.LineBasicMaterial({ color: 0xffffff });
+            axisLine = new THREE.Line(axisGeo, axisMat);
+            earthGroup.add(axisLine);
+
+            // 5. 緯度線 (赤道與回歸線)
+            createLatLines();
+
+            // 6. 直射光線 (移出地球群組，放在 scene，由代碼每幀更新)
+            const rayGeo = new THREE.BufferGeometry();
+            const rayMat = new THREE.LineDashedMaterial({ 
+                color: 0xfacc15, 
+                dashSize: 1.5, 
+                gapSize: 1,
+                linewidth: 2
+            });
+            rayLine = new THREE.Line(rayGeo, rayMat);
+            scene.add(rayLine);
+
+            // 7. 星空背景
+            createStars();
+
+            // 8. 公轉軌道
+            const orbitCurve = new THREE.EllipseCurve(0, 0, 35, 35);
+            const orbitPoints = orbitCurve.getPoints(128);
+            const orbitGeo = new THREE.BufferGeometry().setFromPoints(orbitPoints);
+            const orbitMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.15 });
+            const orbit = new THREE.LineLoop(orbitGeo, orbitMat);
+            orbit.rotation.x = Math.PI / 2;
+            scene.add(orbit);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+
+            document.getElementById('check-axis').onchange = (e) => axisLine.visible = e.target.checked;
+            document.getElementById('check-ray').onchange = (e) => rayLine.visible = e.target.checked;
+            
+            window.addEventListener('resize', onWindowResize);
+            
+            setTimeout(() => {
+                document.getElementById('loading').style.display = 'none';
+                setSeason('spring');
+            }, 1000);
+        }
+
+        function createLatLines() {
+            const linesGroup = new THREE.Group();
+            earthGroup.add(linesGroup);
+            this.latLinesGroup = linesGroup;
+
+            const createLine = (y, color) => {
+                const radiusAtY = Math.sqrt(Math.max(0, 25 - y*y)); // r=5
+                const curve = new THREE.EllipseCurve(0, 0, radiusAtY + 0.05, radiusAtY + 0.05);
+                const points = curve.getPoints(64);
+                const geo = new THREE.BufferGeometry().setFromPoints(points);
+                const mat = new THREE.LineBasicMaterial({ color: color });
+                const line = new THREE.LineLoop(geo, mat);
+                line.rotation.x = Math.PI / 2;
+                line.position.y = y;
+                linesGroup.add(line);
+            };
+
+            createLine(0, 0xffffff); // 赤道
+            createLine(5 * Math.sin(THREE.MathUtils.degToRad(23.5)), 0xff4444); // 北回歸線
+            createLine(5 * Math.sin(THREE.MathUtils.degToRad(-23.5)), 0x4444ff); // 南回歸線
+
+            document.getElementById('check-lines').onchange = (e) => linesGroup.visible = e.target.checked;
+        }
+
+        function createStars() {
+            const starGeo = new THREE.BufferGeometry();
+            const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.6 });
+            const starPos = [];
+            for (let i = 0; i < 6000; i++) {
+                starPos.push((Math.random() - 0.5) * 1800, (Math.random() - 0.5) * 1800, (Math.random() - 0.5) * 1800);
+            }
+            starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starPos, 3));
+            scene.add(new THREE.Points(starGeo, starMat));
+        }
+
+        function setSeason(key) {
+            const data = SEASON_CONFIG[key];
+            document.querySelectorAll('.btn-season').forEach(b => b.classList.remove('active'));
+            document.getElementById('btn-' + key).classList.add('active');
+
+            // --- 核心修正：往同方向運行的角度邏輯 ---
+            let targetRad = data.step * Math.PI * 2;
+            
+            // 取得當前角度在 0 ~ 2PI 之外的部分 (累積圈數)
+            let currentRotation = pivot.rotation.y;
+            let currentNormalized = currentRotation % (Math.PI * 2);
+            if (currentNormalized < 0) currentNormalized += Math.PI * 2;
+
+            // 計算目標角度，確保其大於當前角度
+            let additionalRotation = targetRad - currentNormalized;
+            if (additionalRotation <= 0) additionalRotation += Math.PI * 2;
+
+            currentTargetAngle = currentRotation + additionalRotation;
+
+            new TWEEN.Tween(pivot.rotation)
+                .to({ y: currentTargetAngle }, 1500)
+                .easing(TWEEN.Easing.Cubic.Out)
+                .start();
+
+            // UI 更新
+            document.getElementById('val-season').innerText = data.title;
+            document.getElementById('val-lat').innerText = data.lat;
+            document.getElementById('val-desc').innerText = data.desc;
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate(time) {
+            requestAnimationFrame(animate);
+            TWEEN.update(time);
+            
+            earthMesh.rotation.y += 0.003; // 自轉
+
+            // --- 核心修正：動態更新太陽直射光線 ---
+            if (rayLine.visible) {
+                const earthWorldPos = new THREE.Vector3();
+                earthMesh.getWorldPosition(earthWorldPos);
+                
+                // 設定線段起點 (太陽 0,0,0) 與終點 (地球中心)
+                const points = [new THREE.Vector3(0, 0, 0), earthWorldPos];
+                rayLine.geometry.setFromPoints(points);
+                rayLine.computeLineDistances(); // 虛線需要更新距離
+            }
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+    </script>
+</body>
+</html>

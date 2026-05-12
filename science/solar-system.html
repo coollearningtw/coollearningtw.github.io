@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>太陽系 3D 動態模型 - 酷學習</title>
+    <link rel="stylesheet" href="../styles/style.css">
+    <link rel="stylesheet" href="../styles/header.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- 引入 Tween.js 用於平滑鏡頭動畫 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
+
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #000; color: #fff; font-family: "Noto Sans TC", sans-serif; }
+        header { position: absolute; width: calc(100% - 36px); z-index: 100; background: rgba(0,0,0,0.5) !important; backdrop-filter: blur(5px); }
+        
+        #canvas-container { position: absolute; top: 0; left: 0; width: 100%; height: 100vh; }
+
+        /* 左側導航選單 */
+        .sidebar {
+            position: absolute; left: 20px; top: 90px; width: 180px;
+            background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px;
+            padding: 15px; z-index: 10; display: flex; flex-direction: column; gap: 8px;
+        }
+        .nav-item {
+            padding: 10px 15px; background: rgba(255,255,255,0.05); border-radius: 8px;
+            cursor: pointer; transition: 0.2s; font-size: 0.9rem; display: flex; align-items: center; gap: 10px;
+            border: 1px solid transparent;
+        }
+        .nav-item:hover { background: rgba(56, 189, 248, 0.2); border-color: #38bdf8; }
+        .nav-item.active { background: #0ea5e9; font-weight: bold; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; }
+
+        /* 右側資訊卡片 */
+        .info-card {
+            position: absolute; right: 20px; top: 90px; width: 280px;
+            background: rgba(15, 23, 42, 0.85); border: 1px solid #38bdf8;
+            border-radius: 20px; padding: 25px; z-index: 10;
+            transform: translateX(400px); transition: transform 0.5s cubic-bezier(0.17, 0.84, 0.44, 1);
+        }
+        .info-card.show { transform: translateX(0); }
+        .info-card h2 { margin: 0 0 10px; color: #38bdf8; font-size: 1.8rem; }
+        .info-card p { font-size: 0.95rem; line-height: 1.6; color: #cbd5e1; margin-bottom: 15px; }
+        .data-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 0.85rem; }
+        .data-label { color: #94a3b8; }
+
+        /* 下方控制列 */
+        .bottom-ctrl {
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 20px; background: rgba(0,0,0,0.6); padding: 10px 30px;
+            border-radius: 50px; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); z-index: 10;
+        }
+        .ctrl-btn { background: none; border: none; color: #fff; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; opacity: 0.7; transition: 0.2s; }
+        .ctrl-btn:hover { opacity: 1; color: #38bdf8; }
+
+        #loading { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .loader { width: 50px; height: 50px; border: 3px solid #1e293b; border-top-color: #38bdf8; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        @media (max-width: 768px) {
+            .sidebar { width: 60px; padding: 10px 5px; }
+            .nav-item span { display: none; }
+            .info-card { width: 220px; padding: 15px; font-size: 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+    <div id="loading"><div class="loader"></div>正在穿越星門，啟動引力引擎...</div>
+
+    <header>
+        <div class="logo">
+            <a href="earth-science.html" class="back-link">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            </a>
+            <span class="header-title-area">太陽系探索航線</span>
+        </div>
+    </header>
+
+    <div id="canvas-container"></div>
+
+    <!-- 左側行星選單 -->
+    <div class="sidebar" id="planet-nav">
+        <div class="nav-item active" data-id="sun"><div class="dot" style="background:#facc15"></div><span>太陽 (Sun)</span></div>
+        <div class="nav-item" data-id="mercury"><div class="dot" style="background:#94a3b8"></div><span>水星</span></div>
+        <div class="nav-item" data-id="venus"><div class="dot" style="background:#fbbf24"></div><span>金星</span></div>
+        <div class="nav-item" data-id="earth"><div class="dot" style="background:#3b82f6"></div><span>地球</span></div>
+        <div class="nav-item" data-id="mars"><div class="dot" style="background:#ef4444"></div><span>火星</span></div>
+        <div class="nav-item" data-id="jupiter"><div class="dot" style="background:#d97706"></div><span>木星</span></div>
+        <div class="nav-item" data-id="saturn"><div class="dot" style="background:#fde047"></div><span>土星</span></div>
+        <div class="nav-item" data-id="uranus"><div class="dot" style="background:#7dd3fc"></div><span>天王星</span></div>
+        <div class="nav-item" data-id="neptune"><div class="dot" style="background:#38bdf8"></div><span>海王星</span></div>
+    </div>
+
+    <!-- 右側資訊卡片 -->
+    <div class="info-card" id="info-card">
+        <h2 id="planet-name">太陽</h2>
+        <p id="planet-desc">太陽系的中心恆星，提供了地球生命所需的能量。</p>
+        <div id="planet-data">
+            <!-- 動態插入數據 -->
+        </div>
+    </div>
+
+    <!-- 下方工具列 -->
+    <div class="bottom-ctrl">
+        <button class="ctrl-btn" id="reset-cam">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+            全貌視角
+        </button>
+        <button class="ctrl-btn" id="toggle-orbit">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 1 0 10 10"/></svg>
+            軌道顯示
+        </button>
+    </div>
+
+    <script>
+        // --- 行星數據庫 ---
+        const PLANETS_DATA = {
+            sun: { name: "太陽", desc: "太陽系中心恆星，質量佔全系的 99.8%。其核心進行著強大的核融合。", radius: 15, data: { "分類": "G型主序星", "表面溫度": "約 5,500°C", "自轉週期": "25-35 天" } },
+            mercury: { name: "水星", desc: "最靠近太陽的行星，大氣稀薄，晝夜溫差極大。", radius: 2, data: { "分類": "類地行星", "公轉週期": "88 天", "衛星數量": "0" } },
+            venus: { name: "金星", desc: "太陽系最熱的行星，擁有濃厚的二氧化碳大氣與強烈的溫室效應。", radius: 4.5, data: { "分類": "類地行星", "表面壓強": "地球的 92 倍", "自轉": "逆向自轉" } },
+            earth: { name: "地球", desc: "我們唯一的家園，目前已知唯一擁有生命與液態水的星體。", radius: 5, data: { "分類": "類地行星", "大氣成分": "氮、氧、氬", "衛星數量": "1 (月球)" } },
+            mars: { name: "火星", desc: "紅色的行星，擁有太陽系最高大的山脈——奧林帕斯山。", radius: 3, data: { "分類": "類地行星", "公轉週期": "687 天", "衛星數量": "2" } },
+            jupiter: { name: "木星", desc: "太陽系最大的行星，巨大的氣體巨星，擁有著名的「大紅斑」風暴。", radius: 12, data: { "分類": "氣體巨星", "質量": "地球的 318 倍", "衛星數量": "95+" } },
+            saturn: { name: "土星", desc: "以壯麗的行星環著稱，密度低到可以浮在水面上。", radius: 10, hasRing: true, data: { "分類": "氣體巨星", "環成分": "冰塊與岩石屑", "衛星數量": "146" } },
+            uranus: { name: "天王星", desc: "躺著旋轉的冰巨星，大氣中含有大量的甲烷，呈現青藍色。", radius: 7, data: { "分類": "冰巨星", "自轉傾角": "97.77°", "公轉週期": "84 年" } },
+            neptune: { name: "海王星", desc: "距離太陽最遠的行星，擁有太陽系中最強勁的強風。", radius: 7, data: { "分類": "冰巨星", "平均距離": "30.1 AU", "公轉週期": "165 年" } }
+        };
+
+        // --- 核心變數 ---
+        let scene, camera, renderer, controls;
+        let planets = {}; // 存放 3D 物件
+        let planetPivots = {}; // 存放公轉軸
+        let orbitLines = [];
+        let currentFocus = "sun";
+
+        init();
+        animate();
+
+        function init() {
+            scene = new THREE.Scene();
+
+            // 1. 攝影機
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 5000);
+            camera.position.set(0, 400, 800);
+
+            // 2. 渲染器
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+            // 3. 燈光系統
+            const sunLight = new THREE.PointLight(0xffffff, 2, 2000); // 太陽點光源
+            sunLight.position.set(0, 0, 0);
+            scene.add(sunLight);
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.1); // 微弱環境光避免背光面全黑
+            scene.add(ambientLight);
+
+            // 4. 星空背景
+            createStars();
+
+            // 5. 建立星體
+            createSolarSystem();
+
+            // 6. 控制器
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.minDistance = 50;
+            controls.maxDistance = 2500;
+
+            // 7. UI 事件
+            bindUI();
+
+            window.addEventListener('resize', onWindowResize);
+            setTimeout(() => {
+                document.getElementById('loading').style.display = 'none';
+                flyToPlanet('sun'); // 初始聚焦太陽
+            }, 1500);
+        }
+
+        function createStars() {
+            const starGeo = new THREE.BufferGeometry();
+            const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.7 });
+            const starPositions = [];
+            for (let i = 0; i < 10000; i++) {
+                starPositions.push((Math.random() - 0.5) * 4000, (Math.random() - 0.5) * 4000, (Math.random() - 0.5) * 4000);
+            }
+            starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starPositions, 3));
+            scene.add(new THREE.Points(starGeo, starMat));
+        }
+
+        function createSolarSystem() {
+            const loader = new THREE.TextureLoader();
+            loader.setCrossOrigin('anonymous'); // 必須開啟，否則 3D 畫布會報安全性錯誤
+
+            // 來源：TBaltazar 穩定 CDN 資源
+            const base = 'https://raw.githubusercontent.com/coollearningtw/img/master/earth-science/models/planets/';
+            
+            const textures = {
+                sun: base + 'sun.jpg', // 太陽暫代
+                mercury: base + 'mercury.jpg',
+                venus: base + 'venus_surface.jpg',
+                earth: base + 'earth.jpg',
+                mars: base + 'mars.jpg',
+                jupiter: base + 'jupiter.jpg',
+                saturn: base + 'saturn.jpg',
+                uranus: base + 'uranus.jpg',
+                neptune: base + 'neptune.jpg'
+            };
+
+            // 行星距離配置 (縮放處理以利觀察)
+            const distScale = [0, 60, 90, 130, 170, 260, 340, 420, 500];
+            const keys = Object.keys(PLANETS_DATA);
+
+            keys.forEach((key, i) => {
+                const data = PLANETS_DATA[key];
+                const pivot = new THREE.Group();
+                scene.add(pivot);
+                planetPivots[key] = pivot;
+
+                // 建立球體
+                const geo = new THREE.SphereGeometry(data.radius, 32, 32);
+                let mat;
+                if(key === 'sun') {
+                    mat = new THREE.MeshBasicMaterial({ color: 0xffcc00, map: loader.load('https://raw.githubusercontent.com/coollearningtw/img/master/earth-science/models/planets/sun.jpg') });
+                } else {
+                    mat = new THREE.MeshPhongMaterial({ map: loader.load(textures[key]), shininess: 5 });
+                }
+
+                // ... 在 keys.forEach 循環內 ...
+
+                const mesh = new THREE.Mesh(geo, mat);
+                mesh.position.x = distScale[i];
+                pivot.add(mesh);
+                planets[key] = mesh;
+
+                // --- 特別針對金星加入大氣層 ---
+                if (key === 'venus') {
+                    // 1. 建立一個略大的球體作為大氣層 (半徑多出 1%)
+                    const atmosGeo = new THREE.SphereGeometry(data.radius * 1.015, 32, 32);
+                    
+                    // 2. 載入大氣層紋理 (通常是平滑的黃白色雲圖)
+                    const venusAtmosTex = loader.load('https://raw.githubusercontent.com/coollearningtw/img/refs/heads/main/earth-science/models/planets/venus_atmosphere.jpg');
+                    
+                    const atmosMat = new THREE.MeshPhongMaterial({
+                        map: venusAtmosTex,
+                        transparent: true,
+                        opacity: 0.6, // 讓它半透明，隱約可以看到下方的地表
+                        shininess: 2
+                    });
+                    
+                    const venusAtmos = new THREE.Mesh(atmosGeo, atmosMat);
+                    // 將大氣層掛在金星本體上，它會跟著金星一起公轉
+                    mesh.add(venusAtmos);
+                    
+                    // 存起來以便之後做不同的旋轉動畫
+                    mesh.userData.atmosphere = venusAtmos; 
+                }
+
+                // 土星環
+                if (data.hasRing) {
+                    // 1. 建立幾何體
+                    const innerRadius = data.radius + 3;
+                    const outerRadius = data.radius + 15;
+                    const ringGeo = new THREE.RingGeometry(innerRadius, outerRadius, 128); // 增加分段讓圓周更平滑
+
+                    // --- 核心修正：重新計算 UV 貼圖座標 ---
+                    const pos = ringGeo.attributes.position;
+                    const uv = ringGeo.attributes.uv;
+
+                    for (let i = 0; i < pos.count; i++) {
+                        // 取得每個頂點的 X, Y 位置
+                        const x = pos.getX(i);
+                        const y = pos.getY(i);
+                        
+                        // 計算該點距離圓心的距離 (半徑)
+                        const distance = Math.sqrt(x * x + y * y);
+                        
+                        // 將貼圖座標 U (橫向) 映射到半徑：
+                        // 讓圖片的左端對應內環，右端對應外環
+                        const u = (distance - innerRadius) / (outerRadius - innerRadius);
+                        
+                        // 將貼圖座標 V (縱向) 映射到 0 或 1 (環幾何體的預設分佈)
+                        // 這樣長條形就會像一條彩帶一樣繞著圓心轉
+                        uv.setXY(i, u, i % 2); 
+                    }
+
+                    // 2. 載入紋理 (使用 jsDelivr 避開 CORS 黑色錯誤)
+                    const ringTex = loader.load('https://raw.githubusercontent.com/coollearningtw/img/refs/heads/main/earth-science/models/planets/saturn_ring_alpha.png');
+                    
+                    // 設定紋理包裹模式
+                    ringTex.wrapS = THREE.RepeatWrapping;
+                    ringTex.wrapT = THREE.RepeatWrapping;
+
+                    const ringMat = new THREE.MeshBasicMaterial({ 
+                        map: ringTex,
+                        side: THREE.DoubleSide, 
+                        transparent: true, 
+                        opacity: 0.9,
+                        alphaTest: 0.1 // 濾掉太透明的像素
+                    });
+
+                    const ring = new THREE.Mesh(ringGeo, ringMat);
+                    
+                    // 3. 調整環的傾角
+                    ring.rotation.x = Math.PI / 2.2; 
+                    mesh.add(ring);
+                }
+
+                // 軌道線
+                if(i > 0) {
+                    const curve = new THREE.EllipseCurve(0, 0, distScale[i], distScale[i]);
+                    const points = curve.getPoints(100);
+                    const orbitGeo = new THREE.BufferGeometry().setFromPoints(points);
+                    const orbitMat = new THREE.LineBasicMaterial({ color: 0xFFFFFF, transparent: true, opacity: 0.3 });
+                    const orbit = new THREE.LineLoop(orbitGeo, orbitMat);
+                    orbit.rotation.x = Math.PI / 2;
+                    scene.add(orbit);
+                    orbitLines.push(orbit);
+                }
+            });
+        }
+
+        function flyToPlanet(id) {
+            currentFocus = id;
+            const targetPlanet = planets[id];
+            const data = PLANETS_DATA[id];
+
+            // 更新 UI
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.id === id));
+            const card = document.getElementById('info-card');
+            card.classList.add('show');
+            document.getElementById('planet-name').innerText = data.name;
+            document.getElementById('planet-desc').innerText = data.desc;
+            
+            let html = '';
+            for(let k in data.data) {
+                html += `<div class="data-row"><span class="data-label">${k}</span><span>${data.data[k]}</span></div>`;
+            }
+            document.getElementById('planet-data').innerHTML = html;
+
+            // 核心動畫：鏡頭飛行
+            const targetPos = new THREE.Vector3();
+            targetPlanet.getWorldPosition(targetPos);
+
+            // 計算目標鏡頭位置 (根據星球半徑動態調整距離)
+            const offset = data.radius * 4;
+            const camTargetPos = {
+                x: targetPos.x + offset,
+                y: targetPos.y + offset / 2,
+                z: targetPos.z + offset
+            };
+
+            // 使用 TWEEN 進行平滑移動
+            new TWEEN.Tween(camera.position)
+                .to(camTargetPos, 1500)
+                .easing(TWEEN.Easing.Quadratic.Out)
+                .start();
+
+            new TWEEN.Tween(controls.target)
+                .to({ x: targetPos.x, y: targetPos.y, z: targetPos.z }, 1500)
+                .easing(TWEEN.Easing.Quadratic.Out)
+                .start();
+        }
+
+        function bindUI() {
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.onclick = () => flyToPlanet(item.dataset.id);
+            });
+
+            document.getElementById('reset-cam').onclick = () => {
+                new TWEEN.Tween(camera.position).to({ x: 0, y: 600, z: 800 }, 1500).easing(TWEEN.Easing.Quadratic.Out).start();
+                new TWEEN.Tween(controls.target).to({ x: 0, y: 0, z: 0 }, 1500).easing(TWEEN.Easing.Quadratic.Out).start();
+                document.getElementById('info-card').classList.remove('show');
+                currentFocus = "overview";
+            };
+
+            document.getElementById('toggle-orbit').onclick = () => {
+                orbitLines.forEach(l => l.visible = !l.visible);
+            };
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate(time) {
+            requestAnimationFrame(animate);
+            TWEEN.update(time);
+            
+            // 行星公轉速度 (比例參考)
+            const speed = 0.0005;
+            planetPivots.mercury.rotation.y += speed * 4.1;
+            planetPivots.venus.rotation.y += speed * 1.6;
+            planetPivots.earth.rotation.y += speed * 1.0;
+            planetPivots.mars.rotation.y += speed * 0.5;
+            planetPivots.jupiter.rotation.y += speed * 0.08;
+            planetPivots.saturn.rotation.y += speed * 0.03;
+            planetPivots.uranus.rotation.y += speed * 0.01;
+            planetPivots.neptune.rotation.y += speed * 0.006;
+
+            // 行星自轉
+            for(let key in planets) {
+                planets[key].rotation.y += 0.005;
+            }
+
+            // 如果正在聚焦某個行星，讓控制器的目標跟隨它
+            if(currentFocus !== "overview" && planets[currentFocus]) {
+                const pPos = new THREE.Vector3();
+                planets[currentFocus].getWorldPosition(pPos);
+                controls.target.copy(pPos);
+            }
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+    </script>
+</body>
+</html>

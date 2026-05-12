@@ -1,0 +1,218 @@
+{
+  "rocks": [
+    {
+      "name": "花崗岩 (Granite)",
+      "category": "火成岩 - 深成岩",
+      "img": "https://cdn.jsdelivr.net/gh/coollearningtw/img@main/earth-science/rocks/granite.jpg",
+      "成因": "岩漿在地下深處緩慢冷卻結晶",
+      "主要成分": "石英、長石、雲母",
+      "特徵": "結晶顆粒粗大且明顯",
+      "desc": "**花崗岩**是組成大陸地殼的主要岩石。由於二氧化矽含量高，顏色通常較淺。常被用作高品質的建築與雕刻材料。"
+    },
+    {
+      "name": "玄武岩 (Basalt)",
+      "category": "火成岩 - 噴出岩",
+      "img": "https://cdn.jsdelivr.net/gh/coollearningtw/img@main/earth-science/rocks/basalt.jpg",
+      "成因": "熔岩流出地表後快速冷卻",
+      "分布": "海洋地殼、澎湖群島",
+      "特徵": "深灰色或黑色，常具氣孔或柱狀節理",
+      "desc": "**玄武岩**是海洋地殼的主體。岩漿黏滯性小，流動性強。澎湖的柱狀玄武岩是世界級的地質景觀。"
+    },
+    {
+      "name": "安山岩 (Andesite)",
+      "category": "火成岩 - 噴出岩",
+      "img": "https://cdn.jsdelivr.net/gh/coollearningtw/img@main/earth-science/rocks/andesite.jpg",
+      "成因": "岩漿受冷凝固而成",
+      "分布": "台灣大屯火山群、海岸山脈",
+      "特徵": "灰色基調，常含有斑晶",
+      "desc": "**安山岩**是台灣最常見的火山岩。因常見於安地斯山脈而得名，屬於中性火成岩。"
+    },
+    {
+      "name": "砂岩 (Sandstone)",
+      "category": "沉積岩 - 碎屑岩",
+      "img": "https://cdn.jsdelivr.net/gh/coollearningtw/img@main/earth-science/rocks/sandstone.jpg",
+      "組成": "直徑 0.06~2mm 的砂粒",
+      "特徵": "層理明顯、質地堅硬抗蝕",
+      "desc": "**砂岩**在台灣分布極廣，常見於北部海岸。由於抗蝕力強，常形成岬角地形（如野柳）。"
+    },
+    {
+      "name": "頁岩 (Shale)",
+      "category": "沉積岩 - 碎屑岩",
+      "img": "https://cdn.jsdelivr.net/gh/coollearningtw/img@main/earth-science/rocks/shale.jpg",
+      "組成": "極細的泥質顆粒",
+      "特徵": "具薄片狀解理，易碎",
+      "desc": "**頁岩**質地軟，易受風化侵蝕。在地形上常形成低窪的谷地。是石油與天然氣常見的生油岩或蓋層。"
+    },
+    {
+      "name": "石灰岩 (Limestone)",
+      "category": "沉積岩 - 生物岩",
+      "img": "https://cdn.jsdelivr.net/gh/coollearningtw/img@main/earth-science/rocks/limestone.jpg",
+      "主要成分": "碳酸鈣 (CaCO₃)",
+      "鑑定": "遇稀鹽酸會產生氣泡",
+      "desc": "**石灰岩**多由珊瑚、貝殼等生物遺骸堆積而成。易受地下水溶蝕形成鐘乳石洞等岩溶地形。"
+    },
+    {
+      "name": "大理岩 (Marble)",
+      "category": "變質岩",
+      "img": "https://cdn.jsdelivr.net/gh/coollearningtw/img@main/earth-science/rocks/marble.jpg",
+      "前身": "石灰岩 (經高溫高壓變質)",
+      "主要成分": "碳酸鈣 (CaCO₃)",
+      "產地": "台灣東部 (花蓮)",
+      "desc": "**大理岩**具有美麗的條紋，質地緻密。因原岩為石灰岩，故同樣具備遇酸產生二氧化碳的化學特性。"
+    },
+    {
+      "name": "石英 (Quartz)",
+      "category": "造岩礦物",
+      "img": "https://cdn.jsdelivr.net/gh/coollearningtw/img@main/earth-science/rocks/quartz.jpg",
+      "莫氏硬度": "7",
+      "特徵": "無解理、貝殼狀斷口",
+      "desc": "**石英**是地殼中化學性質最穩定的礦物之一。純淨透明者稱為水晶，是玻璃工業的重要原料。"
+    }
+  ],
+  "weather": [
+    {
+      "name": "冷鋒 (Cold Front)",
+      "category": "鋒面系統",
+      "img": "https://cdn.jsdelivr.net/gh/coollearningtw/img@main/earth-science/weather/cold_front.jpg",
+      "符號": "藍色實心三角形",
+      "天氣變化": "氣溫驟降、出現雷陣雨",
+      "季節": "台灣冬、春季常見",
+      "desc": "**冷鋒**過境時暖空氣被強迫抬升，鋒後常有積雨雲分佈，帶來短暫且劇烈的降雨。"
+    },
+    {
+      "name": "暖鋒 (Warm Front)",
+      "category": "鋒面系統",
+      "img": "https://cdn.jsdelivr.net/gh/coollearningtw/img@main/earth-science/weather/warm_front.jpg",
+      "符號": "紅色實心半圓形",
+      "天氣變化": "氣溫緩升、持續性細雨",
+      "特徵": "移動速度較慢",
+      "desc": "**暖鋒**推進時暖空氣沿著冷空氣斜面緩緩爬升，形成廣大的雲系。台灣因緯度低，極少見到典型暖鋒。"
+    },
+    {
+      "name": "滯留鋒 (Stationary Front)",
+      "category": "鋒面系統",
+      "img": "https://cdn.jsdelivr.net/gh/coollearningtw/img@main/earth-science/weather/stationary_front.jpg",
+      "代表現象": "梅雨 (Meiyu)",
+      "季節": "5~6 月",
+      "成因": "冷暖氣團勢均力敵",
+      "desc": "**滯留鋒**會長時間停留在某一區域，造成連續多日的陰雨天氣，是台灣重要的水資源來源。"
+    },
+    {
+      "name": "高氣壓 (High Pressure)",
+      "category": "壓力系統",
+      "img": "https://cdn.jsdelivr.net/gh/coollearningtw/img@main/earth-science/weather/high_pressure.jpg",
+      "符號": "藍色 H",
+      "氣流": "中心下沉、順時針向外輻散",
+      "天氣": "晴朗、穩定、乾燥",
+      "desc": "**高氣壓**壟罩下，空氣受壓增溫，水氣不易凝結，因此天氣通常非常好。"
+    },
+    {
+      "name": "低氣壓 (Low Pressure)",
+      "category": "壓力系統",
+      "img": "https://cdn.jsdelivr.net/gh/coollearningtw/img@main/earth-science/weather/low_pressure.jpg",
+      "符號": "紅色 L",
+      "氣流": "中心上升、逆時針向內輻合",
+      "天氣": "陰雨、不穩定",
+      "desc": "**低氣壓**中心空氣上升冷卻，易凝結成雲雨。強大的熱帶低氣壓即演變為颱風。"
+    },
+    {
+      "name": "颱風 (Typhoon)",
+      "category": "熱帶氣旋",
+      "img": "https://cdn.jsdelivr.net/gh/coollearningtw/img@main/earth-science/weather/typhoon.jpg",
+      "結構": "颱風眼、眼牆、螺旋雲帶",
+      "能量來源": "水氣凝結釋放的潛熱",
+      "季節": "7~9 月 (夏、秋季)",
+      "desc": "**颱風**是中心風速達一定強度的熱帶低氣壓。颱風眼內下沉氣流導致無風無雨，眼牆則是風雨最強烈處。"
+    }
+  ],
+  "geology": [
+    {
+      "name": "地質年代總覽",
+      "category": "基礎知識",
+      "img": "https://cdn.jsdelivr.net/gh/coollearningtw/img@main/earth-science/geology/timescale.jpg",
+      "宙": "冥古宙、太古宙、元古宙、顯生宙",
+      "劃分依據": "生物演化與重要地質事件",
+      "desc": "地球歷史約 46 億年。前寒武紀佔 88% 的時間。顯生宙則因化石豐富，依據生物大滅絕分為古生代、中生代、新生代。"
+    },
+    {
+      "name": "寒武紀 (Cambrian)",
+      "宙": "顯生宙 (Phanerozoic)",
+      "代": "古生代 (Paleozoic)",
+      "紀": "寒武紀",
+      "時間": "5.4 ~ 4.8 億年前",
+      "代表生物": "三葉蟲、奇蝦、多細胞無脊椎動物",
+      "img": "https://cdn.jsdelivr.net/gh/coollearningtw/img@main/earth-science/fossils/trilobite.jpg",
+      "desc": "**寒武紀大爆發**：生命在短時間內演化出多種門類，海洋中出現大量具硬殼的生物。三葉蟲是最重要的指標化石。"
+    },
+    {
+      "name": "奧陶紀 (Ordovician)",
+      "宙": "顯生宙",
+      "代": "古生代",
+      "紀": "奧陶紀",
+      "時間": "4.8 ~ 4.4 億年前",
+      "代表生物": "筆石、鸚鵡螺、早期原始魚類",
+      "img": "https://cdn.jsdelivr.net/gh/coollearningtw/img@main/earth-science/fossils/graptolite.jpg",
+      "desc": "海洋生物更加多樣化。末期發生了第一次生物大滅絕，約 85% 的物種消失。"
+    },
+    {
+      "name": "泥盆紀 (Devonian)",
+      "宙": "顯生宙",
+      "代": "古生代",
+      "紀": "泥盆紀",
+      "時間": "4.1 ~ 3.5 億年前",
+      "代表生物": "盾皮魚 (魚類時代)、早期兩棲類、種子蕨",
+      "img": "https://cdn.jsdelivr.net/gh/coollearningtw/img@main/earth-science/fossils/fish_age.jpg",
+      "desc": "被稱為**「魚類時代」**。脊椎動物開始從海洋走向陸地，陸地上出現了大規模的原始森林。"
+    },
+    {
+      "name": "二疊紀 (Permian)",
+      "宙": "顯生宙",
+      "代": "古生代",
+      "紀": "二疊紀",
+      "時間": "2.9 ~ 2.5 億年前",
+      "代表生物": "紡錘蟲、裸子植物、似哺乳爬行動物",
+      "img": "https://cdn.jsdelivr.net/gh/coollearningtw/img@main/earth-science/fossils/permian_extinction.jpg",
+      "desc": "**古生代終結**：末期發生了地質史上規模最大的滅絕事件，導致超過 90% 的海洋物種與 70% 的陸地物種消失。"
+    },
+    {
+      "name": "侏羅紀 (Jurassic)",
+      "宙": "顯生宙",
+      "代": "中生代 (Mesozoic)",
+      "紀": "侏羅紀",
+      "時間": "2.0 ~ 1.4 億年前",
+      "代表生物": "恐龍 (極盛)、始祖鳥、裸子植物",
+      "img": "https://cdn.jsdelivr.net/gh/coollearningtw/img@main/earth-science/fossils/dinosaur.jpg",
+      "desc": "**恐龍時代**：恐龍成為陸地上的主宰。盤古大陸開始分裂，鳥類的祖先始祖鳥也在本時期出現。"
+    },
+    {
+      "name": "白堊紀 (Cretaceous)",
+      "宙": "顯生宙",
+      "代": "中生代",
+      "紀": "白堊紀",
+      "時間": "1.4 億 ~ 6600 萬年前",
+      "代表生物": "恐龍、菊石、被子植物 (開花植物)",
+      "img": "https://cdn.jsdelivr.net/gh/coollearningtw/img@main/earth-science/fossils/ammonite.jpg",
+      "desc": "**中生代結束**：白堊紀末期的小行星撞擊事件導致了著名的 K-Pg 滅絕，恐龍（非鳥類）與菊石徹底消失。"
+    },
+    {
+      "name": "第四紀 (Quaternary)",
+      "宙": "顯生宙",
+      "代": "新生代 (Cenozoic)",
+      "紀": "第四紀",
+      "世": "更新世 (Pleistocene)、全新世 (Holocene)",
+      "時間": "258 萬年前 ~ 至今",
+      "代表生物": "人類、長毛象、現代動植物",
+      "img": "https://cdn.jsdelivr.net/gh/coollearningtw/img@main/earth-science/fossils/mammoth.jpg",
+      "desc": "**人類時代**：此時期經歷了多次冰河期與間冰期的交替。現代人類（智人）演化並開始改變地球環境。"
+    },
+    {
+      "name": "疊層石 (Stromatolite)",
+      "category": "指標化石 - 前寒武紀",
+      "img": "https://cdn.jsdelivr.net/gh/coollearningtw/img@main/earth-science/fossils/stromatolite.jpg",
+      "生存年代": "35 億年前 ~ 至今",
+      "代表生物": "藍綠菌 (Cyanobacteria)",
+      "重要性": "地球氧氣增加的關鍵",
+      "desc": "**疊層石**是地球上最古老的生命證據。藍綠菌透過光合作用釋放氧氣，改變了大氣成分，為後來的多細胞生命鋪路。"
+    }
+  ]
+}

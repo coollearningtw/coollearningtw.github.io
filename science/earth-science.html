@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>地球科學 - 酷學習</title>
+    <link rel="stylesheet" href="../styles/style.css">
+    <link rel="stylesheet" href="../styles/header.css">
+    <style>
+        /* 網格佈局設定 */
+        .tools-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+            gap: 20px; 
+            margin-top: 20px; 
+        }
+
+        /* 卡片基礎樣式 */
+        .tool-card {
+            background: #fff; 
+            border-radius: 16px; 
+            padding: 25px;
+            display: flex; 
+            align-items: center; 
+            gap: 20px; 
+            text-decoration: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.04); 
+            border: 1px solid #f1f5f9;
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 地科專屬懸停效果 (大地橘色) */
+        .tool-card:hover { 
+            transform: translateY(-5px); 
+            box-shadow: 0 10px 25px rgba(234, 88, 12, 0.15); 
+            border-color: #ffedd5;
+        }
+
+        /* 圖示區塊 (淺橘底色) */
+        .tool-icon {
+            width: 60px; 
+            height: 60px; 
+            border-radius: 14px; 
+            background: #ffedd5;
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            flex-shrink: 0;
+        }
+
+        /* 圖示顏色 (深橘色) */
+        .tool-icon svg { 
+            width: 32px; 
+            height: 32px; 
+            fill: #ea580c; 
+        }
+
+        /* 文字資訊區 */
+        .tool-info h3 { 
+            margin: 0 0 5px 0; 
+            color: #1e293b; 
+            font-size: 1.2rem; 
+        }
+        
+        .tool-info p { 
+            margin: 0; 
+            color: #64748b; 
+            font-size: 0.9rem; 
+            line-height: 1.4; 
+        }
+
+        /* 分類標籤樣式 */
+        .card-tag {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 6px;
+        }
+
+        /* 互動模擬標籤 (藍色系) */
+        .tag-interactive { background: #e0f2fe; color: #0284c7; }
+        /* 圖文特徵標籤 (綠色系) */
+        .tag-viewer { background: #dcfce7; color: #16a34a; }
+        
+        .section-header { margin: 40px 0 15px; border-bottom: 2px solid #e2e8f0; color: #475569; font-weight: 800; font-size: 1.15rem; padding-bottom: 8px; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <a href="science.html" class="back-link">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            </a>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="#ea580c" style="margin-right: 5px;">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2m-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+            </svg>
+            <span style="font-weight:900; color:#ea580c; letter-spacing: 1px;">地球科學探索庫</span>
+        </div>
+    </header>
+
+    <div class="page-container">
+        <p style="color:#64748b; margin-top:0; font-size: 1.05rem;">請選擇您要學習的地科主題模組</p>
+
+        <!-- 區塊一：動態互動模擬 -->
+        <div class="section-header">🌍 空間與動態模擬 (Interactive)</div>
+        <div class="tools-grid">
+            <!-- 太陽系 3D 模型 (新新增) -->
+            <a href="solar-system.html" class="tool-card">
+                <span class="card-tag tag-interactive">3D 探索</span>
+                <div class="tool-icon">
+                    <!-- 太陽與行星軌道圖示 -->
+                    <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,7A5,5 0 0,0 7,12A5,5 0 0,0 12,17A5,5 0 0,0 17,12A5,5 0 0,0 12,7M12,9A3,3 0 0,1 15,12A3,3 0 0,1 12,15A3,3 0 0,1 9,12A3,3 0 0,1 12,9Z"/></svg>
+                </div>
+                <div class="tool-info">
+                    <h3>太陽系動態模型</h3>
+                    <p>探索八大行星的公轉與自轉，觀察星體間的比例與距離全貌。</p>
+                </div>
+            </a>
+
+            <!-- 月相與潮汐 -->
+            <a href="moon-tides.html" class="tool-card">
+                <span class="card-tag tag-interactive">互動操作</span>
+                <div class="tool-icon">
+                    <svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 0 1-4.4 2.26 5.403 5.403 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/></svg>
+                </div>
+                <div class="tool-info">
+                    <h3>月相與潮汐</h3>
+                    <p>拖曳日期，觀察日地月相對位置、月相盈虧與潮汐變化。</p>
+                </div>
+            </a>
+
+            <!-- 板塊與斷層 -->
+            <a href="plate-faults.html" class="tool-card">
+                <span class="card-tag tag-interactive">互動操作</span>
+                <div class="tool-icon">
+                    <svg viewBox="0 0 24 24"><path d="M14 6l-3.75 5 2.85 3.8-1.6 1.2C9.81 13.75 7 10 7 10l-6 8h22L14 6z"/></svg>
+                </div>
+                <div class="tool-info">
+                    <h3>板塊與斷層</h3>
+                    <p>台灣周邊板塊分布，與正、逆、平移斷層的3D切換動畫。</p>
+                </div>
+            </a>
+
+            <!-- 星空與日地地月 -->
+            <a href="astronomy.html" class="tool-card">
+                <span class="card-tag tag-interactive">互動操作</span>
+                <div class="tool-icon">
+                    <svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                </div>
+                <div class="tool-info">
+                    <h3>四季與星空</h3>
+                    <p>觀察太陽直射緯度變化、季節軌跡與天球座標。</p>
+                </div>
+            </a>
+        </div>
+
+        <!-- 區塊二：圖文圖鑑學習 -->
+        <div class="section-header">🔍 圖文與特徵圖鑑 (Database)</div>
+        <div class="tools-grid">
+            <!-- 岩石與礦物 -->
+            <a href="earth-viewer.html?topic=rocks" class="tool-card">
+                <span class="card-tag tag-viewer">圖文記憶</span>
+                <div class="tool-icon">
+                    <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 15 10-15L12 2zm0 2.92l5.51 3.58h-11.02L12 4.92zM4.14 8.5h3.6l1.76 9.42L4.14 8.5zm12.12 0h3.6l-5.36 9.42 1.76-9.42z"/></svg>
+                </div>
+                <div class="tool-info">
+                    <h3>岩石與礦物</h3>
+                    <p>三大岩類特徵判別、常見礦物硬度與解理圖鑑。</p>
+                </div>
+            </a>
+
+            <!-- 天氣與鋒面 -->
+            <a href="earth-viewer.html?topic=weather" class="tool-card">
+                <span class="card-tag tag-viewer">圖文記憶</span>
+                <div class="tool-icon">
+                    <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg>
+                </div>
+                <div class="tool-info">
+                    <h3>天氣圖與鋒面</h3>
+                    <p>高低氣壓判讀、冷暖鋒過境前後的氣象特徵變化。</p>
+                </div>
+            </a>
+
+            <!-- 化石與地質年代 -->
+            <!-- 找到這行並確保參數是 geology -->
+            <a href="earth-viewer.html?topic=geology" class="tool-card">
+                <span class="card-tag tag-viewer">圖文記憶</span>
+                <div class="tool-icon">
+                    <svg viewBox="0 0 24 24"><path d="M22 13.91c0-1.12-.52-2.14-1.39-2.78.87-.64 1.39-1.66 1.39-2.78 0-1.93-1.57-3.5-3.5-3.5-1.14 0-2.15.54-2.8 1.38L10.3 4.28C9.65 3.44 8.64 2.9 7.5 2.9c-1.93 0-3.5 1.57-3.5 3.5 0 1.12.52 2.14 1.39 2.78C4.52 9.82 4 10.84 4 11.96c0 1.93 1.57 3.5 3.5 3.5 1.14 0 2.15-.54 2.8-1.38l5.4 1.95c.65.84 1.66 1.38 2.8 1.38 1.93 0 3.5-1.57 3.5-3.5z"/></svg>
+                </div>
+                <div class="tool-info">
+                    <h3>化石與地質年代</h3>
+                    <p>三葉蟲、菊石、恐龍等標準化石與絕對/相對地質年代。</p>
+                </div>
+            </a>
+        </div>
+    </div>
+</body>
+</html>

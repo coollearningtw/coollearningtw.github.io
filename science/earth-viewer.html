@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>地科圖鑑 - 酷學習</title>
+    <link rel="stylesheet" href="../styles/style.css">
+    <link rel="stylesheet" href="../styles/header.css">
+    <style>
+        /* 基礎佈局 */
+        .viewer-layout {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 25px;
+            max-width: 1100px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+
+        /* 左側側邊欄 */
+        .viewer-sidebar {
+            background: #fff;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            padding: 15px;
+            height: calc(100vh - 140px);
+            position: sticky;
+            top: 90px;
+            overflow-y: auto;
+        }
+        
+        .topic-title {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #ea580c;
+            margin: 5px 0 15px 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .item-link {
+            display: block;
+            padding: 12px 15px;
+            border-radius: 10px;
+            text-decoration: none;
+            color: #475569;
+            font-size: 0.95rem;
+            transition: 0.2s;
+            margin-bottom: 5px;
+            font-weight: 500;
+            border: 1px solid transparent;
+        }
+        .item-link:hover { background: #fff7ed; color: #ea580c; }
+        .item-link.active { 
+            background: #ea580c; 
+            color: #fff; 
+            box-shadow: 0 4px 12px rgba(234, 88, 12, 0.2); 
+            border-color: #ea580c;
+        }
+
+        /* 右側詳細內容 */
+        .detail-card {
+            background: #fff;
+            border-radius: 20px;
+            padding: 35px;
+            border: 1px solid #e2e8f0;
+            box-shadow: var(--shadow);
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #f8fafc;
+            padding-bottom: 20px;
+        }
+
+        .detail-name { font-size: 2.2rem; font-weight: 900; color: #1e293b; margin: 0; }
+        .detail-category { font-size: 0.9rem; background: #fff7ed; color: #ea580c; padding: 4px 12px; border-radius: 50px; font-weight: bold; margin-top: 8px; display: inline-block; }
+
+        .img-wrapper {
+            width: 100%;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 30px;
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            aspect-ratio: 16 / 9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .img-wrapper img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* 屬性網格 (宙/代/紀/世等) */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .info-box {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 12px;
+            border-left: 4px solid #ea580c;
+        }
+        .info-label { font-size: 0.75rem; color: #94a3b8; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; }
+        .info-value { font-size: 1.05rem; color: #334155; font-weight: 700; }
+
+        .desc-text { font-size: 1.15rem; line-height: 1.8; color: #475569; text-align: justify; }
+
+        /* 地質年代表彈窗 */
+        .time-table-modal {
+            position: fixed; inset: 0; background: rgba(15, 23, 42, 0.8); z-index: 3000;
+            display: none; align-items: center; justify-content: center; padding: 20px;
+            backdrop-filter: blur(5px);
+        }
+        /* 彈窗內容器：確保標題與按鈕不隨表格滾動 */
+.table-content {
+    background: #fff; width: 95%; max-width: 950px; max-height: 85vh;
+    border-radius: 20px; padding: 25px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+    display: flex; flex-direction: column; /* 改為 Flex 佈局 */
+}
+
+/* --- 核心修正：響應式滾動容器 --- */
+.table-scroll-container {
+    width: 100%;
+    overflow-x: auto;          /* 允許橫向滾動 */
+    overflow-y: auto;          /* 允許縱向滾動 */
+    -webkit-overflow-scrolling: touch; /* 優化 iOS 滑動流暢度 */
+    margin-top: 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+}
+
+.gs-table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    font-size: 0.95rem; 
+    /* 強制最小寬度：防止在手機上文字縮成一團 */
+    min-width: 800px; 
+    table-layout: fixed; /* 固定佈局有助於控制欄寬 */
+}
+
+/* 設定各欄比例，避免文字長短不一造成排版混亂 */
+.gs-table th:nth-child(1), .gs-table td:nth-child(1) { width: 60px; }  /* 宙 */
+.gs-table th:nth-child(2), .gs-table td:nth-child(2) { width: 80px; }  /* 代 */
+.gs-table th:nth-child(3), .gs-table td:nth-child(3) { width: 100px; } /* 紀 */
+.gs-table th:nth-child(4), .gs-table td:nth-child(4) { width: 180px; } /* 代表生物 */
+/* 最後一欄自動延伸：主要事件 */
+
+.gs-table th, .gs-table td { 
+    border: 1px solid #e2e8f0; 
+    padding: 15px 12px; 
+    text-align: left;
+    word-break: break-word; /* 允許在單字內斷行，但因為有 min-width，不會過度擠壓 */
+}
+
+/* 美化滾動條 (可選) */
+.table-scroll-container::-webkit-scrollbar { height: 6px; height: 6px; }
+.table-scroll-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .row-paleo { background-color: #f0fdf4; } /* 古生代綠 */
+        .row-meso { background-color: #fffbeb; }  /* 中生代黃 */
+        .row-ceno { background-color: #eff6ff; }  /* 新生代藍 */
+
+        /* 手機版優化 */
+        @media (max-width: 850px) {
+            .viewer-layout { grid-template-columns: 1fr; margin-top: 10px; }
+            .viewer-sidebar { height: auto; position: static; display: flex; overflow-x: auto; gap: 10px; padding: 10px; margin-bottom: 10px; }
+            .item-link { white-space: nowrap; margin-bottom: 0; padding: 8px 15px; }
+            .topic-title { display: none; }
+            .detail-card { padding: 25px 20px; border-radius: 0; border: none; }
+            .detail-name { font-size: 1.8rem; }
+            .info-grid { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <a href="earth-science.html" class="back-link">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            </a>
+            <span class="header-title-area" id="page-title">地科探索圖鑑</span>
+        </div>
+    </header>
+
+    <div class="viewer-layout">
+        <aside class="viewer-sidebar">
+            <div class="topic-title" id="topic-label">讀取中...</div>
+            <div id="list-root"></div>
+        </aside>
+
+        <main class="detail-container" id="detail-root">
+            <div style="text-align:center; padding:100px 0; color:#94a3b8;">
+                正在開啟觀測儀，請稍候...
+            </div>
+        </main>
+    </div>
+
+    <!-- 地質年代表彈窗結構 -->
+    <div id="timescale-modal" class="time-table-modal" onclick="closeTable()">
+        <div class="table-content" onclick="event.stopPropagation()">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2 style="margin:0; color:#1e293b;">📊 地球歷史地質年代表</h2>
+                <button onclick="closeTable()" style="background:none; border:none; font-size:2rem; cursor:pointer; color:#94a3b8;">&times;</button>
+            </div>
+            <table class="gs-table">
+                <thead>
+                    <tr><th>宙 (Eon)</th><th>代 (Era)</th><th>紀 (Period)</th><th>代表生物</th><th>主要地質事件</th></tr>
+                </thead>
+                <tbody>
+                    <tr class="row-ceno"><td>顯生宙</td><td>新生代</td><td>第四紀</td><td>人類、長毛象</td><td>最近一次冰河期、現代人興起</td></tr>
+                    <tr class="row-ceno"><td>顯生宙</td><td>新生代</td><td>古近紀/新近紀</td><td>大型哺乳類</td><td>被子植物繁盛、靈長類出現</td></tr>
+                    <tr class="row-meso"><td>顯生宙</td><td>中生代</td><td>白堊紀</td><td>恐龍(滅絕)、菊石</td><td>白堊紀大滅絕(小行星撞擊)</td></tr>
+                    <tr class="row-meso"><td>顯生宙</td><td>中生代</td><td>侏羅紀</td><td>恐龍(極盛)、始祖鳥</td><td>盤古大陸開始分裂</td></tr>
+                    <tr class="row-meso"><td>顯生宙</td><td>中生代</td><td>三疊紀</td><td>早期恐龍、裸子植物</td><td>二疊紀大滅絕後的恢復</td></tr>
+                    <tr class="row-paleo"><td>顯生宙</td><td>古生代</td><td>二疊紀</td><td>紡錘蟲、裸子植物</td><td>最大規模物種滅絕事件</td></tr>
+                    <tr class="row-paleo"><td>顯生宙</td><td>古生代</td><td>泥盆紀</td><td>魚類、早期兩棲類</td><td>魚類時代、原始森林出現</td></tr>
+                    <tr class="row-paleo"><td>顯生宙</td><td>古生代</td><td>寒武紀</td><td>三葉蟲、奇蝦</td><td>寒武紀生命大爆發</td></tr>
+                    <tr><td>元古宙</td><td>前寒武紀</td><td>-</td><td>多細胞生物</td><td>羅迪尼亞超大陸形成</td></tr>
+                    <tr><td>太始宙</td><td>前寒武紀</td><td>-</td><td>藍綠菌 (疊層石)</td><td>大氣氧氣量開始增加</td></tr>
+                    <tr><td>冥古宙</td><td>前寒武紀</td><td>-</td><td>無生命</td><td>地球形成、原始海洋出現</td></tr>
+                </tbody>
+            </table>
+            <p style="font-size:0.85rem; color:#64748b; margin-top:20px; line-height:1.6;">
+                ※ 本表為教學簡化版。地質年代精確界線隨放射性定年技術更新，代表生物標註為該時期極盛或具指標性之物種。
+            </p>
+        </div>
+    </div>
+
+    <script src="../scripts/utils.js"></script>
+    <script>
+        const TOPIC_CONFIG = {
+            rocks: { title: "岩石與礦物", icon: "💎", color: "#ea580c" },
+            weather: { title: "天氣圖與鋒面", icon: "☁️", color: "#0284c7" },
+            geology: { title: "化石與地質年代", icon: "🦴", color: "#16a34a" }
+        };
+
+        let currentTopic = "";
+        let topicData = [];
+
+        async function init() {
+            const params = new URLSearchParams(window.location.search);
+            currentTopic = params.get('topic') || 'rocks';
+            
+            const config = TOPIC_CONFIG[currentTopic];
+            document.getElementById('page-title').innerText = config.title;
+            document.getElementById('topic-label').innerHTML = `<span>${config.icon}</span> ${config.title}`;
+            document.documentElement.style.setProperty('--primary-viewer', config.color);
+
+            try {
+                // 讀取 GitHub 上的 JSON 資料
+                const res = await fetch('earth-science.json');
+                const data = await res.json();
+                topicData = data[currentTopic] || [];
+                
+                renderList();
+                if(topicData.length > 0) renderDetail(0);
+            } catch (e) {
+                console.error("Data failed:", e);
+                document.getElementById('detail-root').innerHTML = "<p style='color:red; text-align:center; padding:50px;'>資料庫連線失敗，請檢查網路或 GitHub 資料檔案。</p>";
+            }
+        }
+
+        function renderList() {
+            const root = document.getElementById('list-root');
+            root.innerHTML = topicData.map((item, index) => `
+                <a href="#" class="item-link" id="link-${index}" onclick="renderDetail(${index}); return false;">
+                    ${item.name}
+                </a>
+            `).join('');
+        }
+
+        function renderDetail(index) {
+            const item = topicData[index];
+            const root = document.getElementById('detail-root');
+
+            // 切換 Active 狀態
+            document.querySelectorAll('.item-link').forEach(l => l.classList.remove('active'));
+            document.getElementById(`link-${index}`).classList.add('active');
+
+            // 處理地質年代專屬排序
+            let infoHtml = "";
+            const geoOrder = ["宙", "代", "紀", "世", "時間", "代表生物", "成因", "主要成分", "分布", "符號", "天氣變化"];
+            
+            geoOrder.forEach(key => {
+                if (item[key]) {
+                    infoHtml += `
+                        <div class="info-box">
+                            <div class="info-label">${key}</div>
+                            <div class="info-value">${item[key]}</div>
+                        </div>
+                    `;
+                }
+            });
+
+            // 如果還有其他 JSON 中的 key 沒被列在 geoOrder 中，也補上去
+            const skipKeys = ["name", "desc", "img", "category", ...geoOrder];
+            for (let key in item) {
+                if (!skipKeys.includes(key)) {
+                    infoHtml += `
+                        <div class="info-box">
+                            <div class="info-label">${key}</div>
+                            <div class="info-value">${item[key]}</div>
+                        </div>
+                    `;
+                }
+            }
+
+            // 特殊功能：地質年代表按鈕
+            let tableBtn = "";
+            if (currentTopic === 'geology') {
+                tableBtn = `<button onclick="openTable()" class="btn-tool-text" style="margin-bottom:20px; background:#16a34a; color:white; border:none; padding:10px 20px; width:100%; font-size:1rem;">📊 開啟完整地質年代總表</button>`;
+            }
+
+            root.innerHTML = `
+                <div class="detail-card">
+                    ${tableBtn}
+                    <div class="detail-header">
+                        <div>
+                            <h1 class="detail-name">${item.name}</h1>
+                            <div class="detail-category">${item.category || TOPIC_CONFIG[currentTopic].title}</div>
+                        </div>
+                    </div>
+
+                    <div class="img-wrapper">
+                        <img src="${item.img || 'https://via.placeholder.com/800x450?text=No+Image'}" alt="${item.name}" onerror="this.src='https://via.placeholder.com/800x450?text=Image+Load+Error'">
+                    </div>
+
+                    <div class="info-grid">
+                        ${infoHtml}
+                    </div>
+
+                    <div class="desc-text">
+                        ${parseMarkdown(item.desc || "暫無詳細描述資料。")}
+                    </div>
+                </div>
+            `;
+            
+            // 手機版自動捲動
+            if(window.innerWidth <= 850) {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        // 彈窗控制
+        function openTable() {
+            let modal = document.getElementById('timescale-modal');
+            const modalContent = document.querySelector('.table-content');
+            
+            modalContent.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-shrink:0;">
+                    <h2 style="margin:0; color:#1e293b; font-size:1.4rem;">📊 地質年代表 (左右滑動查看)</h2>
+                    <button onclick="closeTable()" style="background:none; border:none; font-size:2rem; cursor:pointer; color:#94a3b8; line-height:1;">&times;</button>
+                </div>
+                
+                <!-- 滾動容器開始 -->
+                <div class="table-scroll-container">
+                    <table class="gs-table">
+                        <thead>
+                            <tr>
+                                <th>宙</th>
+                                <th>代</th>
+                                <th>紀</th>
+                                <th>代表生物</th>
+                                <th>主要地質事件</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="row-ceno">
+                                <td rowspan="8" style="font-weight:bold; background:#f8fafc; text-align:center;">顯<br>生<br>宙</td>
+                                <td rowspan="2" style="font-weight:bold; text-align:center;">新生代</td>
+                                <td>第四紀</td>
+                                <td>人類、長毛象</td>
+                                <td>最近一次冰河期、現代人興起</td>
+                            </tr>
+                            <tr class="row-ceno">
+                                <td>古新/新近紀</td>
+                                <td>大型哺乳類</td>
+                                <td>被子植物繁盛、靈長類出現</td>
+                            </tr>
+                            <tr class="row-meso">
+                                <td rowspan="3" style="font-weight:bold; text-align:center;">中生代</td>
+                                <td>白堊紀</td>
+                                <td>恐龍(滅絕)、菊石</td>
+                                <td>大滅絕(小行星撞擊)</td>
+                            </tr>
+                            <tr class="row-meso">
+                                <td>侏羅紀</td>
+                                <td>恐龍(極盛)、始祖鳥</td>
+                                <td>盤古大陸開始分裂</td>
+                            </tr>
+                            <tr class="row-meso">
+                                <td>三疊紀</td>
+                                <td>早期恐龍、裸子植物</td>
+                                <td>二疊紀大滅絕後的恢復</td>
+                            </tr>
+                            <tr class="row-paleo">
+                                <td rowspan="3" style="font-weight:bold; text-align:center;">古生代</td>
+                                <td>二疊紀</td>
+                                <td>紡錘蟲、裸子植物</td>
+                                <td>最大規模物種滅絕事件</td>
+                            </tr>
+                            <tr class="row-paleo">
+                                <td>泥盆紀</td>
+                                <td>魚類、早期兩棲類</td>
+                                <td>魚類時代、原始森林出現</td>
+                            </tr>
+                            <tr class="row-paleo">
+                                <td>寒武紀</td>
+                                <td>三葉蟲、奇蝦</td>
+                                <td>寒武紀生命大爆發</td>
+                            </tr>
+                            <tr>
+                                <td style="text-align:center;">元古宙</td>
+                                <td rowspan="3" style="font-weight:bold; background:#fdfdfd; text-align:center;">前<br>寒<br>武<br>紀</td>
+                                <td>-</td>
+                                <td>多細胞生物</td>
+                                <td>羅迪尼亞超大陸形成</td>
+                            </tr>
+                            <tr>
+                                <td style="text-align:center;">太始宙</td>
+                                <td>-</td>
+                                <td>藍綠菌 (疊層石)</td>
+                                <td>大氣氧氣量開始增加</td>
+                            </tr>
+                            <tr>
+                                <td style="text-align:center;">冥古宙</td>
+                                <td>-</td>
+                                <td>無生命</td>
+                                <td>地球形成、原始海洋出現</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- 滾動容器結束 -->
+
+                <div style="margin-top:15px; flex-shrink:0; display:flex; align-items:center; gap:10px; color:#64748b;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    <span style="font-size:0.85rem;">小撇步：在手機上可以向左滑動查看更多資訊</span>
+                </div>
+            `;
+            modal.style.display = 'flex';
+        }
+        function closeTable() { document.getElementById('timescale-modal').style.display = 'none'; }
+
+        init();
+    </script>
+</body>
+</html>

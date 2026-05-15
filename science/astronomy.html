@@ -110,14 +110,15 @@
         const IMG_BASE = "https://raw.githubusercontent.com/coollearningtw/img/refs/heads/main/earth-science/models/planets/";
         
         let scene, camera, renderer, controls, earthGroup, earthMesh, sun, pivot, rayLine, axisLine;
-        let currentTargetAngle = 0; // 追蹤目前角度，確保永遠往同方向增加
+        let currentTargetAngle = 0;
 
-        // 重新定義季節對應的軌道進度 (0 ~ 1)
+        // --- 修正後的季節角度配置 ---
+        // 0 = 夏至 (因為預設位置在 X 軸正向，地軸向 -X 傾斜，正好對準中心點太陽)
         const SEASON_CONFIG = {
-            spring: { step: 0, lat: "赤道 (0°)", desc: "全球晝夜等長", title: "春分" },
-            summer: { step: 0.25, lat: "北回歸線 (23.5°N)", desc: "北半球晝長夜短", title: "夏至" },
-            autumn: { step: 0.5, lat: "赤道 (0°)", desc: "全球晝夜等長", title: "秋分" },
-            winter: { step: 0.75, lat: "南回歸線 (23.5°S)", desc: "北半球晝短夜長", title: "冬至" }
+            spring: { step: 0.75, lat: "赤道 (0°)", desc: "全球晝夜等長", title: "春分" },
+            summer: { step: 0,    lat: "北回歸線 (23.5°N)", desc: "北半球晝長夜短", title: "夏至" },
+            autumn: { step: 0.25, lat: "赤道 (0°)", desc: "全球晝夜等長", title: "秋分" },
+            winter: { step: 0.5,  lat: "南回歸線 (23.5°S)", desc: "北半球晝短夜長", title: "冬至" }
         };
 
         init();
@@ -126,7 +127,7 @@
         function init() {
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 2000);
-            camera.position.set(40, 30, 40);
+            camera.position.set(40, 50, 80); // 稍微調高視角
 
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
@@ -136,7 +137,7 @@
             const loader = new THREE.TextureLoader();
             loader.setCrossOrigin('anonymous');
 
-            // 1. 太陽 (光源中心)
+            // 1. 太陽
             const sunGeo = new THREE.SphereGeometry(6, 32, 32);
             const sunMat = new THREE.MeshBasicMaterial({ 
                 map: loader.load(IMG_BASE + 'sun.jpg'),
@@ -149,14 +150,15 @@
             scene.add(pointLight);
             scene.add(new THREE.AmbientLight(0x444444));
 
-            // 2. 公轉軸心
+            // 2. 公轉軸心 (控制地球在軌道上的位置)
             pivot = new THREE.Group();
             scene.add(pivot);
 
-            // 3. 地球 Tilt 群組 (固定 23.5 度)
+            // 3. 地球 Tilt 群組
+            // 注意：為了讓邏輯更清晰，我們維持 rotation.z = 23.5 度
             earthGroup = new THREE.Group();
-            earthGroup.rotation.z = THREE.MathUtils.degToRad(23.5);
-            earthGroup.position.x = 35; // 軌道半徑
+            earthGroup.rotation.z = THREE.MathUtils.degToRad(23.5); 
+            earthGroup.position.x = 35; 
             pivot.add(earthGroup);
 
             const earthGeo = new THREE.SphereGeometry(5, 64, 64);
@@ -168,30 +170,29 @@
             earthMesh = new THREE.Mesh(earthGeo, earthMat);
             earthGroup.add(earthMesh);
 
-            // 4. 輔助線 (地軸)
+            // 4. 地軸線
             const axisGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 8, 0), new THREE.Vector3(0, -8, 0)]);
             const axisMat = new THREE.LineBasicMaterial({ color: 0xffffff });
             axisLine = new THREE.Line(axisGeo, axisMat);
             earthGroup.add(axisLine);
 
-            // 5. 緯度線 (赤道與回歸線)
+            // 5. 緯度線
             createLatLines();
 
-            // 6. 直射光線 (移出地球群組，放在 scene，由代碼每幀更新)
+            // 6. 直射光線
             const rayGeo = new THREE.BufferGeometry();
             const rayMat = new THREE.LineDashedMaterial({ 
                 color: 0xfacc15, 
-                dashSize: 1.5, 
-                gapSize: 1,
+                dashSize: 1, 
+                gapSize: 0.5,
                 linewidth: 2
             });
             rayLine = new THREE.Line(rayGeo, rayMat);
             scene.add(rayLine);
 
-            // 7. 星空背景
             createStars();
 
-            // 8. 公轉軌道
+            // 公轉軌道線
             const orbitCurve = new THREE.EllipseCurve(0, 0, 35, 35);
             const orbitPoints = orbitCurve.getPoints(128);
             const orbitGeo = new THREE.BufferGeometry().setFromPoints(orbitPoints);
@@ -217,10 +218,8 @@
         function createLatLines() {
             const linesGroup = new THREE.Group();
             earthGroup.add(linesGroup);
-            this.latLinesGroup = linesGroup;
-
             const createLine = (y, color) => {
-                const radiusAtY = Math.sqrt(Math.max(0, 25 - y*y)); // r=5
+                const radiusAtY = Math.sqrt(Math.max(0, 25 - y*y));
                 const curve = new THREE.EllipseCurve(0, 0, radiusAtY + 0.05, radiusAtY + 0.05);
                 const points = curve.getPoints(64);
                 const geo = new THREE.BufferGeometry().setFromPoints(points);
@@ -230,11 +229,9 @@
                 line.position.y = y;
                 linesGroup.add(line);
             };
-
             createLine(0, 0xffffff); // 赤道
             createLine(5 * Math.sin(THREE.MathUtils.degToRad(23.5)), 0xff4444); // 北回歸線
             createLine(5 * Math.sin(THREE.MathUtils.degToRad(-23.5)), 0x4444ff); // 南回歸線
-
             document.getElementById('check-lines').onchange = (e) => linesGroup.visible = e.target.checked;
         }
 
@@ -254,15 +251,11 @@
             document.querySelectorAll('.btn-season').forEach(b => b.classList.remove('active'));
             document.getElementById('btn-' + key).classList.add('active');
 
-            // --- 核心修正：往同方向運行的角度邏輯 ---
             let targetRad = data.step * Math.PI * 2;
-            
-            // 取得當前角度在 0 ~ 2PI 之外的部分 (累積圈數)
             let currentRotation = pivot.rotation.y;
             let currentNormalized = currentRotation % (Math.PI * 2);
             if (currentNormalized < 0) currentNormalized += Math.PI * 2;
 
-            // 計算目標角度，確保其大於當前角度
             let additionalRotation = targetRad - currentNormalized;
             if (additionalRotation <= 0) additionalRotation += Math.PI * 2;
 
@@ -273,7 +266,6 @@
                 .easing(TWEEN.Easing.Cubic.Out)
                 .start();
 
-            // UI 更新
             document.getElementById('val-season').innerText = data.title;
             document.getElementById('val-lat').innerText = data.lat;
             document.getElementById('val-desc').innerText = data.desc;
@@ -289,17 +281,22 @@
             requestAnimationFrame(animate);
             TWEEN.update(time);
             
-            earthMesh.rotation.y += 0.003; // 自轉
+            // 地球自轉
+            earthMesh.rotation.y += 0.005; 
 
-            // --- 核心修正：動態更新太陽直射光線 ---
-            if (rayLine.visible) {
+            // --- 關鍵修正：補償旋轉 ---
+            // 抵消 pivot 的 Y 軸旋轉，確保 earthGroup 的 Z 軸傾斜始終朝向同一個世界空間方向
+            if (earthGroup) {
+                earthGroup.rotation.y = -pivot.rotation.y;
+            }
+
+            // 動態更新太陽直射光線
+            if (rayLine && rayLine.visible) {
                 const earthWorldPos = new THREE.Vector3();
                 earthMesh.getWorldPosition(earthWorldPos);
-                
-                // 設定線段起點 (太陽 0,0,0) 與終點 (地球中心)
                 const points = [new THREE.Vector3(0, 0, 0), earthWorldPos];
                 rayLine.geometry.setFromPoints(points);
-                rayLine.computeLineDistances(); // 虛線需要更新距離
+                rayLine.computeLineDistances();
             }
 
             controls.update();

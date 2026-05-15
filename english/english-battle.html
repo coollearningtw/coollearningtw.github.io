@@ -18,24 +18,29 @@
         header { background-color: rgba(30, 41, 59, 0.9) !important; border-bottom: 1px solid #334155 !important; }
         .header-title-area, .back-link { color: var(--primary-battle) !important; }
 
+        /* 視圖切換 */
         .view-section { display: none; max-width: 600px; margin: 40px auto; padding: 0 20px; }
         .active-view { display: block; }
         .battle-card { background: var(--card-bg); border-radius: 24px; padding: 30px; border: 1px solid #334155; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
 
-        .btn-battle { width: 100%; padding: 15px; border-radius: 12px; border: none; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: 0.2s; margin-bottom: 15px; }
+        /* 按鈕與輸入 */
+        .btn-battle { width: 100%; padding: 15px; border-radius: 12px; border: none; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: 0.2s; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .btn-main { background: var(--primary-battle); color: #000; }
         .btn-sub { background: #334155; color: #fff; }
+        .btn-icon { width: 20px; height: 20px; }
         input.battle-input { width: 100%; background: #0f172a; border: 2px solid #334155; color: #fff; padding: 12px; border-radius: 12px; text-align: center; font-size: 1.2rem; margin-bottom: 15px; box-sizing: border-box; }
 
+        /* 範圍選擇區 (房主) */
         .scope-selector { max-height: 250px; overflow-y: auto; background: #0f172a; padding: 15px; border-radius: 12px; margin-bottom: 20px; text-align: left; border: 1px solid #334155; }
         .version-name { color: var(--host-color); font-weight: bold; font-size: 0.9rem; margin-bottom: 8px; display: block; }
         .lesson-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; }
-        .chip { padding: 6px 12px; background: #1e293b; border: 1px solid #334155; border-radius: 20px; font-size: 0.85rem; cursor: pointer; }
+        .chip { padding: 6px 12px; background: #1e293b; border: 1px solid #334155; border-radius: 20px; font-size: 0.85rem; cursor: pointer; transition: 0.2s; }
         .chip.selected { background: var(--primary-battle); color: #000; border-color: var(--primary-battle); }
         .num-row { display: flex; gap: 10px; margin-bottom: 20px; }
         .num-btn { flex: 1; padding: 10px; background: #0f172a; border: 1px solid #475569; border-radius: 10px; color: #94a3b8; cursor: pointer; }
         .num-btn.active { border-color: var(--host-color); color: var(--host-color); background: rgba(251, 191, 36, 0.1); }
 
+        /* --- 競技場主體 --- */
         #view-arena { max-width: 800px; }
         .vs-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: var(--card-bg); padding: 15px 25px; border-radius: 50px; border: 2px solid #334155; }
         .player-info { display: flex; flex-direction: column; align-items: center; width: 35%; }
@@ -43,11 +48,12 @@
         .player-combo { font-size: 0.8rem; color: #10b981; font-weight: bold; opacity: 0; }
         .player-combo.show { opacity: 1; }
 
+        /* 圓形倒數計時 */
         .timer-circle { position: relative; width: 70px; height: 70px; display: flex; align-items: center; justify-content: center; }
         .timer-circle svg { transform: rotate(-90deg); width: 70px; height: 70px; }
         .timer-circle circle { fill: none; stroke-width: 5; stroke-linecap: round; }
-        .timer-progress { stroke: var(--primary-battle); stroke-dasharray: 201; stroke-dashoffset: 0; transition: stroke-dashoffset 0.1s linear; }
         .timer-bg { stroke: #334155; }
+        .timer-progress { stroke: var(--primary-battle); stroke-dasharray: 201; stroke-dashoffset: 0; transition: stroke-dashoffset 0.1s linear; }
         #timer-num { position: absolute; font-size: 1.6rem; font-weight: 900; }
 
         .progress-container { width: 100%; height: 6px; background: #334155; border-radius: 3px; margin-bottom: 20px; overflow: hidden; }
@@ -58,13 +64,14 @@
         .q-pos { font-size: 1.1rem; color: #64748b; font-weight: bold; margin-bottom: 10px; }
 
         .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .opt-btn { padding: 22px; font-size: 1.3rem; font-weight: 800; border-radius: 18px; border: 2px solid #e2e8f0; background: #fff; cursor: pointer; color: #1e293b; transition: 0.2s; }
+        .opt-btn { padding: 22px; font-size: 1.3rem; font-weight: 800; border-radius: 18px; border: 2px solid #e2e8f0; background: #fff; cursor: pointer; color: #1e293b; transition: 0.1s; }
         .opt-btn.correct { background: #10b981 !important; color: #fff !important; border-color: #059669; }
         .opt-btn.wrong { background: #ef4444 !important; color: #fff !important; border-color: #991b1b; }
         
         .combo-popup { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); color: var(--host-color); font-size: 3rem; font-weight: 900; pointer-events: none; animation: floatUpLong 1.5s ease-out forwards; z-index: 100; text-shadow: 0 4px 15px rgba(0,0,0,0.4); }
         @keyframes floatUpLong { 0% { transform: translate(-50%, 0); opacity: 0; } 10% { transform: translate(-50%, -20px); opacity: 1; } 80% { transform: translate(-50%, -160px); opacity: 1; } 100% { transform: translate(-50%, -200px); opacity: 0; } }
 
+        /* 遮罩層 */
         .overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.96); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
     </style>
 </head>
@@ -79,7 +86,7 @@
         </div>
     </header>
 
-    <!-- 入口選單 -->
+    <!-- 1. 入口選單 -->
     <div id="view-menu" class="view-section active-view">
         <div class="battle-card" style="text-align:center;">
             <h1 class="title-neon">BATTLE ARENA</h1>
@@ -88,55 +95,67 @@
         </div>
     </div>
 
-    <!-- 房主設定 -->
+    <!-- 2. 房主：設定範圍 -->
     <div id="view-create" class="view-section">
         <div class="battle-card">
             <h2 style="margin-top:0;">設定對決範圍</h2>
-            <div class="scope-selector" id="scope-list">讀取中...</div>
+            <div class="scope-selector" id="scope-list">讀取教材中...</div>
             <div class="num-row">
                 <button class="num-btn active" onclick="setNum(10, this)">10 題</button>
                 <button class="num-btn" onclick="setNum(20, this)">20 題</button>
             </div>
-            <input type="text" id="host-name" class="battle-input" placeholder="你的暱稱">
+            <input type="text" id="host-name" class="battle-input" placeholder="輸入你的暱稱">
             <button class="btn-battle btn-main" onclick="createRoom()">生成代碼並開啟</button>
             <button class="btn-battle btn-sub" onclick="switchView('view-menu')">返回</button>
         </div>
     </div>
 
-    <!-- 加入房間 -->
+    <!-- 3. 加入者：輸入代碼 -->
     <div id="view-join" class="view-section">
         <div class="battle-card">
             <h2>加入好友房間</h2>
-            <input type="text" id="input-code" class="battle-input" placeholder="6 位數代碼">
-            <input type="text" id="joiner-name" class="battle-input" placeholder="你的暱稱">
-            <button class="btn-battle btn-main" onclick="joinRoom()">搜尋並進入房間</button>
+            <input type="text" id="input-code" class="battle-input" placeholder="請輸入 6 位數代碼">
+            <input type="text" id="joiner-name" class="battle-input" placeholder="輸入你的暱稱">
+            <button class="btn-battle btn-main" onclick="joinRoom()">進入房間</button>
             <button class="btn-battle btn-sub" onclick="switchView('view-menu')">返回</button>
         </div>
     </div>
 
-    <!-- 等待大廳 -->
+    <!-- 4. 等待大廳 -->
     <div id="view-lobby" class="view-section">
         <div class="battle-card">
             <div style="text-align:center; margin-bottom:20px;">
                 <span style="color:#94a3b8;">房間代碼</span>
                 <div style="font-size:3.5rem; font-weight:900; color:var(--host-color);" id="display-code">000000</div>
-            </div>
-            <div style="display:flex; justify-content:space-around; align-items:center;">
-                <div style="text-align:center;">
-                    <div style="font-size:3rem;">👤</div>
-                    <div id="lobby-my-name">---</div>
+                
+                <div style="display: flex; gap: 10px; justify-content: center; margin-top: 15px;">
+                    <button class="btn-battle btn-sub" onclick="copyInviteLink()" style="width:auto; padding:8px 15px; font-size:0.85rem;">
+                        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                        複製邀請連結
+                    </button>
+                    <button class="btn-battle btn-sub" onclick="showQRModal()" style="width:auto; padding:8px 15px; font-size:0.85rem;">
+                        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect><path d="M7 7h.01M17 7h.01M7 17h.01"></path></svg>
+                        顯示 QR Code
+                    </button>
                 </div>
-                <div style="font-weight:900; color:#475569;">VS</div>
+            </div>
+
+            <div style="display:flex; justify-content:space-around; align-items:center; margin-top:30px;">
                 <div style="text-align:center;">
-                    <div id="opp-avatar" style="font-size:3rem; opacity:0.3;">?</div>
-                    <div id="lobby-opp-name">等待中...</div>
+                    <div style="font-size:3.5rem;">👤</div>
+                    <div id="lobby-my-name" style="font-weight:bold;">---</div>
+                </div>
+                <div style="font-weight:900; color:#475569; font-size:1.5rem;">VS</div>
+                <div style="text-align:center;">
+                    <div id="opp-avatar" style="font-size:3.5rem; opacity:0.3;">?</div>
+                    <div id="lobby-opp-name" style="color:#64748b;">等待中...</div>
                 </div>
             </div>
-            <p style="text-align:center; color:#38bdf8;" id="lobby-status">正在連線伺服器...</p>
+            <p style="text-align:center; color:#38bdf8; font-weight:bold;" id="lobby-status">正在連線伺服器...</p>
         </div>
     </div>
 
-    <!-- 競技場 -->
+    <!-- 5. 競技場 -->
     <div id="view-arena" class="view-section">
         <div class="vs-header">
             <div class="player-info">
@@ -159,9 +178,20 @@
         <div class="options-grid" id="options-grid"></div>
     </div>
 
-    <!-- 遮罩層 -->
+    <!-- QR Code 彈窗 -->
+    <div id="qr-modal" class="overlay" onclick="closeQRModal()">
+        <div class="battle-card" style="max-width:320px; text-align:center;" onclick="event.stopPropagation()">
+            <h3 style="margin-top:0; color:var(--primary-battle);">邀請好友加入</h3>
+            <div id="qr-container" style="background:#fff; padding:15px; border-radius:16px; margin:20px 0; display:inline-block;">
+                <img id="qr-image" src="" alt="QR Code" style="width:200px; height:200px; display:block;">
+            </div>
+            <button class="btn-battle btn-main" onclick="closeQRModal()" style="margin-bottom:0;">關閉視窗</button>
+        </div>
+    </div>
+
+    <!-- 訊息遮罩 (倒數、結果、斷線) -->
     <div id="game-overlay" class="overlay">
-        <h1 id="over-main" style="font-size:8rem; color:var(--primary-battle);">3</h1>
+        <h1 id="over-main" style="font-size:8rem; margin:0; color:var(--primary-battle);">3</h1>
         <p id="over-sub" style="font-size:1.5rem; color:#94a3b8;"></p>
         <div id="over-actions" style="margin-top:30px; display:none;">
             <button class="btn-battle btn-main" onclick="location.reload()" style="width:200px;">回到主選單</button>
@@ -176,9 +206,20 @@
         let quizPool = [], currentIndex = 0, numQuestions = 10;
         let myScore = 0, oppScore = 0, myCombo = 0, oppCombo = 0;
         let myDone = false, oppDone = false, canClick = false;
-        let timeLeft = 10, timerInterval;
+        let timeLeft = 10, timerInterval, isMatchActive = false;
         let selectedScope = [];
-        let isMatchActive = false; // 追蹤比賽是否正在進行
+
+        // 啟動偵測 URL 參數
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const roomFromUrl = urlParams.get('room');
+            if (roomFromUrl && roomFromUrl.length === 6) {
+                switchView('view-join');
+                document.getElementById('input-code').value = roomFromUrl;
+                const savedName = localStorage.getItem('last_player_name');
+                if (savedName) document.getElementById('joiner-name').value = savedName;
+            }
+        });
 
         async function loadScope() {
             const res = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/english.json');
@@ -226,6 +267,7 @@
         async function joinRoom() {
             roomId = document.getElementById('input-code').value.trim();
             myName = document.getElementById('joiner-name').value.trim() || "挑戰者";
+            localStorage.setItem('last_player_name', myName);
             const { data } = await window.supabaseClient.from('active_rooms').select('*').eq('room_code', roomId);
             if (!data || data.length === 0) return alert("找不到房間");
             numQuestions = data[0].settings.num;
@@ -238,7 +280,6 @@
             switchView('view-lobby');
             document.getElementById('lobby-my-name').innerText = myName;
             myChannel = window.supabaseClient.channel(`live_${roomId}`, { config: { presence: { key: myName } } });
-            
             myChannel
                 .on('presence', { event: 'sync' }, () => {
                     const players = Object.keys(myChannel.presenceState());
@@ -249,10 +290,7 @@
                         if (isHost) prepareQuiz();
                     }
                 })
-                .on('presence', { event: 'leave' }, ({ leftPresences }) => {
-                    // 比賽進行中有人離開
-                    if (isMatchActive) handleOpponentLeft();
-                })
+                .on('presence', { event: 'leave' }, () => { if (isMatchActive) handleOpponentLeft(); })
                 .on('broadcast', { event: 'sync_quiz' }, (p) => { if(!isHost){ quizPool = p.payload.quiz; startCountdown(); } })
                 .on('broadcast', { event: 'stat' }, (p) => {
                     if (p.payload.user !== myName) {
@@ -292,20 +330,18 @@
                         switchView('view-arena');
                         document.getElementById('arena-my-name').innerText = myName;
                         document.getElementById('arena-opp-name').innerText = document.getElementById('lobby-opp-name').innerText;
-                        isMatchActive = true; // 比賽正式開始
-                        triggerNextRound(0);
+                        isMatchActive = true; triggerNextRound(0);
                     }, 800);
                 }
             }, 1000);
         }
 
         function handleOpponentLeft() {
-            isMatchActive = false;
-            clearInterval(timerInterval);
+            isMatchActive = false; clearInterval(timerInterval);
             const overlay = document.getElementById('game-overlay');
             overlay.style.display = 'flex';
             document.getElementById('over-main').innerText = "⚠️";
-            document.getElementById('over-sub').innerText = "對手已離開比賽，連線中斷。";
+            document.getElementById('over-sub').innerText = "對手已離開比賽。";
             document.getElementById('over-actions').style.display = 'block';
         }
 
@@ -313,10 +349,7 @@
             currentIndex = idx;
             if (currentIndex >= quizPool.length) return showResult();
             myDone = false; oppDone = false; canClick = true; timeLeft = 10;
-            renderQuestion();
-            startTimer();
-            updateArenaUI();
-            broadcastStat();
+            renderQuestion(); startTimer(); updateArenaUI(); broadcastStat();
         }
 
         function renderQuestion() {
@@ -352,19 +385,15 @@
                 myCombo = 0; if (btn) btn.classList.add('wrong');
                 Array.from(document.querySelectorAll('.opt-btn')).forEach(b => { if(b.innerText === cor) b.classList.add('correct'); });
             }
-            updateArenaUI(); 
-            broadcastStat(); 
-            checkHostSync();
+            updateArenaUI(); broadcastStat(); checkHostSync();
         }
 
         function startTimer() {
             updateTimerUI();
             const startTime = Date.now();
-            const duration = 10000; 
             clearInterval(timerInterval);
             timerInterval = setInterval(() => {
-                const elapsed = Date.now() - startTime;
-                timeLeft = Math.max(0, (duration - elapsed) / 1000);
+                timeLeft = Math.max(0, (10000 - (Date.now() - startTime)) / 1000);
                 updateTimerUI();
                 if (timeLeft <= 0) {
                     clearInterval(timerInterval);
@@ -375,17 +404,15 @@
 
         function updateTimerUI() {
             document.getElementById('timer-num').innerText = Math.ceil(timeLeft);
-            const circle = document.getElementById('timer-bar');
-            const circumference = 201; 
-            const offset = circumference - (timeLeft / 10) * circumference;
-            circle.style.strokeDashoffset = offset;
+            const offset = 201 - (timeLeft / 10) * 201;
+            document.getElementById('timer-bar').style.strokeDashoffset = offset;
         }
 
         function checkHostSync() {
             if (isHost && myDone && oppDone) {
                 setTimeout(() => {
                     const nextIdx = currentIndex + 1;
-                    if (myChannel) myChannel.send({ type: 'broadcast', event: 'go_next', payload: { index: nextIdx } });
+                    myChannel.send({ type: 'broadcast', event: 'go_next', payload: { index: nextIdx } });
                     triggerNextRound(nextIdx);
                 }, 1500);
             }
@@ -408,22 +435,30 @@
             const anchor = document.getElementById('combo-anchor');
             const el = document.createElement('div');
             el.className = 'combo-popup'; el.innerText = `+${score}`;
-            anchor.appendChild(el); 
-            setTimeout(() => el.remove(), 1500);
+            anchor.appendChild(el); setTimeout(() => el.remove(), 1500);
         }
 
+        function copyInviteLink() {
+            const inviteUrl = `${window.location.origin}${window.location.pathname}?room=${roomId}`;
+            navigator.clipboard.writeText(inviteUrl).then(() => alert("連結已複製"));
+        }
+
+        function showQRModal() {
+            const inviteUrl = `${window.location.origin}${window.location.pathname}?room=${roomId}`;
+            document.getElementById('qr-image').src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(inviteUrl)}`;
+            document.getElementById('qr-modal').style.display = 'flex';
+        }
+
+        function closeQRModal() { document.getElementById('qr-modal').style.display = 'none'; }
+
         async function showResult() {
-            isMatchActive = false; // 比賽正常結束
-            const overlay = document.getElementById('game-overlay'); 
-            overlay.style.display = 'flex';
+            isMatchActive = false;
+            const overlay = document.getElementById('game-overlay'); overlay.style.display = 'flex';
             const main = document.getElementById('over-main');
-            const sub = document.getElementById('over-sub');
-            if (myScore > oppScore) { main.innerText = "🏆"; sub.innerText = "你贏了！"; }
-            else if (myScore < oppScore) { main.innerText = "💀"; sub.innerText = "敗北..."; }
-            else { main.innerText = "🤝"; sub.innerText = "平手！"; }
-            
+            if (myScore > oppScore) main.innerText = "🏆";
+            else if (myScore < oppScore) main.innerText = "💀";
+            else main.innerText = "🤝";
             if (isHost) window.supabaseClient.from('active_rooms').delete().eq('room_code', roomId);
-            
             document.getElementById('over-actions').style.display = 'block';
         }
     </script>

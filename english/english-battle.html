@@ -6,31 +6,31 @@
     <title>單字知識王 Live - 酷學習</title>
     <link rel="stylesheet" href="../styles/style.css">
     <link rel="stylesheet" href="../styles/header.css">
+    <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         :root {
             --primary-battle: #38bdf8;
             --host-color: #fbbf24;
             --bg-dark: #0f172a;
             --card-bg: #1e293b;
+            --share-color: #10b981;
         }
         body { background-color: var(--bg-dark); color: #fff; margin: 0; font-family: "Noto Sans TC", sans-serif; overflow-x: hidden; }
         
         header { background-color: rgba(30, 41, 59, 0.9) !important; border-bottom: 1px solid #334155 !important; }
         .header-title-area, .back-link { color: var(--primary-battle) !important; }
 
-        /* 視圖切換 */
         .view-section { display: none; max-width: 600px; margin: 40px auto; padding: 0 20px; }
         .active-view { display: block; }
-        .battle-card { background: var(--card-bg); border-radius: 24px; padding: 30px; border: 1px solid #334155; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
+        .battle-card { background: var(--card-bg); border-radius: 24px; padding: 30px; border: 1px solid #334155; box-shadow: 0 20px 50px rgba(0,0,0,0.3); position: relative; }
 
-        /* 按鈕與輸入 */
         .btn-battle { width: 100%; padding: 15px; border-radius: 12px; border: none; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: 0.2s; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .btn-main { background: var(--primary-battle); color: #000; }
         .btn-sub { background: #334155; color: #fff; }
+        .btn-share { background: var(--share-color); color: #fff; }
         .btn-icon { width: 20px; height: 20px; }
         input.battle-input { width: 100%; background: #0f172a; border: 2px solid #334155; color: #fff; padding: 12px; border-radius: 12px; text-align: center; font-size: 1.2rem; margin-bottom: 15px; box-sizing: border-box; }
 
-        /* 範圍選擇區 (房主) */
         .scope-selector { max-height: 250px; overflow-y: auto; background: #0f172a; padding: 15px; border-radius: 12px; margin-bottom: 20px; text-align: left; border: 1px solid #334155; }
         .version-name { color: var(--host-color); font-weight: bold; font-size: 0.9rem; margin-bottom: 8px; display: block; }
         .lesson-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; }
@@ -40,7 +40,7 @@
         .num-btn { flex: 1; padding: 10px; background: #0f172a; border: 1px solid #475569; border-radius: 10px; color: #94a3b8; cursor: pointer; }
         .num-btn.active { border-color: var(--host-color); color: var(--host-color); background: rgba(251, 191, 36, 0.1); }
 
-        /* --- 競技場主體 --- */
+        /* 競技場 UI */
         #view-arena { max-width: 800px; }
         .vs-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: var(--card-bg); padding: 15px 25px; border-radius: 50px; border: 2px solid #334155; }
         .player-info { display: flex; flex-direction: column; align-items: center; width: 35%; }
@@ -48,7 +48,9 @@
         .player-combo { font-size: 0.8rem; color: #10b981; font-weight: bold; opacity: 0; }
         .player-combo.show { opacity: 1; }
 
-        /* 圓形倒數計時 */
+        #reader { width: 100%; border-radius: 12px; overflow: hidden; margin-bottom: 15px; background: #000; }
+        .overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.96); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
+        
         .timer-circle { position: relative; width: 70px; height: 70px; display: flex; align-items: center; justify-content: center; }
         .timer-circle svg { transform: rotate(-90deg); width: 70px; height: 70px; }
         .timer-circle circle { fill: none; stroke-width: 5; stroke-linecap: round; }
@@ -71,8 +73,9 @@
         .combo-popup { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); color: var(--host-color); font-size: 3rem; font-weight: 900; pointer-events: none; animation: floatUpLong 1.5s ease-out forwards; z-index: 100; text-shadow: 0 4px 15px rgba(0,0,0,0.4); }
         @keyframes floatUpLong { 0% { transform: translate(-50%, 0); opacity: 0; } 10% { transform: translate(-50%, -20px); opacity: 1; } 80% { transform: translate(-50%, -160px); opacity: 1; } 100% { transform: translate(-50%, -200px); opacity: 0; } }
 
-        /* 遮罩層 */
-        .overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.96); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
+        /* 動畫效果：呼吸燈 */
+        .ready-pulse { animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.8; transform: scale(1.02); } 100% { opacity: 1; transform: scale(1); } }
     </style>
 </head>
 <body>
@@ -110,14 +113,24 @@
         </div>
     </div>
 
-    <!-- 3. 加入者：輸入代碼 -->
+    <!-- 3. 加入者 -->
     <div id="view-join" class="view-section">
         <div class="battle-card">
             <h2>加入好友房間</h2>
-            <input type="text" id="input-code" class="battle-input" placeholder="請輸入 6 位數代碼">
-            <input type="text" id="joiner-name" class="battle-input" placeholder="輸入你的暱稱">
-            <button class="btn-battle btn-main" onclick="joinRoom()">進入房間</button>
-            <button class="btn-battle btn-sub" onclick="switchView('view-menu')">返回</button>
+            <div id="scanner-container" style="display:none;">
+                <div id="reader"></div>
+                <button class="btn-battle btn-sub" onclick="stopScanner()">取消掃描</button>
+            </div>
+            <div id="join-form">
+                <button class="btn-battle btn-sub" onclick="startScanner()" style="border: 1px dashed var(--primary-battle);">
+                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h18a2 2 0 0 1 2 2z"></path><path d="M12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"></path></svg>
+                    掃描 QR Code 加入
+                </button>
+                <input type="text" id="input-code" class="battle-input" placeholder="請輸入 6 位數代碼">
+                <input type="text" id="joiner-name" class="battle-input" placeholder="輸入你的暱稱">
+                <button class="btn-battle btn-main" onclick="joinRoom()">進入房間</button>
+                <button class="btn-battle btn-sub" onclick="switchView('view-menu')">返回</button>
+            </div>
         </div>
     </div>
 
@@ -128,14 +141,12 @@
                 <span style="color:#94a3b8;">房間代碼</span>
                 <div style="font-size:3.5rem; font-weight:900; color:var(--host-color);" id="display-code">000000</div>
                 
-                <div style="display: flex; gap: 10px; justify-content: center; margin-top: 15px;">
-                    <button class="btn-battle btn-sub" onclick="copyInviteLink()" style="width:auto; padding:8px 15px; font-size:0.85rem;">
-                        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
-                        複製邀請連結
-                    </button>
-                    <button class="btn-battle btn-sub" onclick="showQRModal()" style="width:auto; padding:8px 15px; font-size:0.85rem;">
-                        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect><path d="M7 7h.01M17 7h.01M7 17h.01"></path></svg>
-                        顯示 QR Code
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
+                    <button class="btn-battle btn-sub" onclick="copyInviteLink()" style="font-size:0.85rem; margin-bottom:0;">複製連結</button>
+                    <button class="btn-battle btn-sub" onclick="showQRModal()" style="font-size:0.85rem; margin-bottom:0;">顯示 QR</button>
+                    <button class="btn-battle btn-share" onclick="shareRoom()" style="grid-column: span 2; margin-bottom:0;">
+                        <svg class="btn-icon" fill="currentColor" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92c0-1.61-1.31-2.92-2.92-2.92z"/></svg>
+                        分享邀請連結
                     </button>
                 </div>
             </div>
@@ -151,7 +162,14 @@
                     <div id="lobby-opp-name" style="color:#64748b;">等待中...</div>
                 </div>
             </div>
-            <p style="text-align:center; color:#38bdf8; font-weight:bold;" id="lobby-status">正在連線伺服器...</p>
+            
+            <!-- 狀態與開始按鈕區 -->
+            <div style="margin-top:40px;">
+                <p style="text-align:center; color:#38bdf8; font-weight:bold; margin-bottom:15px;" id="lobby-status">正在連線伺服器...</p>
+                <button id="btn-host-start" class="btn-battle btn-main ready-pulse" style="display:none;" onclick="hostStartBattle()">
+                    開始對決！
+                </button>
+            </div>
         </div>
     </div>
 
@@ -189,7 +207,7 @@
         </div>
     </div>
 
-    <!-- 訊息遮罩 (倒數、結果、斷線) -->
+    <!-- 訊息遮罩 -->
     <div id="game-overlay" class="overlay">
         <h1 id="over-main" style="font-size:8rem; margin:0; color:var(--primary-battle);">3</h1>
         <p id="over-sub" style="font-size:1.5rem; color:#94a3b8;"></p>
@@ -208,77 +226,41 @@
         let myDone = false, oppDone = false, canClick = false;
         let timeLeft = 10, timerInterval, isMatchActive = false;
         let selectedScope = [];
+        let html5QrCode = null;
 
-        // 啟動偵測 URL 參數
-        window.addEventListener('DOMContentLoaded', () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const roomFromUrl = urlParams.get('room');
-            if (roomFromUrl && roomFromUrl.length === 6) {
-                switchView('view-join');
-                document.getElementById('input-code').value = roomFromUrl;
-                const savedName = localStorage.getItem('last_player_name');
-                if (savedName) document.getElementById('joiner-name').value = savedName;
-            }
-        });
-
-        async function loadScope() {
-            const res = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/english.json');
-            const data = await res.json();
-            const container = document.getElementById('scope-list');
-            container.innerHTML = '';
-            data.sources.forEach(src => {
-                const group = document.createElement('div');
-                group.className = 'version-group';
-                let chips = src.lessons.map(l => `<div class="chip" onclick="toggleChip(this, '${src.name}', ${l.lesson})">${l.title}</div>`).join('');
-                group.innerHTML = `<span class="version-name">${src.name}</span><div class="lesson-chips">${chips}</div>`;
-                container.appendChild(group);
+        // --- 掃描與分享邏輯 ---
+        async function startScanner() {
+            document.getElementById('scanner-container').style.display = 'block';
+            document.getElementById('join-form').style.display = 'none';
+            html5QrCode = new Html5Qrcode("reader");
+            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+            try {
+                await html5QrCode.start({ facingMode: "environment" }, config, (decodedText) => {
+                    const url = new URL(decodedText);
+                    const code = url.searchParams.get("room");
+                    if (code) { document.getElementById('input-code').value = code; stopScanner(); }
+                });
+            } catch (err) { alert("相機啟動失敗"); stopScanner(); }
+        }
+        function stopScanner() { 
+            if (html5QrCode) html5QrCode.stop().finally(() => {
+                document.getElementById('scanner-container').style.display = 'none';
+                document.getElementById('join-form').style.display = 'block';
             });
         }
-
-        function toggleChip(el, srcName, lesNum) {
-            el.classList.toggle('selected');
-            let version = selectedScope.find(v => v.source === srcName);
-            if (!version) { selectedScope.push(version = { source: srcName, lessons: [] }); }
-            if (el.classList.contains('selected')) version.lessons.push(lesNum);
-            else version.lessons = version.lessons.filter(n => n !== lesNum);
+        function shareRoom() {
+            const inviteUrl = `${window.location.origin}${window.location.pathname}?room=${roomId}`;
+            const text = `🔥 我在「單字知識王」發起了英文對決！\n房間代碼：${roomId}\n快點擊連結進入房間比拼吧！⚡️`;
+            if (navigator.share) navigator.share({ title: '單字王邀請', text, url: inviteUrl });
+            else copyInviteLink();
         }
 
-        function setNum(n, el) {
-            numQuestions = n;
-            document.querySelectorAll('.num-btn').forEach(b => b.classList.remove('active'));
-            el.classList.add('active');
-        }
-
-        function switchView(id) {
-            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active-view'));
-            document.getElementById(id).classList.add('active-view');
-            if (id === 'view-create') loadScope();
-        }
-
-        async function createRoom() {
-            myName = document.getElementById('host-name').value.trim() || "房主";
-            if (selectedScope.every(s => s.lessons.length === 0)) return alert("請選擇單字範圍");
-            roomId = Math.floor(100000 + Math.random() * 900000).toString();
-            document.getElementById('display-code').innerText = roomId;
-            await window.supabaseClient.from('active_rooms').insert([{ room_code: roomId, host_name: myName, settings: { scope: selectedScope, num: numQuestions }, status: 'waiting' }]);
-            isHost = true; startConnection();
-        }
-
-        async function joinRoom() {
-            roomId = document.getElementById('input-code').value.trim();
-            myName = document.getElementById('joiner-name').value.trim() || "挑戰者";
-            localStorage.setItem('last_player_name', myName);
-            const { data } = await window.supabaseClient.from('active_rooms').select('*').eq('room_code', roomId);
-            if (!data || data.length === 0) return alert("找不到房間");
-            numQuestions = data[0].settings.num;
-            selectedScope = data[0].settings.scope;
-            isHost = false; document.getElementById('display-code').innerText = roomId;
-            startConnection();
-        }
-
+        // --- 遊戲大廳與開始邏輯 ---
         function startConnection() {
             switchView('view-lobby');
             document.getElementById('lobby-my-name').innerText = myName;
+            document.getElementById('lobby-status').innerText = "等待對手加入...";
+
             myChannel = window.supabaseClient.channel(`live_${roomId}`, { config: { presence: { key: myName } } });
             myChannel
                 .on('presence', { event: 'sync' }, () => {
@@ -287,11 +269,28 @@
                         const opp = players.find(p => p !== myName);
                         document.getElementById('opp-avatar').style.opacity = "1";
                         document.getElementById('lobby-opp-name').innerText = opp;
-                        if (isHost) prepareQuiz();
+
+                        if (isHost) {
+                            document.getElementById('lobby-status').innerText = "對手已就緒！";
+                            document.getElementById('btn-host-start').style.display = 'flex';
+                        } else {
+                            document.getElementById('lobby-status').innerText = "等待房主開始對決...";
+                        }
+                    } else {
+                        // 如果有人離開
+                        document.getElementById('opp-avatar').style.opacity = "0.3";
+                        document.getElementById('lobby-opp-name').innerText = "等待中...";
+                        document.getElementById('btn-host-start').style.display = 'none';
+                        document.getElementById('lobby-status').innerText = "等待對手加入...";
                     }
                 })
                 .on('presence', { event: 'leave' }, () => { if (isMatchActive) handleOpponentLeft(); })
-                .on('broadcast', { event: 'sync_quiz' }, (p) => { if(!isHost){ quizPool = p.payload.quiz; startCountdown(); } })
+                .on('broadcast', { event: 'start_game' }, (p) => { 
+                    if (!isHost) {
+                        quizPool = p.payload.quiz;
+                        startCountdown();
+                    }
+                })
                 .on('broadcast', { event: 'stat' }, (p) => {
                     if (p.payload.user !== myName) {
                         oppScore = p.payload.score; oppDone = p.payload.isDone; oppCombo = p.payload.combo;
@@ -302,7 +301,8 @@
                 .subscribe(async (s) => { if (s === 'SUBSCRIBED') await myChannel.track({ online_at: new Date() }); });
         }
 
-        async function prepareQuiz() {
+        async function hostStartBattle() {
+            // 房主獲取單字並通知所有人開始
             const res = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/english.json');
             const data = await res.json();
             let all = [];
@@ -311,10 +311,13 @@
                 if (scope) src.lessons.forEach(l => { if (scope.lessons.includes(l.lesson)) all.push(...l.vocabulary); });
             });
             quizPool = all.sort(() => 0.5 - Math.random()).slice(0, numQuestions);
-            myChannel.send({ type: 'broadcast', event: 'sync_quiz', payload: { quiz: quizPool } });
+            
+            // 廣播單字庫與開始指令
+            myChannel.send({ type: 'broadcast', event: 'start_game', payload: { quiz: quizPool } });
             startCountdown();
         }
 
+        // --- 核心遊戲流程 (與之前邏輯相同) ---
         function startCountdown() {
             const overlay = document.getElementById('game-overlay');
             const main = document.getElementById('over-main');
@@ -334,15 +337,6 @@
                     }, 800);
                 }
             }, 1000);
-        }
-
-        function handleOpponentLeft() {
-            isMatchActive = false; clearInterval(timerInterval);
-            const overlay = document.getElementById('game-overlay');
-            overlay.style.display = 'flex';
-            document.getElementById('over-main').innerText = "⚠️";
-            document.getElementById('over-sub').innerText = "對手已離開比賽。";
-            document.getElementById('over-actions').style.display = 'block';
         }
 
         function triggerNextRound(idx) {
@@ -440,7 +434,7 @@
 
         function copyInviteLink() {
             const inviteUrl = `${window.location.origin}${window.location.pathname}?room=${roomId}`;
-            navigator.clipboard.writeText(inviteUrl).then(() => alert("連結已複製"));
+            navigator.clipboard.writeText(inviteUrl).then(() => alert("連結已複製到剪貼簿！"));
         }
 
         function showQRModal() {
@@ -459,6 +453,72 @@
             else if (myScore < oppScore) main.innerText = "💀";
             else main.innerText = "🤝";
             if (isHost) window.supabaseClient.from('active_rooms').delete().eq('room_code', roomId);
+            document.getElementById('over-actions').style.display = 'block';
+        }
+
+        // 基本初始化
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const roomFromUrl = urlParams.get('room');
+            if (roomFromUrl) {
+                switchView('view-join');
+                document.getElementById('input-code').value = roomFromUrl;
+            }
+        });
+        function switchView(id) {
+            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active-view'));
+            document.getElementById(id).classList.add('active-view');
+            if (id === 'view-create') loadScope();
+        }
+        async function loadScope() {
+            const res = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/english.json');
+            const data = await res.json();
+            const container = document.getElementById('scope-list');
+            container.innerHTML = '';
+            data.sources.forEach(src => {
+                const group = document.createElement('div');
+                group.className = 'version-group';
+                let chips = src.lessons.map(l => `<div class="chip" onclick="toggleChip(this, '${src.name}', ${l.lesson})">${l.title}</div>`).join('');
+                group.innerHTML = `<span class="version-name">${src.name}</span><div class="lesson-chips">${chips}</div>`;
+                container.appendChild(group);
+            });
+        }
+        function toggleChip(el, srcName, lesNum) {
+            el.classList.toggle('selected');
+            let version = selectedScope.find(v => v.source === srcName);
+            if (!version) { selectedScope.push(version = { source: srcName, lessons: [] }); }
+            if (el.classList.contains('selected')) version.lessons.push(lesNum);
+            else version.lessons = version.lessons.filter(n => n !== lesNum);
+        }
+        function setNum(n, el) {
+            numQuestions = n;
+            document.querySelectorAll('.num-btn').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
+        }
+        async function createRoom() {
+            myName = document.getElementById('host-name').value.trim() || "房主";
+            if (selectedScope.every(s => s.lessons.length === 0)) return alert("請選擇單字範圍");
+            roomId = Math.floor(100000 + Math.random() * 900000).toString();
+            document.getElementById('display-code').innerText = roomId;
+            await window.supabaseClient.from('active_rooms').insert([{ room_code: roomId, host_name: myName, settings: { scope: selectedScope, num: numQuestions }, status: 'waiting' }]);
+            isHost = true; startConnection();
+        }
+        async function joinRoom() {
+            roomId = document.getElementById('input-code').value.trim();
+            myName = document.getElementById('joiner-name').value.trim() || "挑戰者";
+            localStorage.setItem('last_player_name', myName);
+            const { data } = await window.supabaseClient.from('active_rooms').select('*').eq('room_code', roomId);
+            if (!data || data.length === 0) return alert("找不到房間");
+            numQuestions = data[0].settings.num;
+            selectedScope = data[0].settings.scope;
+            isHost = false; document.getElementById('display-code').innerText = roomId;
+            startConnection();
+        }
+        function handleOpponentLeft() {
+            isMatchActive = false; clearInterval(timerInterval);
+            const overlay = document.getElementById('game-overlay'); overlay.style.display = 'flex';
+            document.getElementById('over-main').innerText = "⚠️";
+            document.getElementById('over-sub').innerText = "對手已離開比賽。";
             document.getElementById('over-actions').style.display = 'block';
         }
     </script>

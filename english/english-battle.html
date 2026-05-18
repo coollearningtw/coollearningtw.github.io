@@ -460,13 +460,13 @@
             if (selectedScope.every(s => s.lessons.length === 0)) return alert("請選擇範圍");
             roomId = Math.floor(100000 + Math.random() * 900000).toString();
             document.getElementById('display-code').innerText = roomId;
-            await window.supabaseClient.from('active_rooms').insert([{ room_code: roomId, host_name: myName, settings: { scope: selectedScope, num: numQuestions }, status: 'waiting' }]);
+            await window.supabaseClient.from('english_battle').insert([{ room_code: roomId, host_name: myName, settings: { scope: selectedScope, num: numQuestions }, status: 'waiting' }]);
             isHost = true; startConnection();
         }
         async function joinRoom() {
             roomId = document.getElementById('input-code').value.trim();
             myName = document.getElementById('joiner-name').value.trim() || "挑戰者";
-            const { data } = await window.supabaseClient.from('active_rooms').select('*').eq('room_code', roomId);
+            const { data } = await window.supabaseClient.from('english_battle').select('*').eq('room_code', roomId);
             if (!data || data.length === 0) return alert("找不到房間");
             numQuestions = data[0].settings.num; selectedScope = data[0].settings.scope;
             isHost = false; document.getElementById('display-code').innerText = roomId;

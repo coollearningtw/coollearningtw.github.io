@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日語單字庫 - 酷學習</title>
+    <link rel="stylesheet" href="../styles/style.css">
+    <link rel="stylesheet" href="../styles/header.css">
+    <style>
+        body { background-color: #fff5f7; padding-bottom: 100px; }
+        
+        .lesson-title {
+            font-size: 1.5rem; font-weight: 900; color: #db2777;
+            margin: 30px 0 15px; border-left: 5px solid #db2777; padding-left: 15px;
+        }
+
+        .word-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px; margin-bottom: 40px;
+        }
+
+        .word-card {
+            background: #fff; border-radius: 16px; padding: 20px;
+            display: flex; align-items: center; justify-content: space-between;
+            border: 1px solid #f1f3f5; transition: 0.2s; cursor: pointer;
+            position: relative;
+        }
+        .word-card:hover { 
+            transform: translateY(-3px); 
+            box-shadow: 0 10px 20px rgba(219, 39, 119, 0.08);
+            border-color: #fbcfe8;
+        }
+
+        .word-main { display: flex; flex-direction: column; gap: 4px; }
+        
+        /* 漢字樣式 */
+        .kanji { font-size: 1.4rem; font-weight: 800; color: #1e293b; }
+        
+        /* 假名樣式 */
+        .kana { font-size: 0.9rem; color: #64748b; font-weight: 600; }
+        
+        /* 中文翻譯樣式 */
+        .chinese { font-size: 1rem; color: #db2777; font-weight: bold; margin-top: 5px; }
+
+        .btn-speak {
+            background: #fdf2f8; color: #db2777; border: none;
+            width: 44px; height: 44px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: 0.2s;
+        }
+        .btn-speak:hover { background: #db2777; color: #fff; }
+        .btn-speak svg { width: 24px; height: 24px; fill: currentColor; }
+
+        @media (max-width: 600px) {
+            .word-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <header style="border:2px solid #f9a8d4; background:#fce7f3; color:#db2777;">
+        <div class="logo">
+            <a href="index.html" class="back-link" style="margin-right:10px;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#db2777" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            </a>
+            <span class="header-title-area" style="font-weight:bold; color:#db2777; font-size:1.1rem; letter-spacing:1px;">日語單字瀏覽</span>
+        </div>
+    </header>
+
+    <div class="page-container" id="vocab-root">
+        <!-- 由 JavaScript 自動填充單字列表 -->
+        <p style="text-align:center; color:#94a3b8; padding:50px;">載入單字庫中...</p>
+    </div>
+
+    <script src="../scripts/utils.js"></script>
+    <script>
+        const SPEAKER_SVG = `<svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
+
+        async function init() {
+            try {
+                const res = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/japanese.json');
+                const data = await res.json();
+                const root = document.getElementById('vocab-root');
+                root.innerHTML = '';
+
+                data.sources.forEach(source => {
+                    // 渲染版本大標題
+                    const sourceHeader = document.createElement('h2');
+                    sourceHeader.style.color = "#475569";
+                    sourceHeader.style.marginTop = "40px";
+                    sourceHeader.innerText = source.name;
+                    root.appendChild(sourceHeader);
+
+                    source.lessons.forEach(lesson => {
+                        // 渲染課別標題
+                        const lessonTitle = document.createElement('div');
+                        lessonTitle.className = 'lesson-title';
+                        lessonTitle.innerText = `L${lesson.lesson} ${lesson.title}`;
+                        root.appendChild(lessonTitle);
+
+                        // 渲染單字網格
+                        const grid = document.createElement('div');
+                        grid.className = 'word-grid';
+
+                        lesson.vocabulary.forEach(v => {
+                            const card = document.createElement('div');
+                            card.className = 'word-card';
+                            card.onclick = () => speak(v.kana, 'ja-JP');
+
+                            card.innerHTML = `
+                                <div class="word-main">
+                                    <div class="kana">${v.kana === v.kanji ? '' : v.kana}</div>
+                                    <div class="kanji">${v.kanji}</div>
+                                    <div class="chinese">${v.chinese}</div>
+                                </div>
+                                <button class="btn-speak">${SPEAKER_SVG}</button>
+                            `;
+                            grid.appendChild(card);
+                        });
+                        root.appendChild(grid);
+                    });
+                });
+            } catch (e) {
+                console.error("資料載入失敗", e);
+                document.getElementById('vocab-root').innerHTML = '<p style="color:red; text-align:center;">單字庫載入失敗，請檢查網路連線。</p>';
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

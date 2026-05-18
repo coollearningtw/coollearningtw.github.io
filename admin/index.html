@@ -8,105 +8,201 @@
     <link rel="stylesheet" href="../styles/header.css">
     <link rel="icon" type="image/png" href="../images/logo-gold.png">
     <style>
-        body { background-color: #f8fafc; }
+        body { background-color: #fff5f7; padding-bottom: 80px; }
+        
+        /* 類別區塊容器 */
+        .admin-section {
+            max-width: 1000px;
+            margin: 40px auto 0;
+            padding: 0 20px;
+        }
+
+        /* 類別標題樣式 */
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            color: #475569;
+            font-size: 1.1rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .section-header::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: #cbd5e1;
+        }
+
         .dashboard-grid { 
             display: grid; 
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
-            gap: 25px; 
-            margin-top: 40px; 
-            padding-bottom: 50px;
+            gap: 20px; 
         }
+
+        /* 管理員卡片基礎樣式 */
         .admin-card { 
             background: #fff; 
             border-radius: 20px; 
-            padding: 35px 30px; 
+            padding: 30px; 
             text-decoration: none; 
             display: flex; 
-            flex-direction: column; 
             align-items: center; 
+            gap: 20px;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
             border: 1px solid #e2e8f0; 
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); 
+            position: relative;
+            overflow: hidden;
         }
-        .admin-card:hover { 
-            transform: translateY(-10px); 
-            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); 
-            border-color: #0b76d1; 
-        }
-        .card-icon { width: 64px; height: 64px; margin-bottom: 25px; fill: #0b76d1; transition: transform 0.3s ease; }
-        .admin-card:hover .card-icon { transform: scale(1.1); }
-        .card-title { font-size: 1.3rem; font-weight: 800; color: #1e293b; margin-bottom: 12px; }
-        .card-desc { font-size: 0.95rem; color: #64748b; text-align: center; line-height: 1.6; }
 
-        /* 鎖定系統 CSS */
-        #page-lock-mask { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.65); backdrop-filter: blur(25px) saturate(160%); -webkit-backdrop-filter: blur(25px) saturate(160%); z-index: 999999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.6s ease, visibility 0.6s; }
-        .lock-content { text-align: center; user-select: none; }
-        #lock-icon { width: 100px; height: 100px; cursor: pointer; fill: #0b76d1; margin-bottom: 25px; transition: transform 0.1s; }
-        .lock-notice { font-size: 1.2rem; font-weight: 900; color: #334155; }
-        body.locked-scrolling { overflow: hidden !important; height: 100vh !important; pointer-events: none; }
-        #page-lock-mask { pointer-events: auto; }
+        .admin-card:hover { 
+            transform: translateY(-5px); 
+            box-shadow: 0 15px 30px rgba(0,0,0,0.08); 
+            border-color: var(--primary); 
+        }
+
+        .card-icon { width: 50px; height: 50px; flex-shrink: 0; transition: 0.3s; }
+        .admin-card:hover .card-icon { transform: scale(1.1) rotate(5deg); }
+        
+        .card-info { flex: 1; }
+        .card-title { font-size: 1.2rem; font-weight: 800; color: #1e293b; margin-bottom: 4px; }
+        .card-desc { font-size: 0.85rem; color: #64748b; line-height: 1.5; }
+
+        /* --- 類別專屬樣式 --- */
+
+        /* 1. 系統管理：簡約、專業灰色調 */
+        .section-sys .admin-card { border-left: 5px solid #64748b; }
+
+        /* 2. 學科資料：明亮、主題顏色 */
+        .card-en { border-left: 5px solid #3b82f6; }
+        .card-ch { border-left: 5px solid #ef4444; }
+
+        /* 3. 技能館：活潑、漸層色與獨特樣式 */
+        .section-skill .admin-card { border: none; color: #fff; }
+        
+        .card-jp-admin { 
+            background: linear-gradient(135deg, #db2777 0%, #f472b6 100%); 
+            box-shadow: 0 10px 20px rgba(219, 39, 119, 0.2);
+        }
+        .card-chess-admin { 
+            background: linear-gradient(135deg, #1e293b 0%, #475569 100%); 
+            box-shadow: 0 10px 20px rgba(30, 41, 59, 0.2);
+        }
+        .card-cube-admin { 
+            background: linear-gradient(135deg, #059669 0%, #34d399 100%); 
+            box-shadow: 0 10px 20px rgba(5, 150, 105, 0.2);
+        }
+        
+        /* 調整技能卡片文字顏色 */
+        .section-skill .card-title { color: #fff; }
+        .section-skill .card-desc { color: rgba(255,255,255,0.8); }
+        .section-skill .card-icon { fill: #fff; }
+
+        /* ========== 鎖定系統樣式 ========== */
+        #page-lock-mask { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.65); backdrop-filter: blur(25px) saturate(160%); z-index: 999999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.6s ease, visibility 0.6s; }
+        .lock-content { text-align: center; }
+        #lock-icon { width: 100px; height: 100px; cursor: pointer; fill: #0b76d1; margin-bottom: 25px; }
         .unlocked-hidden { opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; }
+        body.locked-scrolling { overflow: hidden; }
     </style>
 </head>
 <body>
-    <!-- 鎖定遮罩 HTML -->
     <div id="page-lock-mask">
         <div class="lock-content">
             <svg id="lock-icon" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm9 14H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg>
-            <div class="lock-notice">此功能僅提供給部分用戶使用</div>
-            <a href="../index.html" style="color: white; text-decoration: none; background-color: #0b76d1; height: 45px; margin-top: 25px; border-radius: 25px; display: flex; align-items: center; justify-content: center; padding: 0 30px; font-weight:bold;">回到首頁</a>
+            <div style="font-weight:900; color:#334155;">管理權限驗證中</div>
+            <a href="../index.html" style="color: #0b76d1; text-decoration: none; margin-top: 20px; display: inline-block; font-weight: bold;">回到首頁</a>
         </div>
     </div>
 
-    <header>
+    <header style="border:2px solid #f9a8d4; background:#fce7f3; color:#db2777;">
         <div class="logo">
-            <a href="../index.html" class="back-link">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            <a href="../index.html" class="back-link" style="margin-right:10px;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#db2777" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
             </a>
-            <span style="font-weight:bold; color:var(--primary); font-size:1.2rem;">管理員控制台</span>
+            <span style="font-weight:bold; color:#db2777; font-size:1.2rem; letter-spacing:1px;">管理員主控台</span>
         </div>
     </header>
 
-    <div class="page-container">
+    <!-- 第一部分：系統管理 -->
+    <section class="admin-section section-sys">
+        <div class="section-header">系統維護工具</div>
         <div class="dashboard-grid">
-            <!-- 公告管理 -->
             <a href="anno-editor.html" class="admin-card">
-                <svg class="card-icon" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 9h-2V5h2v6zm0 4h-2v-2h2v2z"/></svg>
-                <div class="card-title">公告管理</div>
-                <div class="card-desc">發布新公告、編輯系統通知或更新首頁輪播內容。</div>
+                <svg class="card-icon" viewBox="0 0 24 24" fill="#64748b"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 9h-2V5h2v6zm0 4h-2v-2h2v2z"/></svg>
+                <div class="card-info">
+                    <div class="card-title">公告管理</div>
+                    <div class="card-desc">發布首頁跑馬燈、系統通知與重要資訊更新。</div>
+                </div>
             </a>
-
-            <!-- 更新日誌管理 -->
             <a href="changelog-editor.html" class="admin-card">
-                <svg class="card-icon" viewBox="0 0 24 24"><path d="M13 3H6c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V9l-7-7zm0 1.5L18.5 10H13V4.5zM6 19.5v-15h6v6h6v9H6z"/></svg>
-                <div class="card-title">更新日誌管理</div>
-                <div class="card-desc">紀錄版本更迭、新增功能與修復細節。</div>
-            </a>
-
-            <!-- 英文資料管理 -->
-            <a href="english-editor.html" class="admin-card">
-                <svg class="card-icon" viewBox="0 0 24 24"><path d="M11.5 4L6 20h2.2l1.1-4h5.4l1.1 4H18L12.5 4h-1M10 13l2-6 2 6h-4z"/></svg>
-                <div class="card-title">英文單字課文管理</div>
-                <div class="card-desc">編輯英文單字庫、課文段落內容與單字詳解。</div>
-            </a>
-
-            <!-- 翻譯資料管理 -->
-            <a href="english-translation-editor.html" class="admin-card">
-                <svg class="card-icon" viewBox="0 0 24 24"><path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2.1l1.1-3h5.4l1.1 3H24l-5.5-12zm-2.62 7l1.62-4.41L19.12 17h-3.24z"/></svg>
-                <div class="card-title">翻譯資料管理</div>
-                <div class="card-desc">編輯英文翻譯對句、調整句子順序與翻譯測驗內容。</div>
-            </a>
-
-            <!-- 國文資料管理 -->
-            <a href="chinese-editor.html" class="admin-card">
-                <svg class="card-icon" viewBox="0 0 24 24"><path d="M3 3v17a1 1 0 001 1h17v-2H5V3H3m15.25 6.75c.41-.41.41-1.09 0-1.5l-1.5-1.5c-.41-.41-1.09-.41-1.5 0l-8.25 8.25V18h2.25l8.25-8.25m-8.5 5l-3 3 3 3h10v-6h-10z"/></svg>
-                <div class="card-title">國文資料管理</div>
-                <div class="card-desc">編輯註釋背誦、課文本文內容與段落解析。</div>
+                <svg class="card-icon" viewBox="0 0 24 24" fill="#64748b"><path d="M13 3H6c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V9l-7-7zm0 1.5L18.5 10H13V4.5zM6 19.5v-15h6v6h6v9H6z"/></svg>
+                <div class="card-info">
+                    <div class="card-title">更新日誌</div>
+                    <div class="card-desc">紀錄開發進度、功能修正與版本號管理。</div>
+                </div>
             </a>
         </div>
-    </div>
+    </section>
 
-    <!-- 引用外部化的鎖定邏輯 JS -->
+    <!-- 第二部分：正規學科 -->
+    <section class="admin-section section-academic">
+        <div class="section-header">學科資料編輯</div>
+        <div class="dashboard-grid">
+            <a href="english-editor.html" class="admin-card card-en">
+                <svg class="card-icon" viewBox="0 0 24 24" fill="#3b82f6"><path d="M11.5 4L6 20h2.2l1.1-4h5.4l1.1 4H18L12.5 4h-1M10 13l2-6 2 6h-4z"/></svg>
+                <div class="card-info">
+                    <div class="card-title">英文單字課文</div>
+                    <div class="card-desc">管理英文單字庫、課文朗讀內容與測驗資料。</div>
+                </div>
+            </a>
+            <a href="english-translation-editor.html" class="admin-card card-en">
+                <svg class="card-icon" viewBox="0 0 24 24" fill="#3b82f6"><path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2.1l1.1-3h5.4l1.1 3H24l-5.5-12zm-2.62 7l1.62-4.41L19.12 17h-3.24z"/></svg>
+                <div class="card-info">
+                    <div class="card-title">英文翻譯管理</div>
+                    <div class="card-desc">編輯對句練習、調整句子順序與翻譯難度。</div>
+                </div>
+            </a>
+            <a href="chinese-editor.html" class="admin-card card-ch">
+                <svg class="card-icon" viewBox="0 0 24 24" fill="#ef4444"><path d="M3 3v17a1 1 0 001 1h17v-2H5V3H3m15.25 6.75c.41-.41.41-1.09 0-1.5l-1.5-1.5c-.41-.41-1.09-.41-1.5 0l-8.25 8.25V18h2.25l8.25-8.25m-8.5 5l-3 3 3 3h10v-6h-10z"/></svg>
+                <div class="card-info">
+                    <div class="card-title">國文資料管理</div>
+                    <div class="card-desc">管理註釋背誦、課文解析、作者與賞析內容。</div>
+                </div>
+            </a>
+        </div>
+    </section>
+
+    <!-- 第三部分：技能與興趣 -->
+    <section class="admin-section section-skill">
+        <div class="section-header">技能館管理</div>
+        <div class="dashboard-grid">
+            <a href="japanese-editor.html" class="admin-card card-jp-admin">
+                <svg class="card-icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/><circle cx="12" cy="12" r="5" fill="#fff"/></svg>
+                <div class="card-info">
+                    <div class="card-title">日語研究室</div>
+                    <div class="card-desc">編輯五十音資料、漢字讀音與動漫用語。</div>
+                </div>
+            </a>
+            <a href="#" class="admin-card card-chess-admin" style="opacity: 0.7;">
+                <svg class="card-icon" viewBox="0 0 24 24" fill="#fff"><path d="M19 22H5V20H19V22M17 19H7V17H17V19M16 16H8V11C8 8.24 10.24 6 13 6V4H11V2H17V4H15V6C17.76 6 20 8.24 20 11V16H16Z"/></svg>
+                <div class="card-info">
+                    <div class="card-title">西洋棋學院</div>
+                    <div class="card-desc">管理互動棋譜、開局策略與戰術挑戰。(開發中)</div>
+                </div>
+            </a>
+            <a href="#" class="admin-card card-cube-admin" style="opacity: 0.7;">
+                <svg class="card-icon" viewBox="0 0 24 24" fill="#fff"><path d="M21 16.5C21 16.88 20.79 17.21 20.47 17.38L12.57 21.82C12.41 21.94 12.21 22 12 22C11.79 22 11.59 21.94 11.43 21.82L3.53 17.38C3.21 17.21 3 16.88 3 16.5V7.5C3 7.12 3.21 6.79 3.53 6.62L11.43 2.18C11.59 2.06 11.79 2 12 2C12.21 2 12.41 2.06 12.57 2.18L20.47 6.62C20.79 6.79 21 7.12 21 7.5V16.5Z"/></svg>
+                <div class="card-info">
+                    <div class="card-title">魔術方塊 3D</div>
+                    <div class="card-desc">管理 3D 動畫公式步法與演算法邏輯。(開發中)</div>
+                </div>
+            </a>
+        </div>
+    </section>
+
     <script src="../scripts/admin-lock.js"></script>
 </body>
 </html>

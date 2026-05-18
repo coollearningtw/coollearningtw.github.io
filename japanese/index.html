@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日語研究室 - 酷學習</title>
+    <link rel="stylesheet" href="../styles/style.css">
+    <link rel="stylesheet" href="../styles/header.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@900&display=swap" rel="stylesheet">
+    <style>
+
+        :root {
+            --jp-theme: #db2777;
+            --jp-bg: #fff5f7;
+            --jp-border: #f9a8d4;
+            --jp-header-bg: #fce7f3;
+            --jp-header-text: #db2777;
+        }
+
+        body { background-color: var(--jp-bg); }
+
+        header {
+            border: 2px solid var(--jp-border);
+            background-color: var(--jp-header-bg);
+            color: var(--jp-header-text);
+        }
+
+        /* 英雄區塊：日式簡約大標題 */
+        .hero-section {
+            text-align: center;
+            padding: 60px 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero-section h1 {
+            font-size: 2.5rem;
+            color: var(--jp-theme);
+            font-weight: 900;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+        .hero-section p {
+            color: #db2777;
+            font-size: 1.1rem;
+            opacity: 0.85;
+        }
+
+        /* 背景裝飾大字 */
+        .bg-kanji {
+            position: absolute;
+            top: 20px;
+            right: -20px;
+            font-family: 'Noto Sans JP', sans-serif;
+            font-size: 15rem;
+            color: #db2777;
+            opacity: 0.06;
+            pointer-events: none;
+            user-select: none;
+            z-index: -1;
+        }
+
+        /* 入口導航網格 */
+        .nav-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            max-width: 1000px;
+            margin: 0 auto 50px;
+            padding: 0 20px;
+        }
+
+        /* 入口卡片樣式 */
+        .nav-card {
+            background: #fff;
+            border-radius: 24px;
+            padding: 40px 30px;
+            text-decoration: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 1.5px solid var(--jp-border);
+            box-shadow: 0 10px 25px rgba(219, 39, 119, 0.05);
+        }
+
+        .nav-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(219, 39, 119, 0.12);
+            border-color: var(--jp-theme);
+            background: #fdf2f8;
+        }
+
+        .icon-circle {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #fdf2f8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            color: var(--jp-theme);
+            transition: 0.3s;
+            border: 2px solid #fbcfe8;
+        }
+
+        .nav-card:hover .icon-circle {
+            background: var(--jp-theme);
+            color: #fff;
+            transform: rotate(10deg);
+            border-color: #db2777;
+        }
+
+        .icon-circle svg { width: 40px; height: 40px; fill: currentColor; }
+
+        .nav-card h2 {
+            font-size: 1.5rem;
+            color: #db2777;
+            margin-bottom: 12px;
+            font-weight: 800;
+            letter-spacing: 1px;
+        }
+
+        .nav-card p {
+            color: #db2777;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            opacity: 0.8;
+        }
+
+        /* 底部裝飾 */
+        .footer-deco {
+            text-align: center;
+            padding: 40px 0;
+            opacity: 0.5;
+        }
+        .footer-deco img { height: 40px; filter: grayscale(1); }
+
+        @media (max-width: 600px) {
+            .hero-section { padding: 40px 20px; }
+            .hero-section h1 { font-size: 2rem; }
+            .nav-card { padding: 30px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header style="border:2px solid #f9a8d4; background:#fce7f3; color:#db2777;">
+        <div class="logo">
+            <a href="../index.html" class="back-link" style="margin-right:10px;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#db2777" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            </a>
+            <span class="header-title-area" style="font-weight:bold; color:#db2777; font-size:1.1rem; letter-spacing:1px;">日語研究室</span>
+        </div>
+    </header>
+
+
+    <main class="page-container">
+        
+        <section class="hero-section">
+            <h1>日本語を学ぼう</h1>
+            <p>探索日語的奧秘，從零開始邁向達人之路</p>
+            <div class="bg-kanji">日</div>
+        </section>
+
+        <div class="nav-grid">
+            
+            <!-- 五十音圖入口 -->
+            <a href="gojuon.html" class="nav-card">
+                <div class="icon-circle">
+                    <!-- 假名符號 SVG -->
+                    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/><circle cx="12" cy="12" r="5"/></svg>
+                </div>
+                <h2>五十音圖表</h2>
+                <p>日語學習的基石。包含平假名、片假名對照、發音練習與手寫體辨識。</p>
+            </a>
+
+            <!-- 單字清單入口 -->
+            <a href="words.html" class="nav-card">
+                <div class="icon-circle">
+                    <!-- 書本/清單 SVG -->
+                    <svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9H9V9h10v2zm-4 4H9v-2h6v2zm4-8H9V5h10v2z"/></svg>
+                </div>
+                <h2>常用單字庫</h2>
+                <p>收錄基礎生活用語、動漫流行語與 N5 核心詞彙，配備漢字與讀音標註。</p>
+            </a>
+
+            <!-- 測驗中心入口 -->
+            <a href="jp-quiz.html" class="nav-card">
+                <div class="icon-circle">
+                    <!-- 和風星星獎章 SVG -->
+                    <svg viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="22" stroke="#db2777" stroke-width="3" fill="#fff5f7"/><path d="M24 12l3.09 6.26L34 19.27l-5 4.87L30.18 32 24 28.27 17.82 32 19 24.14l-5-4.87 6.91-1.01L24 12z" fill="#db2777" stroke="#db2777" stroke-width="2"/></svg>
+                </div>
+                <h2>日語挑戰賽</h2>
+                <p>透過多種模式驗收學習成果。包含假名辨識、漢字讀音與譯義挑戰。</p>
+            </a>
+
+        </div>
+
+        <div class="footer-deco">
+            <img src="../images/logo.png" alt="Decoration">
+            <div style="margin-top:10px; font-size:0.8rem; color:#94a3b8;">Cool Learning Japanese Lab</div>
+        </div>
+
+    </main>
+
+</body>
+</html>

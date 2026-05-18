@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>日語資料管理台 - 酷學習</title>
+    <link rel="icon" type="image/png" href="../images/logo-gold.png">
+    <link rel="stylesheet" href="../styles/style.css">
+    <link rel="stylesheet" href="../styles/header.css">
+    <style>
+        /* ========== 鎖定系統樣式 (修正重點) ========== */
+        #page-lock-mask {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.65); backdrop-filter: blur(25px) saturate(160%);
+            -webkit-backdrop-filter: blur(25px) saturate(160%); z-index: 999999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.6s ease, visibility 0.6s;
+            pointer-events: auto;
+        }
+        .lock-content { text-align: center; user-select: none; }
+        #lock-icon { width: 100px; height: 100px; cursor: pointer; fill: #db2777; margin-bottom: 25px; transition: transform 0.1s; }
+        #lock-icon:active { transform: scale(0.9); }
+        
+        /* 核心修正：解鎖後的隱藏類別 */
+        .unlocked-hidden { opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; }
+        
+        /* 鎖定時禁止捲動 */
+        body.locked-scrolling { overflow: hidden !important; height: 100vh !important; }
+        body.locked-scrolling .admin-layout, body.locked-scrolling header { pointer-events: none !important; }
+
+        /* ========== 編輯器佈局 ========== */
+        body { background-color: #f1f5f9; height: 100vh; overflow: hidden; display: flex; flex-direction: column; margin: 0; }
+        header { flex-shrink: 0; background-color: #fff !important; border-bottom: 1px solid #e2e8f0 !important; width: 100% !important; max-width: none !important; margin: 0 !important; border-radius: 0 !important; }
+        
+        .admin-layout { display: grid; grid-template-columns: 300px 1fr 350px; flex: 1; overflow: hidden; background: #e2e8f0; gap: 1px; }
+        
+        .sidebar { background: #fff; display: flex; flex-direction: column; overflow-y: auto; }
+        .sidebar-header { padding: 20px; border-bottom: 1px solid #e2e8f0; background: #f8fafc; position: sticky; top:0; z-index:10; }
+        .lesson-item { padding: 15px 20px; border-bottom: 1px solid #f1f5f9; cursor: pointer; transition: 0.2s; }
+        .lesson-item:hover { background: #fdf2f8; }
+        .lesson-item.active { background: #fce7f3; border-left: 4px solid #db2777; }
+        .lesson-item .src-n { font-size: 0.75rem; color: #94a3b8; font-weight: bold; }
+        .lesson-item .les-t { font-weight: bold; font-size: 0.95rem; color: #1e293b; margin-top: 4px; }
+
+        .editor-main { background: #fff; overflow-y: auto; padding: 30px; }
+        .vocab-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-bottom: 20px; position: relative; }
+        .vocab-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 0.8rem; font-weight: bold; color: #64748b; margin-bottom: 5px; }
+        input[type="text"] { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; }
+        
+        .quiz-toggles { display: flex; gap: 10px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed #cbd5e1; }
+        .quiz-toggles label { font-size: 0.75rem; display: flex; align-items: center; gap: 4px; cursor: pointer; }
+
+        .preview-panel { background: #f1f5f9; overflow-y: auto; padding: 20px; }
+        .word-card { background: #fff; border-radius: 12px; padding: 20px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 15px; }
+        .p-kanji { font-size: 1.5rem; font-weight: 800; color: #1e293b; }
+        .p-kanji ruby rt { font-size: 0.5em; color: #db2777; }
+        .p-chinese { font-size: 1rem; color: #db2777; font-weight: bold; margin-top: 5px; }
+
+        .btn-tool { padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.85rem; border: 1px solid #cbd5e1; background: #fff; }
+        .btn-add { background: #db2777; color: #fff; border: none; }
+        .btn-danger { color: #ef4444; border: none; background: none; cursor: pointer; font-size: 0.8rem; font-weight: bold; }
+
+        #json-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.8); display: none; align-items: center; justify-content: center; z-index: 3000; }
+        .json-box { background: #fff; padding: 30px; border-radius: 16px; width: 90%; max-width: 800px; }
+        textarea#json-output { width: 100%; height: 450px; font-family: monospace; background: #0f172a; color: #38bdf8; padding: 15px; border-radius: 8px; resize: none; border: none; }
+        
+        #save-status { font-size: 0.75rem; color: #10b981; margin-left: 10px; opacity: 0; transition: 0.3s; }
+    </style>
+</head>
+<body>
+    <!-- 鎖定遮罩 -->
+    <div id="page-lock-mask">
+        <div class="lock-content">
+            <svg id="lock-icon" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm9 14H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg>
+            <div style="font-weight:900; color:#334155; font-size: 1.2rem;">日語編輯器鎖定中</div>
+            <a href="../index.html" style="color: white; text-decoration: none; background-color: #db2777; height: 40px; margin-top: 20px; border-radius: 20px; display: flex; align-items: center; justify-content: center; padding: 0 20px;">回首頁</a>
+        </div>
+    </div>
+
+    <header>
+        <div class="logo" style="padding: 10px 20px; display:flex; align-items:center; justify-content: space-between; width: 100%;">
+            <div style="display:flex; align-items:center; gap:15px;">
+                <a href="index.html" style="text-decoration:none; color:#db2777; font-size:1.2rem;">⬅</a>
+                <span style="font-weight:900; color:#db2777;">日語館管理台 <span id="save-status">● 已自動存檔</span></span>
+            </div>
+            <div style="display:flex; gap:10px;">
+                <button class="btn-tool" onclick="resetDraft()" style="color:#ef4444;">重置修改</button>
+                <button class="btn-tool btn-add" onclick="showJSON()">產出 JSON</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="admin-layout">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <strong>課程清單</strong>
+                    <button class="btn-tool" onclick="addNewVersion()">+ 新版本</button>
+                </div>
+            </div>
+            <div id="lesson-list"></div>
+        </div>
+
+        <div class="editor-main">
+            <div id="editor-form">
+                <div style="text-align:center; color:#94a3b8; margin-top:150px;">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="#e2e8f0"><path d="M3 3v18h18V3H3zm16 16H5V5h14v14zm-2-8H7v-2h10v2zm-4 4H7v-2h6v2z"/></svg>
+                    <h3>請選擇左側課別開始編輯</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="preview-panel">
+            <div style="position: sticky; top: 0;">
+                <h4 style="margin-top:0; color:#64748b;">即時預覽</h4>
+                <div id="live-preview"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="json-modal">
+        <div class="json-box">
+            <h3 style="margin-top:0;">複製 JSON 到 GitHub</h3>
+            <textarea id="json-output" readonly></textarea>
+            <div style="margin-top:20px; text-align:right;">
+                <button class="btn-tool" onclick="document.getElementById('json-modal').style.display='none'">關閉</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../scripts/utils.js"></script>
+    <script src="../scripts/admin-lock.js"></script>
+    <script>
+        // ... (下方 JS 邏輯保持不變，與之前的代碼相同) ...
+        let dataStore = { sources: [] };
+        let activeKey = null;
+        const STORAGE_KEY = 'cool_learning_jp_draft';
+        const GITHUB_JSON = 'https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/japanese.json';
+
+        async function init() {
+            const draft = localStorage.getItem(STORAGE_KEY);
+            if (draft) { dataStore = JSON.parse(draft); renderList(); } 
+            else {
+                try {
+                    const res = await fetch(GITHUB_JSON + '?t=' + Date.now());
+                    dataStore = await res.json();
+                    renderList();
+                } catch (e) { console.error(e); }
+            }
+        }
+
+        function renderList() {
+            const container = document.getElementById('lesson-list');
+            container.innerHTML = dataStore.sources.flatMap((src, vIdx) => 
+                src.lessons.map((les, lIdx) => {
+                    const key = `${vIdx}-${lIdx}`;
+                    return `<div class="lesson-item ${activeKey === key ? 'active' : ''}" onclick="selectLesson(${vIdx}, ${lIdx})">
+                        <div class="src-n">${src.name}</div>
+                        <div class="les-t">L${les.lesson} ${les.title}</div>
+                    </div>`;
+                })
+            ).join('');
+        }
+
+        function selectLesson(vIdx, lIdx) {
+            activeKey = `${vIdx}-${lIdx}`; renderList();
+            const source = dataStore.sources[vIdx];
+            const lesson = source.lessons[lIdx];
+            document.getElementById('editor-form').innerHTML = `
+                <div style="background:#f8fafc; padding:20px; border-radius:12px; margin-bottom:20px; border:1px solid #e2e8f0;">
+                    <div class="vocab-grid">
+                        <div class="form-group"><label>版本名稱</label><input type="text" value="${source.name}" oninput="updateMeta(${vIdx}, 'name', this.value)"></div>
+                        <div class="form-group"><label>課別標題</label><input type="text" value="${lesson.title}" oninput="updateLessonMeta(${vIdx}, ${lIdx}, 'title', this.value)"></div>
+                    </div>
+                </div>
+                <div id="vocab-container"></div>
+                <button class="btn-tool btn-add" style="width:100%; padding:15px; margin-top:10px;" onclick="addVocab(${vIdx}, ${lIdx})">+ 新增單字項目</button>
+                <div style="margin-top:40px; border-top:1px solid #f1f5f9; padding-top:20px;"><button class="btn-danger" onclick="deleteLesson(${vIdx}, ${lIdx})">刪除此課別</button></div>`;
+            renderVocabs();
+        }
+
+        function renderVocabs() {
+            const [vIdx, lIdx] = activeKey.split('-').map(Number);
+            const container = document.getElementById('vocab-container');
+            const vocabs = dataStore.sources[vIdx].lessons[lIdx].vocabulary;
+            container.innerHTML = vocabs.map((v, i) => `
+                <div class="vocab-card">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:10px;"><span style="font-weight:bold; color:#db2777;">#${i+1}</span><button class="btn-danger" onclick="removeVocab(${vIdx}, ${lIdx}, ${i})">移除</button></div>
+                    <div class="vocab-grid">
+                        <div class="form-group"><label>漢字 (Kanji)</label><input type="text" value="${v.kanji}" oninput="updateVocab(${vIdx},${lIdx},${i},'kanji',this.value)"></div>
+                        <div class="form-group"><label>假名 (Kana)</label><input type="text" value="${v.kana}" oninput="updateVocab(${vIdx},${lIdx},${i},'kana',this.value)"></div>
+                        <div class="form-group"><label>羅馬字 (Romaji)</label><input type="text" value="${v.romaji}" oninput="updateVocab(${vIdx},${lIdx},${i},'romaji',this.value)"></div>
+                        <div class="form-group"><label>中文 (Meaning)</label><input type="text" value="${v.chinese}" oninput="updateVocab(${vIdx},${lIdx},${i},'chinese',this.value)"></div>
+                    </div>
+                    <div class="quiz-toggles">
+                        <label><input type="checkbox" ${v['type-en2ch']!==false?'checked':''} onchange="updateVocab(${vIdx},${lIdx},${i},'type-en2ch',this.checked)">看日選中</label>
+                        <label><input type="checkbox" ${v['type-ch2en']!==false?'checked':''} onchange="updateVocab(${vIdx},${lIdx},${i},'type-ch2en',this.checked)">看中選日</label>
+                        <label><input type="checkbox" ${v['type-reading']!==false?'checked':''} onchange="updateVocab(${vIdx},${lIdx},${i},'type-reading',this.checked)">漢字讀音</label>
+                    </div>
+                </div>`).join('');
+            updatePreview();
+        }
+
+        function updatePreview() {
+            const [vIdx, lIdx] = activeKey.split('-').map(Number);
+            const vocabs = dataStore.sources[vIdx].lessons[lIdx].vocabulary;
+            const root = document.getElementById('live-preview');
+            root.innerHTML = vocabs.map(v => {
+                const rubyHtml = (v.kanji !== v.kana) ? `<ruby>${v.kanji}<rt>${v.kana}</rt></ruby>` : v.kanji;
+                return `<div class="word-card"><div class="p-kanji">${rubyHtml}</div><div style="font-size:0.7rem; color:#94a3b8;">${v.romaji}</div><div class="p-chinese">${v.chinese}</div></div>`;
+            }).join('');
+        }
+
+        function updateMeta(vIdx, f, v) { dataStore.sources[vIdx][f] = v; renderList(); sync(); }
+        function updateLessonMeta(vIdx, lIdx, f, v) { dataStore.sources[vIdx].lessons[lIdx][f] = v; renderList(); sync(); }
+        function updateVocab(vIdx, lIdx, i, f, v) { dataStore.sources[vIdx].lessons[lIdx].vocabulary[i][f] = v; sync(); updatePreview(); }
+        function addVocab(vIdx, lIdx) { dataStore.sources[vIdx].lessons[lIdx].vocabulary.push({ kanji: "", kana: "", romaji: "", chinese: "", "type-en2ch": true, "type-ch2en": true, "type-reading": true }); renderVocabs(); sync(); }
+        function removeVocab(vIdx, lIdx, i) { dataStore.sources[vIdx].lessons[lIdx].vocabulary.splice(i, 1); renderVocabs(); sync(); }
+        function addNewVersion() { dataStore.sources.unshift({ name: "新課程版本", lessons: [{ lesson: 1, title: "第一課", vocabulary: [] }] }); activeKey = "0-0"; renderList(); selectLesson(0, 0); sync(); }
+        function deleteLesson(vIdx, lIdx) { if(confirm("確定刪除此課別？")) { dataStore.sources[vIdx].lessons.splice(lIdx, 1); activeKey = null; renderList(); document.getElementById('editor-form').innerHTML = ''; sync(); }}
+        function sync() { localStorage.setItem(STORAGE_KEY, JSON.stringify(dataStore)); const status = document.getElementById('save-status'); status.style.opacity = '1'; setTimeout(() => status.style.opacity = '0', 1500); }
+        function resetDraft() { if(confirm("確定重置？將從 GitHub 重新載入。")){ localStorage.removeItem(STORAGE_KEY); location.reload(); }}
+        function showJSON() { document.getElementById('json-output').value = JSON.stringify(dataStore, null, 2); document.getElementById('json-modal').style.display = 'flex'; }
+        init();
+    </script>
+</body>
+</html>

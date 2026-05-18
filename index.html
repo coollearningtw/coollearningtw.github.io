@@ -92,7 +92,6 @@
             font-weight: bold;
             color: var(--primary);
         }
-
         .card-tag {
             position: absolute;
             top: 10px;
@@ -103,6 +102,125 @@
             transform: rotate(45deg);
             font-weight: bold;
         }
+
+        /* 技能館網格 */
+            .skills-grid, .skills-flex-grid {
+                display: flex;
+                gap: 20px;
+                width: 100%;
+            }
+
+        /* 技能卡片通用基礎 */
+            .skill-card, .skills-flex-grid .subject-card {
+            position: relative;
+            border-radius: 24px;
+            padding: 30px;
+            text-decoration: none;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            min-height: 140px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+                flex: 1 1 0;
+                min-width: 0;
+        }
+
+        .skill-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .skill-content {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .skill-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .skill-icon svg { width: 35px; height: 35px; fill: currentColor; }
+
+        .skill-info h3 {
+            margin: 0 0 5px;
+            font-size: 1.4rem;
+            font-weight: 900;
+        }
+
+        .skill-info p {
+            margin: 0;
+            font-size: 0.9rem;
+            opacity: 0.8;
+            line-height: 1.4;
+        }
+
+        /* --- 個別卡片樣式設計 --- */
+
+        /* 日語館：櫻花粉 + 浮動假名背景 */
+        .card-jp {
+            background: linear-gradient(135deg, #fff5f7 0%, #fce7f3 100%);
+            color: #db2777;
+            border-color: #f9a8d4;
+        }
+        .card-jp .card-bg-decoration {
+            position: absolute;
+            right: -10px;
+            bottom: -20px;
+            font-size: 8rem;
+            font-weight: 900;
+            opacity: 0.1;
+            font-family: "serif";
+            transform: rotate(-15deg);
+        }
+
+        /* 西洋棋：石板黑 + 質感木紋感 */
+        .card-chess {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            color: #f8fafc;
+            border-color: #475569;
+        }
+        .card-chess .skill-icon { background: rgba(255, 255, 255, 0.1); color: #fbbf24; }
+        .card-chess .card-bg-decoration {
+            position: absolute;
+            right: 10px;
+            top: -10px;
+            font-size: 7rem;
+            opacity: 0.1;
+        }
+
+        /* 魔術方塊：白底 + 四色幾何裝飾 */
+        .card-cube {
+            background: #ffffff;
+            color: #1e293b;
+            border: 2px solid #e2e8f0;
+        }
+        .card-cube .skill-icon { background: #f1f5f9; color: #3b82f6; }
+        .cube-accent {
+            position: absolute;
+            top: 0; right: 0; width: 80px; height: 80px;
+            background: linear-gradient(45deg, #ef4444 25%, #3b82f6 25%, #3b82f6 50%, #fbbf24 50%, #fbbf24 75%, #22c55e 75%);
+            clip-path: polygon(100% 0, 0 0, 100% 100%);
+            opacity: 0.6;
+        }
+
+        /* 手機版適應 */
+            @media (max-width: 600px) {
+                .skills-grid, .skills-flex-grid {
+                    flex-direction: column;
+                }
+                .skill-info h3 { font-size: 1.2rem; }
+            }
 
         @media (max-width: 768px) {
             .subject-card.top-row, .subject-card.bottom-row {
@@ -177,6 +295,45 @@
             </div>
         </section>
     </div>
+
+    <!-- === 技能與興趣館 (非學科區塊) === -->
+    <h2 style="display: flex; align-items: center; gap: 12px; margin-top: 50px; margin-bottom: 20px; max-width: 980px; padding: 0 20px; margin-left: auto; margin-right: auto; color: #1e293b; font-size: 2rem; font-weight: 900;">
+        <span style="display: inline-block; width: 6px; height: 36px; background: linear-gradient(to bottom, #f472b6, #fb923c); border-radius: 999px;"></span>
+        技能與興趣館
+    </h2>
+
+    <div class="main-layout" style="margin-top: 0;">
+            <div class="skills-flex-grid">
+                <!-- 日語館卡片 -->
+                <a href="japanese/index.html" class="subject-card card-jp" style="position:relative;">
+                    <div class="subject-icon" style="background:rgba(255,255,255,0.2); width:60px; height:60px; display:flex; align-items:center; justify-content:center; border-radius:16px;">
+                        <svg viewBox="0 0 24 24" style="width:40px; height:40px;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/><circle cx="12" cy="12" r="5" fill="#ef4444"/></svg>
+                    </div>
+                    <span class="subject-name" style="color:#db2777;">日語研究室</span>
+                    <span style="font-size:0.95rem; color:#db2777; opacity:0.8; margin-top:6px;">五十音、基礎單字與動漫流行語學習</span>
+                    <div class="card-bg-decoration" style="position:absolute; right:-10px; bottom:-20px; font-size:8rem; font-weight:900; opacity:0.1; font-family:'serif'; transform:rotate(-15deg); pointer-events:none;">あ</div>
+                </a>
+                <!-- 西洋棋卡片 -->
+                <a href="chess/index.html" class="subject-card card-chess" style="pointer-events:none; opacity:0.6;">
+                    <div class="subject-icon" style="background:rgba(255,255,255,0.1); color:#fbbf24; width:60px; height:60px; display:flex; align-items:center; justify-content:center; border-radius:16px; font-size:40px; font-weight:bold;">
+                        ♟
+                    </div>
+                    <span class="subject-name" style="color:#fbbf24;">西洋棋學院</span>
+                    <span style="font-size:0.95rem; color:#fbbf24; opacity:0.8; margin-top:6px;">策略開局、殘局挑戰與互動棋譜觀測</span>
+                    <div class="card-bg-decoration" style="position:absolute; right:10px; top:-10px; font-size:7rem; opacity:0.1; pointer-events:none;">♟</div>
+                </a>
+                <!-- 魔術方塊卡片 -->
+                <a href="rubiks/index.html" class="subject-card card-cube" style="pointer-events:none; opacity:0.6;">
+                    <div class="subject-icon" style="background:#f1f5f9; color:#3b82f6; width:60px; height:60px; display:flex; align-items:center; justify-content:center; border-radius:16px;">
+                        <svg viewBox="0 0 24 24" style="width:40px; height:40px;"><path d="M21 16.5C21 16.88 20.79 17.21 20.47 17.38L12.57 21.82C12.41 21.94 12.21 22 12 22C11.79 22 11.59 21.94 11.43 21.82L3.53 17.38C3.21 17.21 3 16.88 3 16.5V7.5C3 7.12 3.21 6.79 3.53 6.62L11.43 2.18C11.59 2.06 11.79 2 12 2C12.21 2 12.41 2.06 12.57 2.18L20.47 6.62C20.79 6.79 21 7.12 21 7.5V16.5Z"/></svg>
+                    </div>
+                    <span class="subject-name" style="color:#3b82f6;">魔術方塊 3D</span>
+                    <span style="font-size:0.95rem; color:#3b82f6; opacity:0.8; margin-top:6px;">3D 公式演示，掌握 CFOP 進階轉法</span>
+                    <div class="cube-accent" style="position:absolute; top:0; right:0; width:80px; height:80px; background:linear-gradient(45deg, #ef4444 25%, #3b82f6 25%, #3b82f6 50%, #fbbf24 50%, #fbbf24 75%, #22c55e 75%); clip-path:polygon(100% 0, 0 0, 100% 100%); opacity:0.6;"></div>
+                </a>
+            </div>
+    </div>
+
     <!-- 原本的 main-layout 結束後，加入新的區塊 -->
     <h2 style="display: flex; align-items: center; gap: 12px; margin-top: 40px; margin-bottom: 20px; max-width: 980px; padding: 0 20px; margin-left: auto; margin-right: auto; color: var(--primary); font-size: 2rem; font-weight: bold;">
     <span style="display: inline-block;width: 6px;height: 36px;background: var(--primary);border-radius: 999px;"></span>學習助手</h2>

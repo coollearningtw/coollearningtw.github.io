@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日語測驗 - 酷學習</title>
+    <link rel="stylesheet" href="../styles/style.css">
+    <link rel="stylesheet" href="../styles/header.css">
+    <link rel="stylesheet" href="../styles/english-quiz.css">
+    <link rel="icon" type="image/png" href="../images/logo-gold.png">
+    <style>
+        /* 日語字體優化 */
+        body { font-family: "Noto Sans TC", "Noto Sans JP", sans-serif; background-color: #fff5f7; }
+        
+        /* 考題卡片內文字間距與排版 */
+        .q-text {
+            font-size: 2.8rem;
+            margin-bottom: 50px; /* 增加與選項的距離 */
+            color: #062733;
+            font-weight: 900;
+        }
+
+        /* 修正發音按鈕位置 */
+        .tts-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 10px;
+            color: var(--primary);
+            opacity: 0.6;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .tts-btn:hover { opacity: 1; transform: scale(1.1); }
+        .tts-btn svg { width: 28px; height: 28px; fill: currentColor; }
+
+        /* 選項字體 */
+        .option { font-size: 1.25rem !important; }
+
+        /* 測驗範圍群組樣式 */
+        .source-group { 
+            margin-bottom: 12px; 
+            padding: 15px; 
+            background: #fff; 
+            border-radius: 12px; 
+            border: 1px solid #f1f3f5; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+        .type-tag {
+            display: inline-block;
+            padding: 4px 12px;
+            background: #f8fafc;
+            color: #64748b;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            border: 1px solid #e2e8f0;
+        }
+
+        /* 錯題按鈕風格 */
+        #mistake-btn {
+            width: 100%;
+            margin-top: 15px;
+            background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%);
+            color: #db2777;
+            border: 1px solid #f9a8d4;
+            box-shadow: 0 4px 12px rgba(219, 39, 119, 0.1);
+        }
+
+        /* 覆蓋 english-quiz.css 的進度列位置，確保不顯示得分 */
+        .meta { justify-content: center; position: relative; }
+        #progress { position: absolute; left: 10px; }
+    </style>
+</head>
+<body>
+    <header style="border:2px solid #f9a8d4; background:#fce7f3; color:#db2777;">
+        <div class="logo">
+            <a href="index.html" class="back-link" style="margin-right:10px;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#db2777" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            </a>
+            <span class="header-title-area" style="font-weight:bold; color:#db2777; font-size:1.1rem; letter-spacing:1px;">日語挑戰賽</span>
+        </div>
+    </header>
+
+    <main class="quiz-container page-container">
+        <!-- 設定與開始區塊 -->
+        <section class="setup">
+            <div class="std-card panel">
+                <h3>測驗範圍</h3>
+                <div class="source-group">
+                    <label style="font-weight: 800; color: #db2777; cursor:pointer;">
+                        <input type="checkbox" id="scope-gojuon" checked onchange="updateTotalCount()"> 五十音圖 (基礎清音)
+                    </label>
+                </div>
+                <div id="vocab-sources-list"></div>
+                <p id="scope-count-msg" style="margin-top:10px; color:#94a3b8; font-size:0.9rem; font-weight:bold;"></p>
+            </div>
+
+            <div class="std-card panel">
+                <h3>測驗類型 (多選)</h3>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+                    <label style="cursor:pointer;"><input type="checkbox" id="type-recognition" checked> 假名辨識</label>
+                    <label style="cursor:pointer;"><input type="checkbox" id="type-reading" checked> 漢字選讀音</label>
+                    <label style="cursor:pointer;"><input type="checkbox" id="type-meaning" checked> 單字譯義</label>
+                </div>
+            </div>
+
+            <div class="std-card panel">
+                <h3>題數</h3>
+                <div class="num-select">
+                    <label class="num-item"><input type="radio" name="num" value="10"> <span>10</span></label>
+                    <label class="num-item"><input type="radio" name="num" value="20" checked> <span>20</span></label>
+                    <label class="num-item"><input type="radio" name="num" value="all"> <span>全部</span></label>
+                </div>
+            </div>
+
+            <div style="margin-top:30px;">
+                <button id="start-btn" class="btn" style="width:100%; font-size:1.2rem; padding:15px; background:#db2777;">開始新測驗</button>
+                <div id="mistake-area" style="display:none;">
+                    <div id="last-score-info" style="text-align:center; margin-top:15px; font-weight:bold; color:#db2777;"></div>
+                    <button id="mistake-btn" class="btn">錯題訂正 (0)</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 測驗進行區 -->
+        <section id="quiz" class="quiz" style="display:none;">
+            <div class="meta">
+                <div id="progress">0 / 0</div>
+                <div id="timer">--</div>
+            </div>
+
+            <div id="question-area" class="question-area std-card">
+                <!-- 由 JS 動態生成 -->
+            </div>
+
+            <div class="controls">
+                <button id="exit-btn" class="btn secondary">退出測驗</button>
+            </div>
+        </section>
+    </main>
+
+    <!-- 退出確認 Modal -->
+    <div id="exit-modal" class="exit-modal" style="display:none;">
+      <div class="exit-modal-backdrop"></div>
+      <div class="exit-modal-dialog">
+        <h3 style="margin-top:0;">確認退出</h3>
+        <p>確定要退出測驗？進度將不會結束。</p>
+        <div class="exit-modal-actions" style="display:flex; gap:10px; justify-content:center; margin-top:20px;">
+          <button id="exit-confirm" class="btn" style="flex:1;">確定</button>
+          <button id="exit-cancel" class="btn secondary" style="flex:1;">取消</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="../scripts/utils.js"></script>
+    <script>
+        let gojuonData = [];
+        let vocabData = [];
+        let quizPool = [];
+        let currentQuiz = [];
+        let currentIndex = 0;
+        let score = 0;
+        let timer = null;
+        let mistakes = [];
+
+        const SPEAKER_SVG = `<svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
+
+        async function init() {
+            try {
+                const [res1, res2] = await Promise.all([
+                    fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/gojuon.json'),
+                    fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/japanese.json')
+                ]);
+                gojuonData = (await res1.json()).seion;
+                vocabData = (await res2.json()).sources;
+                renderSources();
+                updateTotalCount();
+            } catch (e) { console.error("資料載入失敗", e); }
+        }
+
+        function renderSources() {
+            const container = document.getElementById('vocab-sources-list');
+            container.innerHTML = vocabData.map(src => `
+                <div class="source-group">
+                    <div style="font-weight:900; margin-bottom:8px; font-size:1rem;">${src.name}</div>
+                    ${src.lessons.map(l => `
+                        <label style="display:block; font-size:0.95rem; margin-bottom:6px; cursor:pointer;">
+                            <input type="checkbox" class="lesson-check" data-src="${src.name}" data-les="${l.lesson}" checked onchange="updateTotalCount()"> 
+                            L${l.lesson} ${l.title}
+                        </label>
+                    `).join('')}
+                </div>
+            `).join('');
+        }
+
+        function updateTotalCount() {
+            let count = 0;
+            if (document.getElementById('scope-gojuon').checked) count += gojuonData.length;
+            document.querySelectorAll('.lesson-check:checked').forEach(c => {
+                const src = vocabData.find(s => s.name === c.dataset.src);
+                const les = src.lessons.find(l => l.lesson == c.dataset.les);
+                count += les.vocabulary.length;
+            });
+            document.getElementById('scope-count-msg').innerText = `所選範圍共有 ${count} 個學習項目`;
+        }
+
+        document.getElementById('start-btn').onclick = () => {
+            buildPool();
+            if (quizPool.length === 0) return alert("請至少選擇一個範圍與類型！");
+            const num = document.querySelector('input[name="num"]:checked').value;
+            currentQuiz = shuffle([...quizPool]).slice(0, num === 'all' ? quizPool.length : parseInt(num));
+            startSession();
+        };
+
+        function buildPool() {
+            quizPool = [];
+            const types = {
+                rec: document.getElementById('type-recognition').checked,
+                read: document.getElementById('type-reading').checked,
+                mean: document.getElementById('type-meaning').checked
+            };
+            if (document.getElementById('scope-gojuon').checked && types.rec) {
+                gojuonData.forEach(k => {
+                    quizPool.push({ type: 'kana_rec', q: k.h, a: k.k, options: [k.k, ...getRandomOptions(gojuonData, 'k', k.k, 3)], speak: k.h });
+                });
+            }
+            document.querySelectorAll('.lesson-check:checked').forEach(c => {
+                const les = vocabData.find(s => s.name === c.dataset.src).lessons.find(l => l.lesson == c.dataset.les);
+                les.vocabulary.forEach(v => {
+                    if (types.read && v.kanji !== v.kana) {
+                        quizPool.push({ type: 'vocab_read', q: v.kanji, a: v.kana, options: [v.kana, ...getRandomVocabOptions('kana', v.kana, 3)], speak: v.kana });
+                    }
+                    if (types.mean) {
+                        quizPool.push({ type: 'vocab_mean', q: v.kanji, a: v.chinese, options: [v.chinese, ...getRandomVocabOptions('chinese', v.chinese, 3)], speak: v.kana });
+                    }
+                });
+            });
+        }
+
+        function startSession() {
+            currentIndex = 0; score = 0; mistakes = [];
+            document.querySelector('.setup').style.display = 'none';
+            document.getElementById('quiz').style.display = 'block';
+            showQuestion();
+        }
+
+        function showQuestion() {
+            if (currentIndex >= currentQuiz.length) return endQuiz();
+            const qData = currentQuiz[currentIndex];
+            const area = document.getElementById('question-area');
+            area.innerHTML = '';
+            document.getElementById('progress').innerText = `${currentIndex + 1} / ${currentQuiz.length}`;
+
+            const tagMap = { kana_rec: '假名辨識', vocab_read: '漢字讀音', vocab_mean: '單字譯義' };
+            const qHeader = document.createElement('div'); qHeader.className = 'q-header';
+            qHeader.style.position = 'relative';
+            qHeader.innerHTML = `<div class="type-tag">${tagMap[qData.type]}</div><div class="q-text">${qData.q}</div>`;
+            
+            const ttsBtn = document.createElement('button');
+            ttsBtn.className = 'tts-btn'; ttsBtn.innerHTML = SPEAKER_SVG;
+            ttsBtn.onclick = (e) => { e.stopPropagation(); speak(qData.speak, 'ja-JP'); };
+            qHeader.appendChild(ttsBtn);
+            area.appendChild(qHeader);
+
+            const optBox = document.createElement('div'); optBox.className = 'options';
+            shuffle(qData.options).forEach(opt => {
+                const btn = document.createElement('button'); btn.className = 'option btn';
+                btn.innerText = opt;
+                btn.onclick = () => handleAnswer(opt, qData.a, btn);
+                optBox.appendChild(btn);
+            });
+            area.appendChild(optBox);
+            startTimer(10);
+        }
+
+        function handleAnswer(userIdx, correct, btn) {
+            clearInterval(timer);
+            const isCorrect = userIdx === correct;
+            if (isCorrect) score++; else mistakes.push(currentQuiz[currentIndex]);
+
+            document.querySelectorAll('.option').forEach(b => {
+                b.disabled = true;
+                if (b.innerText === correct) b.classList.add('correct');
+                else if (b === btn) b.classList.add('wrong');
+                else b.classList.add('disabled');
+            });
+
+            setTimeout(() => { currentIndex++; showQuestion(); }, isCorrect ? 1000 : 2000);
+        }
+
+        function endQuiz() {
+            document.getElementById('quiz').style.display = 'none';
+            document.querySelector('.setup').style.display = 'block';
+            document.getElementById('last-score-info').innerText = `上次得分：${score} / ${currentQuiz.length}`;
+            if (mistakes.length > 0) {
+                document.getElementById('mistake-area').style.display = 'block';
+                document.getElementById('mistake-btn').innerText = `錯題訂正 (${mistakes.length} 題)`;
+                document.getElementById('mistake-btn').onclick = () => {
+                    currentQuiz = shuffle([...mistakes]); startSession();
+                };
+            } else {
+                document.getElementById('mistake-area').style.display = 'block';
+                document.getElementById('mistake-btn').style.display = 'none';
+                document.getElementById('last-score-info').innerHTML += ` <span style="color:#2ecc71">🎉 全對！</span>`;
+            }
+        }
+
+        function shuffle(a) { for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+        function getRandomOptions(data, field, exclude, num) { return shuffle(data.map(d => d[field]).filter(f => f !== exclude)).slice(0, num); }
+        function getRandomVocabOptions(field, exclude, num) {
+            let all = []; vocabData.forEach(s => s.lessons.forEach(l => l.vocabulary.forEach(v => all.push(v[field]))));
+            return shuffle([...new Set(all)].filter(f => f !== exclude)).slice(0, num);
+        }
+        function startTimer(sec) {
+            let left = sec; const el = document.getElementById('timer');
+            el.innerText = `${left}s`; el.classList.remove('low');
+            clearInterval(timer);
+            timer = setInterval(() => {
+                left--; el.innerText = `${left}s`;
+                if (left <= 3) el.classList.add('low');
+                if (left <= 0) { clearInterval(timer); handleAnswer(null, currentQuiz[currentIndex].a); }
+            }, 1000);
+        }
+
+        // 退出 Modal 控制
+        const exitModal = document.getElementById('exit-modal');
+        document.getElementById('exit-btn').onclick = () => { exitModal.style.display = 'flex'; clearInterval(timer); };
+        document.getElementById('exit-cancel').onclick = () => { exitModal.style.display = 'none'; startTimer(parseInt(document.getElementById('timer').innerText)); };
+        document.getElementById('exit-confirm').onclick = () => { location.reload(); };
+
+        init();
+    </script>
+</body>
+</html>

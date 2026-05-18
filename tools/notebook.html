@@ -82,7 +82,7 @@
             z-index: 200;
         }
 
-        /* 之前定義的立體按鈕樣式 */
+        /* 立體按鈕樣式 */
         .color-btn {
             width: 28px; height: 18px;
             border: 1px solid #000;
@@ -90,12 +90,13 @@
         }
         .color-btn:hover { transform: scale(1.1); filter: brightness(1.1); }
                 
-        /* 筆記本紙張樣式 */
-        .pages-container { display: flex; flex-direction: column; align-items: center; gap: 30px; padding-bottom: 50px; }
+        /* 筆記本紙張樣式 (支援左右滑動，固定大小) */
+        .pages-container { padding-bottom: 50px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
         .page-wrapper {
             background: #fff; box-shadow: 0 10px 25px rgba(0,0,0,0.1); position: relative;
-            transition: 0.3s; overflow: hidden; display: flex; flex-direction: column;
+            transition: transform 0.3s, margin 0.3s; overflow: hidden; display: flex; flex-direction: column;
             cursor: text;
+            margin: 0 auto 30px auto;
         }
         
         .page-wrapper.has-lines {
@@ -141,14 +142,22 @@
         /* ========== 響應式設計 (Responsive Web Design) ========== */
         @media (max-width: 820px) {
             #editor-view { padding: 0; }
-            .editor-toolbar { top: 0; border-radius: 0; margin-bottom: 0; justify-content: center; }
-            .pages-container { gap: 0; }
-            .page-wrapper {
-                width: 100% !important; height: auto !important; min-height: 80vh; 
-                box-shadow: none; border-radius: 0; margin-bottom: 1px; 
-                background-color: #fff; padding: 25px !important;
+            .editor-toolbar { 
+                top: 0; border-radius: 0; margin-bottom: 10px; 
+                justify-content: center; padding: 10px; gap: 8px;
             }
-            .page-num-display { display: none; }
+            .toolbar-group { 
+                flex-wrap: wrap; 
+                border-right: none; 
+                padding-right: 0; 
+                margin-left: 0 !important; 
+                justify-content: center;
+                width: 100%;
+            }
+            .toolbar-group:not(:last-child) {
+                border-bottom: 1px dashed #cbd5e1;
+                padding-bottom: 10px;
+            }
             #dashboard { padding: 0 10px; }
             .modal-card { width: 95%; }
         }
@@ -193,27 +202,33 @@
                 <button class="t-btn" onclick="execCmd('italic')" title="斜體"><i>I</i></button>
                 <button class="t-btn" onclick="execCmd('underline')" title="底線"><u>U</u></button>
                 <button class="t-btn" onclick="execCmd('strikeThrough')" title="刪除線"><s>S</s></button>
-                <div class="toolbar-group">
-                    <details class="color-menu">
-                        <summary class="t-btn" style="width: 60px; text-align: center;">顏色</summary>
-                        <div class="color-palette">
-                            <!-- 預設顏色陣列 -->
-                            <button class="color-btn" style="background:#ef4444;" onclick="execCmd('foreColor', '#ef4444')"></button>
-                            <button class="color-btn" style="background:#d97706;" onclick="execCmd('foreColor', '#d97706')"></button>
-                            <button class="color-btn" style="background:#10b981;" onclick="execCmd('foreColor', '#10b981')"></button>
-                            <button class="color-btn" style="background:#0b76d1;" onclick="execCmd('foreColor', '#0b76d1')"></button>
-                            <button class="color-btn" style="background:#d4c643;" onclick="execCmd('foreColor', '#d4c643')"></button>
-                            <button class="color-btn" style="background:#1e293b;" onclick="execCmd('foreColor', '#1e293b')"></button>
-                            <!-- 額外加入原生拾色器 -->
-                            <input type="color" onchange="execCmd('foreColor', this.value)" title="更多顏色" style="width:22px; height:22px; cursor:pointer; border:none; background:none;">
-                        </div>
-                    </details>
-                </div>
+                
+                <details class="color-menu">
+                    <summary class="t-btn" style="width: 60px; text-align: center;">顏色</summary>
+                    <div class="color-palette">
+                        <button class="color-btn" style="background:#ef4444;" onclick="execCmd('foreColor', '#ef4444')"></button>
+                        <button class="color-btn" style="background:#d97706;" onclick="execCmd('foreColor', '#d97706')"></button>
+                        <button class="color-btn" style="background:#10b981;" onclick="execCmd('foreColor', '#10b981')"></button>
+                        <button class="color-btn" style="background:#0b76d1;" onclick="execCmd('foreColor', '#0b76d1')"></button>
+                        <button class="color-btn" style="background:#d4c643;" onclick="execCmd('foreColor', '#d4c643')"></button>
+                        <button class="color-btn" style="background:#1e293b;" onclick="execCmd('foreColor', '#1e293b')"></button>
+                        <input type="color" onchange="execCmd('foreColor', this.value)" title="更多顏色" style="width:22px; height:22px; cursor:pointer; border:none; background:none;">
+                    </div>
+                </details>
+
                 <select class="t-select" onchange="execCmd('fontName', this.value)" title="字體">
                     <option value="Noto Sans TC">預設字體</option>
                     <option value="標楷體">標楷體</option>
                     <option value="Arial">Arial</option>
                     <option value="Courier New">Courier</option>
+                </select>
+                
+                <!-- 新增：畫布縮放比例調整 -->
+                <select class="t-select" id="zoom-select" onchange="adjustCanvasZoom()" title="顯示比例">
+                    <option value="auto">適應寬度</option>
+                    <option value="1">100%</option>
+                    <option value="0.75">75%</option>
+                    <option value="0.5">50%</option>
                 </select>
             </div>
 
@@ -295,7 +310,7 @@
         const STORAGE_KEY = 'cool_learning_notebooks';
         let notebooks =[];
         let currentNotebookId = null;
-        let editingNotebookId = null; // 用來追蹤現在是在「新增」還是「編輯」
+        let editingNotebookId = null; 
         let saveTimeout = null;
 
         function init() {
@@ -343,11 +358,10 @@
 
         // === 建立/編輯設定 Modal 邏輯 ===
         function openCreateModal() {
-            editingNotebookId = null; // null 代表新增模式
+            editingNotebookId = null; 
             document.getElementById('setup-modal-title').innerText = "建立新筆記本";
             document.getElementById('setup-modal-submit').innerText = "建立";
             
-            // 清空並還原預設值
             document.getElementById('nb-title').value = '';
             document.getElementById('nb-size').value = '800x1131';
             document.getElementById('nb-lineheight').value = '32';
@@ -363,7 +377,7 @@
         }
 
         function openEditModal() {
-            forceSaveContent(); // 打開設定前先儲存現有內容
+            forceSaveContent(); 
             editingNotebookId = currentNotebookId;
             populateSetupModal(currentNotebookId);
         }
@@ -389,7 +403,6 @@
             const [width, height] = sizeSel.value.split('x').map(Number);
             
             if (editingNotebookId === null) {
-                // 新增模式
                 const newNb = {
                     id: 'nb_' + Date.now(),
                     title: title,
@@ -408,7 +421,6 @@
                 renderDashboard();
                 openEditor(newNb.id);
             } else {
-                // 編輯模式
                 const nb = notebooks.find(n => n.id === editingNotebookId);
                 nb.title = title;
                 nb.settings.sizeName = sizeSel.options[sizeSel.selectedIndex].text;
@@ -420,12 +432,11 @@
                 saveData();
                 document.getElementById('create-modal').style.display = 'none';
                 
-                // 如果目前正在編輯這本筆記，立即更新畫面
                 if (currentNotebookId === editingNotebookId) {
                     document.getElementById('current-nb-title').innerText = nb.title;
-                    renderPages(); // 重新渲染紙張大小與行距
+                    renderPages(); 
                 }
-                renderDashboard(); // 同步更新儀表板清單
+                renderDashboard(); 
             }
         }
 
@@ -494,7 +505,48 @@
                 wrapper.appendChild(pageNum);
                 container.appendChild(wrapper);
             });
+            
+            // 繪製紙張後立即套用縮放比例
+            adjustCanvasZoom();
         }
+
+        // 處理畫布的縮放
+        function adjustCanvasZoom() {
+            if (!currentNotebookId) return;
+            const nb = notebooks.find(n => n.id === currentNotebookId);
+            const zoomSel = document.getElementById('zoom-select');
+            const wrappers = document.querySelectorAll('.page-wrapper');
+            
+            let scale = 1;
+            if (zoomSel.value === 'auto') {
+                const screenWidth = window.innerWidth;
+                const targetWidth = nb.settings.width;
+                // 給予左右各一點留白(手機 10px, 電腦 20px)
+                const margin = screenWidth > 820 ? 40 : 20; 
+                if (screenWidth < targetWidth + margin) {
+                    scale = (screenWidth - margin) / targetWidth;
+                }
+            } else {
+                scale = parseFloat(zoomSel.value);
+            }
+
+            wrappers.forEach(w => {
+                w.style.zoom = scale;
+                if (CSS.supports && !CSS.supports('zoom: 1')) {
+                    w.style.transform = `scale(${scale})`;
+                    w.style.transformOrigin = 'top center';
+                    const originalHeight = w.offsetHeight || nb.settings.height;
+                    const newHeight = originalHeight * scale;
+                    w.style.marginBottom = `-${originalHeight - newHeight - 30}px`;
+                }
+            });
+        }
+
+        window.addEventListener('resize', () => {
+            if (currentNotebookId && document.getElementById('zoom-select').value === 'auto') {
+                adjustCanvasZoom();
+            }
+        });
         
         function handleKeyDown(e) {
             const el = e.target;
@@ -502,9 +554,15 @@
             const nb = notebooks.find(n => n.id === currentNotebookId);
             const wrapper = el.parentElement;
             
-            if (e.key === 'Enter' && window.innerWidth > 820) {
-                const availableHeight = wrapper.clientHeight - (nb.settings.padding * 2);
-                if (el.offsetHeight + nb.settings.lineHeight > availableHeight) {
+            if (e.key === 'Enter') {
+                const availableHeight = nb.settings.height - (nb.settings.padding * 2);
+                
+                let currentContentHeight = el.scrollHeight;
+                if (CSS.supports && !CSS.supports('zoom: 1')) {
+                    currentContentHeight = el.offsetHeight;
+                }
+
+                if (currentContentHeight + nb.settings.lineHeight > availableHeight) {
                     e.preventDefault();
                     
                     if (index === nb.pages.length - 1) {
@@ -640,6 +698,13 @@
                 w.classList.remove('has-lines');
                 w.querySelector('.page-num-display').style.display = showPageNum ? 'block' : 'none';
                 if (showLines) addLinesToElement(w);
+                
+                // 匯出前強制將縮放改回 100%，以防圖片產生變形或解析度降低
+                w.style.zoom = 1;
+                if (CSS.supports && !CSS.supports('zoom: 1')) {
+                    w.style.transform = 'none';
+                    w.style.marginBottom = '30px';
+                }
             });
 
             if (format === 'image') {
@@ -693,6 +758,9 @@
                 const tempLines = w.querySelector('.temp-lines-container');
                 if (tempLines) tempLines.remove();
             });
+            
+            // 匯出結束後，把使用者原本的縮放比例套用回來
+            adjustCanvasZoom();
         }
 
         init();

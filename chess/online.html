@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>線上對弈系統 - 酷學習</title>
+    <link rel="stylesheet" href="../styles/style.css">
+    <link rel="stylesheet" href="../styles/header.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&display=swap" rel="stylesheet">
+    <!-- 引入核心庫 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        :root {
+            --chess-gold: #fbbf24;
+            --chess-bg: #0f172a;
+            --chess-card: #1e293b;
+            --sq-light: #e2e8f0;
+            --sq-dark: #475569;
+        }
+
+        body { background-color: var(--chess-bg); color: #fff; margin: 0; font-family: "Noto Sans TC", sans-serif; }
+        
+        /* Header 樣式同步 */
+        header { 
+            background: rgba(30, 41, 59, 0.9) !important; 
+            border-bottom: 2px solid #334155 !important; 
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .header-title-area, .back-link { color: var(--chess-gold) !important; }
+
+        /* 視圖切換 */
+        .view-section { display: none; }
+        .active-view { display: block; }
+
+        /* --- 大廳樣式 --- */
+        .lobby-container {
+            max-width: 500px;
+            margin: 60px auto;
+            padding: 0 20px;
+            text-align: center;
+        }
+        .lobby-card {
+            background: var(--chess-card);
+            border-radius: 24px;
+            padding: 40px;
+            border: 1px solid #334155;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+        }
+        .lobby-card h1 { font-family: 'Cinzel', serif; color: var(--chess-gold); margin-bottom: 30px; font-size: 2rem; }
+
+        /* --- 遊戲佈局樣式 --- */
+        .game-layout { 
+            display: grid; 
+            grid-template-columns: 1fr 320px; 
+            gap: 30px; 
+            max-width: 1100px; 
+            margin: 30px auto; 
+            padding: 0 20px; 
+        }
+
+        .board-container { 
+            position: relative; 
+            width: 100%; 
+            aspect-ratio: 1/1; 
+            background: #1e293b; 
+            border-radius: 12px; 
+            padding: 10px; 
+            border: 4px solid #334155; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4); 
+            box-sizing: border-box;
+        }
+        .chess-board { display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); width: 100%; height: 100%; }
+        .square { display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; }
+        .square.light { background-color: var(--sq-light); }
+        .square.dark { background-color: var(--sq-dark); }
+        .square.selected { background-color: var(--chess-gold) !important; }
+        
+        /* 提示樣式 */
+        .square.hint::after { content: ''; width: 18px; height: 18px; background: rgba(0, 0, 0, 0.15); border-radius: 50%; position: absolute; z-index: 5; }
+        .square.capture-hint::after { content: ''; width: 18px; height: 18px; background: rgba(239, 68, 68, 0.4);border-radius: 50%; z-index: 5;position: absolute; }
+
+        .piece { width: 90%; height: 90%; z-index: 2; transition: transform 0.2s; pointer-events: none; }
+
+        /* 側邊欄 */
+        .status-card { background: var(--chess-card); border: 1px solid #334155; border-radius: 16px; padding: 20px; margin-bottom: 20px; }
+        .turn-indicator { display: flex; align-items: center; gap: 10px; font-weight: bold; margin-bottom: 12px; }
+        .dot { width: 12px; height: 12px; border-radius: 50%; background: #475569; }
+        .dot.active { background: var(--chess-gold); box-shadow: 0 0 10px var(--chess-gold); }
+
+        /* UI 按鈕與輸入 */
+        .btn-chess { width: 100%; padding: 15px; border-radius: 12px; border: none; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: 0.2s; margin-bottom: 10px; }
+        .btn-main { background: var(--chess-gold); color: #000; }
+        .btn-sub { background: #334155; color: #fff; }
+        .battle-input { width: 100%; background: #0f172a; border: 2px solid #334155; color: #fff; padding: 15px; border-radius: 12px; text-align: center; margin-bottom: 15px; font-size: 1.2rem; box-sizing: border-box; }
+
+        .toggle-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; font-size: 0.9rem; }
+        .switch { position: relative; display: inline-block; width: 44px; height: 22px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; inset: 0; background-color: #334155; transition: .3s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--chess-gold); }
+        input:checked + .slider:before { transform: translateX(22px); }
+
+        .history-box { background: #0f172a; border-radius: 10px; height: 180px; overflow-y: auto; padding: 12px; font-family: monospace; font-size: 0.85rem; color: #94a3b8; border: 1px solid #334155; }
+
+        @media (max-width: 850px) {
+            .game-layout { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">
+            <a href="index.html" class="back-link">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            </a>
+            <span class="header-title-area" style="font-family:'Cinzel', serif; letter-spacing:1px;">Online Chess</span>
+        </div>
+        <div id="room-status-nav" style="font-size:0.75rem; color:#94a3b8; font-weight:bold;"></div>
+    </header>
+
+    <!-- 視圖 1：大廳 (Lobby) -->
+    <div id="view-lobby" class="view-section active-view">
+        <div class="lobby-container">
+            <div class="lobby-card">
+                <h1>Battle Lobby</h1>
+                
+                <div style="text-align:left; background:rgba(0,0,0,0.2); padding:18px; border-radius:12px; margin-bottom:25px;">
+                    <label style="display:flex; align-items:center; gap:12px; cursor:pointer;">
+                        <input type="checkbox" id="host-allow-hints" checked style="width:18px; height:18px; accent-color:var(--chess-gold);">
+                        <span style="font-size:0.95rem;">允許遊戲中使用合法走法提示</span>
+                    </label>
+                </div>
+
+                <button class="btn-chess btn-main" onclick="createRoom()">建立對戰房間</button>
+                <div style="margin: 25px 0; color: #475569; font-size:0.85rem; position:relative;">
+                    <span style="background:var(--chess-card); padding: 0 10px; position:relative; z-index:2;">或者加入好友</span>
+                    <hr style="position:absolute; top:50%; width:100%; border:0; border-top:1px solid #334155; z-index:1;">
+                </div>
+                <input type="text" id="join-code" class="battle-input" placeholder="輸入 6 位數房間代碼">
+                <button class="btn-chess btn-sub" onclick="joinRoom()">進入對局</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 視圖 2：對戰競技場 (Arena) -->
+    <div id="view-arena" class="view-section">
+        <main class="game-layout">
+            <div class="board-container">
+                <div id="board" class="chess-board"></div>
+            </div>
+
+            <aside class="game-sidebar">
+                <div class="status-card">
+                    <div class="turn-indicator">
+                        <div id="dot-white" class="dot active"></div> <span>白方 (White)</span>
+                    </div>
+                    <div class="turn-indicator">
+                        <div id="dot-black" class="dot"></div> <span>黑方 (Black)</span>
+                    </div>
+                    <div id="game-msg" style="margin-top:15px; color:var(--chess-gold); font-weight:bold; text-align:center; border-top:1px solid #334155; padding-top:15px;">等待連線中...</div>
+                </div>
+
+                <div class="status-card">
+                    <div class="toggle-row">
+                        <span>顯示走法提示</span>
+                        <label class="switch">
+                            <input type="checkbox" id="user-show-hints" checked onchange="updateUI()">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div id="hint-status-msg" style="font-size:0.7rem; color:#64748b; margin-top:5px;">房主已啟用提示功能</div>
+                </div>
+
+                <div class="status-card">
+                    <div style="font-size:0.75rem; color:#94a3b8; margin-bottom:8px; text-transform:uppercase;">棋譜歷史 History</div>
+                    <div id="history" class="history-box"></div>
+                </div>
+                
+                <button class="btn-chess btn-sub" onclick="location.reload()">退出遊戲</button>
+            </aside>
+        </main>
+    </div>
+
+    <script src="../scripts/supabase-config.js"></script>
+    <script src="../scripts/supabase-config.js"></script>
+    <script>
+        // --- 核心全域變數 ---
+        const game = new Chess();
+        let myRoomCode = null;
+        let mySide = null; // 'w' 或 'b'
+        let selectedSquare = null;
+        let gameActive = false;
+        let allowHintsGlobal = true;
+        let hintsList = [];
+        let gameChannel = null;
+
+        const PIECE_SVG = {
+            'w': { 'p': 'https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg', 'r': 'https://upload.wikimedia.org/wikipedia/commons/7/72/Chess_rlt45.svg', 'n': 'https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg', 'b': 'https://upload.wikimedia.org/wikipedia/commons/b/b1/Chess_blt45.svg', 'q': 'https://upload.wikimedia.org/wikipedia/commons/1/15/Chess_qlt45.svg', 'k': 'https://upload.wikimedia.org/wikipedia/commons/4/42/Chess_klt45.svg' },
+            'b': { 'p': 'https://upload.wikimedia.org/wikipedia/commons/c/c7/Chess_pdt45.svg', 'r': 'https://upload.wikimedia.org/wikipedia/commons/f/ff/Chess_rdt45.svg', 'n': 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Chess_ndt45.svg', 'b': 'https://upload.wikimedia.org/wikipedia/commons/9/98/Chess_bdt45.svg', 'q': 'https://upload.wikimedia.org/wikipedia/commons/4/47/Chess_qdt45.svg', 'k': 'https://upload.wikimedia.org/wikipedia/commons/f/f0/Chess_kdt45.svg' }
+        };
+
+        // --- 1. UI 切換與清理工具 ---
+        
+        // 終止遊戲並返回大廳
+        async function exitToLobby(reason = "") {
+            gameActive = false;
+            
+            // 清理連線
+            if (gameChannel) {
+                await window.supabaseClient.removeChannel(gameChannel);
+                gameChannel = null;
+            }
+
+            // 重置棋盤邏輯
+            game.reset();
+            selectedSquare = null;
+            hintsList = [];
+            myRoomCode = null;
+
+            // UI 切換
+            document.getElementById('view-arena').classList.remove('active-view');
+            document.getElementById('view-lobby').classList.add('active-view');
+            document.getElementById('room-status-nav').innerText = "";
+            
+            if (reason) {
+                // 在大廳顯示提示訊息
+                const lobbyMsg = document.createElement('div');
+                lobbyMsg.id = "temp-toast";
+                lobbyMsg.style = "position:fixed; top:100px; left:50%; transform:translateX(-50%); background:#ef4444; color:white; padding:12px 25px; border-radius:50px; font-weight:bold; z-index:3000; box-shadow:0 10px 20px rgba(0,0,0,0.3);";
+                lobbyMsg.innerText = reason;
+                document.body.appendChild(lobbyMsg);
+                setTimeout(() => lobbyMsg.remove(), 4000);
+            }
+        }
+
+        // --- 2. 連線與房間邏輯 ---
+
+        async function createRoom() {
+            const code = Math.floor(100000 + Math.random() * 900000).toString();
+            const allowHints = document.getElementById('host-allow-hints').checked;
+            
+            const { error } = await window.supabaseClient.from('chess_games').insert([{ 
+                room_code: code, 
+                status: 'waiting',
+                allow_hints: allowHints 
+            }]);
+
+            if (error) return alert("無法建立房間，請檢查網路連線");
+            myRoomCode = code;
+            mySide = 'w';
+            allowHintsGlobal = allowHints;
+            enterArena();
+        }
+
+        async function joinRoom() {
+            const code = document.getElementById('join-code').value.trim().toUpperCase();
+            if (!code) return;
+
+            const { data, error } = await window.supabaseClient.from('chess_games').select('*').eq('room_code', code).single();
+            
+            if (error || !data) return alert("找不到該代碼對應的房間");
+            if (data.status !== 'waiting') return alert("房間已滿或遊戲已結束");
+            
+            myRoomCode = code;
+            mySide = 'b';
+            allowHintsGlobal = data.allow_hints;
+            gameActive = true;
+
+            await window.supabaseClient.from('chess_games').update({ status: 'playing' }).eq('room_code', code);
+            enterArena();
+        }
+
+        function enterArena() {
+            document.getElementById('view-lobby').classList.remove('active-view');
+            document.getElementById('view-arena').classList.add('active-view');
+            document.getElementById('room-status-nav').innerText = `ID: ${myRoomCode} | SIDE: ${mySide === 'w' ? 'WHITE' : 'BLACK'}`;
+            
+            // 提示開關初始化
+            const hintCheck = document.getElementById('user-show-hints');
+            if (!allowHintsGlobal) {
+                hintCheck.checked = false;
+                hintCheck.disabled = true;
+                document.getElementById('hint-status-msg').innerText = "房主已停用提示功能";
+                document.getElementById('hint-status-msg').style.color = "#ef4444";
+            } else {
+                hintCheck.checked = true;
+                hintCheck.disabled = false;
+                document.getElementById('hint-status-msg').innerText = "房主已啟用提示功能";
+                document.getElementById('hint-status-msg').style.color = "#64748b";
+            }
+
+            renderBoard();
+            subscribeToGame();
+            updateUI();
+        }
+
+        function subscribeToGame() {
+            gameChannel = window.supabaseClient.channel(`live_${myRoomCode}`, {
+                config: { presence: { key: mySide } }
+            });
+
+            gameChannel
+                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'chess_games', filter: `room_code=eq.${myRoomCode}` }, payload => {
+                    const data = payload.new;
+                    if (data.status === 'playing' && !gameActive) gameActive = true;
+                    if (data.fen !== game.fen()) game.load(data.fen);
+                    updateUI();
+                })
+                .on('presence', { event: 'leave' }, ({ leftPresences }) => {
+                    // 如果有人離開，且我還在遊戲中
+                    if (gameActive) {
+                        exitToLobby("對手已離開，遊戲終止");
+                    }
+                })
+                .subscribe(async (status) => {
+                    if (status === 'SUBSCRIBED') {
+                        await gameChannel.track({ online_at: new Date().toISOString() });
+                    }
+                });
+        }
+
+        // --- 3. 渲染與遊戲邏輯 ---
+
+        function renderBoard() {
+            const boardEl = document.getElementById('board');
+            boardEl.innerHTML = '';
+            
+            const ranks = mySide === 'b' ? [1, 2, 3, 4, 5, 6, 7, 8] : [8, 7, 6, 5, 4, 3, 2, 1];
+            const files = mySide === 'b' ? ['h', 'g', 'f', 'e', 'd', 'c', 'b', 'a'] : ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+
+            ranks.forEach(rank => {
+                files.forEach(file => {
+                    const coords = file + rank;
+                    const square = document.createElement('div');
+                    square.className = `square ${(ranks.indexOf(rank) + files.indexOf(file)) % 2 === 0 ? 'light' : 'dark'}`;
+                    
+                    if (selectedSquare === coords) square.classList.add('selected');
+                    
+                    if (hintsList.includes(coords)) {
+                        const targetPiece = game.get(coords);
+                        square.classList.add(targetPiece ? 'capture-hint' : 'hint');
+                    }
+
+                    square.onclick = () => handleSquareClick(coords);
+                    
+                    const piece = game.get(coords);
+                    if (piece) {
+                        const img = document.createElement('img');
+                        img.src = PIECE_SVG[piece.color][piece.type];
+                        img.className = 'piece';
+                        square.appendChild(img);
+                    }
+                    boardEl.appendChild(square);
+                });
+            });
+        }
+
+        async function handleSquareClick(coords) {
+            if (!gameActive || game.turn() !== mySide) return;
+
+            if (hintsList.includes(coords)) {
+                game.move({ from: selectedSquare, to: coords, promotion: 'q' });
+                selectedSquare = null;
+                hintsList = [];
+                await syncMove();
+                updateUI();
+                return;
+            }
+
+            const piece = game.get(coords);
+            if (piece && piece.color === mySide) {
+                if (selectedSquare === coords) {
+                    selectedSquare = null; hintsList = [];
+                } else {
+                    selectedSquare = coords;
+                    const showHints = document.getElementById('user-show-hints').checked;
+                    if (allowHintsGlobal && showHints) {
+                        hintsList = game.moves({ square: coords, verbose: true }).map(m => m.to);
+                    } else {
+                        hintsList = [];
+                    }
+                }
+            } else {
+                selectedSquare = null; hintsList = [];
+            }
+            renderBoard();
+        }
+
+        async function syncMove() {
+            await window.supabaseClient
+                .from('chess_games')
+                .update({ fen: game.fen(), last_move: game.history().pop() })
+                .eq('room_code', myRoomCode);
+        }
+
+        function updateUI() {
+            renderBoard();
+            const msgEl = document.getElementById('game-msg');
+            
+            if (!gameActive) {
+                msgEl.innerText = "⏳ 等待對手加入...";
+                return;
+            }
+
+            document.getElementById('dot-white').classList.toggle('active', game.turn() === 'w');
+            document.getElementById('dot-black').classList.toggle('active', game.turn() === 'b');
+            
+            let status = game.turn() === mySide ? "🟢 你的回合" : "⚪ 對手回合";
+            if (game.in_check()) status += " (被將軍!)";
+            if (game.game_over()) {
+                gameActive = false;
+                if (game.in_checkmate()) status = "🏁 任務完成：將死！";
+                else status = "🏁 遊戲結束";
+            }
+            msgEl.innerText = status;
+
+            const historyEl = document.getElementById('history');
+            historyEl.innerHTML = game.history().map((m, i) => `
+                <div style="display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid #1e293b;">
+                    <span>Step ${i+1}</span>
+                    <span style="color:var(--chess-gold); font-weight:bold;">${m}</span>
+                </div>
+            `).join('');
+            historyEl.scrollTop = historyEl.scrollHeight;
+        }
+    </script>
+</body>
+</html>

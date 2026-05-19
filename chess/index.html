@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>西洋棋學院 - 酷學習</title>
+    <link rel="stylesheet" href="../styles/style.css">
+    <link rel="stylesheet" href="../styles/header.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --chess-gold: #fbbf24;
+            --chess-bg: #0f172a;
+            --chess-card: #1e293b;
+            --chess-border: #334155;
+        }
+
+        body { background-color: var(--chess-bg); color: #fff; }
+
+        header {
+            border: 2px solid var(--chess-border);
+            background-color: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(10px);
+        }
+
+        .back-link, .header-title-area { color: var(--chess-gold) !important; }
+
+        /* 英雄區塊 */
+        .chess-hero {
+            text-align: center;
+            padding: 60px 20px;
+            position: relative;
+        }
+        
+        .chess-hero h1 {
+            font-family: 'Cinzel', serif;
+            font-size: 3rem;
+            color: var(--chess-gold);
+            margin-bottom: 10px;
+            letter-spacing: 4px;
+        }
+
+        .chess-hero p {
+            color: #94a3b8;
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* 導覽網格 */
+        .nav-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            max-width: 1100px;
+            margin: 0 auto 50px;
+            padding: 0 20px;
+        }
+
+        .nav-card {
+            background: var(--chess-card);
+            border-radius: 24px;
+            padding: 40px 30px;
+            text-decoration: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 1px solid var(--chess-border);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--chess-gold);
+            box-shadow: 0 15px 40px rgba(251, 191, 36, 0.15);
+        }
+
+        /* 卡片裝飾背景棋子 */
+        .card-deco {
+            position: absolute;
+            right: -20px;
+            bottom: -20px;
+            font-size: 8rem;
+            opacity: 0.05;
+            color: var(--chess-gold);
+            pointer-events: none;
+            transition: 0.3s;
+        }
+        .nav-card:hover .card-deco {
+            opacity: 0.1;
+            transform: scale(1.1) rotate(-10deg);
+        }
+
+        .icon-box {
+            width: 70px;
+            height: 70px;
+            background: rgba(251, 191, 36, 0.1);
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--chess-gold);
+            margin-bottom: 25px;
+            transition: 0.3s;
+        }
+
+        .nav-card:hover .icon-box {
+            background: var(--chess-gold);
+            color: var(--chess-bg);
+            transform: scale(1.1);
+        }
+
+        .icon-box svg { width: 35px; height: 35px; fill: currentColor; }
+
+        .nav-card h2 {
+            font-size: 1.4rem;
+            color: var(--chess-gold);
+            margin-bottom: 12px;
+            font-weight: 800;
+        }
+
+        .nav-card p {
+            color: #94a3b8;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        /* 標籤 */
+        .status-tag {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            padding: 4px 12px;
+            border-radius: 50px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: rgba(255,255,255,0.05);
+            color: #64748b;
+        }
+        .tag-live { background: #ef4444; color: #fff; }
+
+        @media (max-width: 600px) {
+            .chess-hero h1 { font-size: 2.2rem; }
+            .nav-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">
+            <a href="../index.html" class="back-link">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            </a>
+            <span class="header-title-area">西洋棋學院</span>
+        </div>
+    </header>
+
+    <main class="page-container">
+        
+        <section class="chess-hero">
+            <h1>CHESS ACADEMY</h1>
+            <p>智力與策略的巔峰對決，從基礎走法邁向特級大師。</p>
+        </section>
+
+        <div class="nav-grid">
+            
+            <!-- 基礎教學 -->
+            <a href="learn.html" class="nav-card">
+                <div class="status-tag">Beginner</div>
+                <div class="icon-box">
+                    <svg viewBox="0 0 24 24"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/></svg>
+                </div>
+                <h2>基礎走法教學</h2>
+                <p>認識六大棋子與特殊規則：入堡、吃過路兵與兵的升變。</p>
+                <div class="card-deco">♙</div>
+            </a>
+
+            <!-- 開局圖鑑 -->
+            <a href="openings.html" class="nav-card">
+                <div class="status-tag">Theory</div>
+                <div class="icon-box">
+                    <svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+                </div>
+                <h2>互動開局庫</h2>
+                <p>探索義大利開局、西西里防禦等經典開局，掌握中心控制權。</p>
+                <div class="card-deco">♘</div>
+            </a>
+
+            <!-- 戰術殘局 -->
+            <a href="puzzles.html" class="nav-card">
+                <div class="status-tag">Challenge</div>
+                <div class="icon-box">
+                    <svg viewBox="0 0 24 24"><path d="M18 2H6c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V16H9c-1.1 0-2 .9-2 2v1h10v-1c0-1.1-.9-2-2-2h-3v-3.1c1.63-.33 2.98-1.46 3.61-2.96C18.08 8.63 20 6.55 20 4V3c0-1.1-.9-2-2-2z"/></svg>
+                </div>
+                <h2>戰術與殘局</h2>
+                <p>解開 Mate in 1 等經典殘局難題，提升實戰中的模式識別能力。</p>
+                <div class="card-deco">♔</div>
+            </a>
+
+            <!-- 線上對戰 -->
+            <a href="online.html" class="nav-card">
+                <div class="status-tag tag-live">● Live PvP</div>
+                <div class="icon-box">
+                    <svg viewBox="0 0 24 24"><path d="M19 22H5V20H19V22M17 19H7V17H17V19M16 16H8V11C8 8.24 10.24 6 13 6V4H11V2H17V4H15V6C17.76 6 20 8.24 20 11V16H16Z"/></svg>
+                </div>
+                <h2>線上對決</h2>
+                <p>使用 Supabase 實時連線。建立房間，與好友進行跨時空的策略對戰。</p>
+                <div class="card-deco">♖</div>
+            </a>
+
+        </div>
+
+    </main>
+
+</body>
+</html>

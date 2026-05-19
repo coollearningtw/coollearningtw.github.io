@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>戰術殘局 - 酷學習</title>
+    <link rel="stylesheet" href="../styles/style.css">
+    <link rel="stylesheet" href="../styles/header.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <style>
+        :root {
+            --chess-gold: #fbbf24;
+            --chess-bg: #0f172a;
+            --chess-card: #1e293b;
+            --sq-light: #e2e8f0;
+            --sq-dark: #475569;
+        }
+
+        body { background-color: var(--chess-bg); color: #fff; margin: 0; font-family: "Noto Sans TC", sans-serif; }
+        header { background: rgba(30, 41, 59, 0.9) !important; border-bottom: 2px solid #334155 !important; }
+        .header-title-area, .back-link { color: var(--chess-gold) !important; }
+
+        .puzzle-layout { 
+            display: grid; 
+            grid-template-columns: 1fr 380px; 
+            gap: 30px; 
+            max-width: 1200px; 
+            margin: 30px auto; 
+            padding: 0 20px; 
+        }
+
+        /* 棋盤外框佈局 */
+        .board-wrapper {
+            display: grid;
+            grid-template-columns: 30px 1fr;
+            grid-template-rows: 1fr 30px;
+            background: #1e293b;
+            padding: 15px;
+            border-radius: 12px;
+            border: 4px solid #334155;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            height: fit-content;
+        }
+        .coord-label { color: #94a3b8; font-weight: bold; font-size: 0.9rem; font-family: monospace; display: flex; align-items: center; justify-content: center; }
+
+        .board-container { position: relative; width: 100%; aspect-ratio: 1/1; }
+        .chess-board { display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); width: 100%; height: 100%; }
+        .square { display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; }
+        .square.light { background-color: var(--sq-light); }
+        .square.dark { background-color: var(--sq-dark); }
+        .square.selected { background-color: var(--chess-gold) !important; }
+        
+        /* 提示樣式 */
+        .square.hint::after { content: ''; width: 16px; height: 16px; background: rgba(0, 0, 0, 0.1); border-radius: 50%; position: absolute; }
+        .square.capture-hint::after { content: ''; width: 18px; height: 18px; background: rgba(239, 68, 68, 0.4);border-radius: 50%; z-index: 5;position: absolute; }
+
+        /* 錯誤閃爍動畫 */
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+        .wrong-move { animation: shake 0.3s ease-in-out; border: 2px solid #ef4444 !important; }
+
+        .piece { width: 90%; height: 90%; z-index: 2; transition: transform 0.2s; pointer-events: none; }
+
+        /* 右側資訊卡 */
+        .puzzle-card { 
+            background: var(--chess-card); 
+            border: 1px solid #334155; 
+            border-radius: 20px; 
+            padding: 30px; 
+            height: fit-content;
+            position: sticky;
+            top: 100px;
+        }
+
+        .diff-tag { display: inline-block; padding: 4px 12px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; margin-bottom: 15px; }
+        .diff-easy { background: #059669; color: #fff; }
+        .diff-medium { background: #d97706; color: #fff; }
+        .diff-hard { background: #dc2626; color: #fff; }
+
+        .puzzle-title { font-size: 1.6rem; font-weight: 900; margin-bottom: 15px; color: #fff; }
+        .puzzle-desc { font-size: 1rem; color: #94a3b8; line-height: 1.7; margin-bottom: 30px; }
+
+        .success-overlay {
+            position: absolute; inset: 0; background: rgba(15, 23, 42, 0.9);
+            z-index: 100; border-radius: 4px; display: none;
+            align-items: center; justify-content: center; flex-direction: column;
+            backdrop-filter: blur(8px);
+        }
+
+        .btn-chess { width: 100%; padding: 15px; border-radius: 12px; border: none; font-weight: bold; font-size: 1.1rem; cursor: pointer; transition: 0.2s; }
+        .btn-next { background: var(--chess-gold); color: #000; }
+        .btn-next:hover { transform: scale(1.05); }
+
+        @media (max-width: 900px) {
+            .puzzle-layout { grid-template-columns: 1fr; }
+            .puzzle-card { position: static; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">
+            <a href="index.html" class="back-link">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            </a>
+            <span class="header-title-area">戰術與殘局挑戰</span>
+        </div>
+    </header>
+
+    <main class="puzzle-layout">
+        <!-- 棋盤區 -->
+        <div id="board-outer" class="board-wrapper">
+            <div style="display:flex; flex-direction:column; height:100%; justify-content:space-around;">
+                <span class="coord-label">8</span><span class="coord-label">7</span><span class="coord-label">6</span><span class="coord-label">5</span><span class="coord-label">4</span><span class="coord-label">3</span><span class="coord-label">2</span><span class="coord-label">1</span>
+            </div>
+            <div class="board-container">
+                <div id="board" class="chess-board"></div>
+                <div id="success-overlay" class="success-overlay">
+                    <div style="font-size: 4rem; margin-bottom: 10px;">🏆</div>
+                    <h2 style="color:var(--chess-gold); margin-bottom: 5px;">破解成功！</h2>
+                    <p style="color:#94a3b8; margin-bottom: 25px;">完美找到了最佳走法</p>
+                    <button class="btn-chess btn-next" id="btn-finish-text" onclick="nextPuzzle()" style="max-width: 200px;">下一個挑戰</button>
+                </div>
+            </div>
+            <div></div>
+            <div style="display:flex; width:100%; justify-content:space-around; padding-top:10px;">
+                <span class="coord-label">a</span><span class="coord-label">b</span><span class="coord-label">c</span><span class="coord-label">d</span><span class="coord-label">e</span><span class="coord-label">f</span><span class="coord-label">g</span><span class="coord-label">h</span>
+            </div>
+        </div>
+
+        <!-- 資訊區 -->
+        <aside class="puzzle-card">
+            <div id="puzzle-info">
+                <div id="diff-badge" class="diff-tag">Easy</div>
+                <h1 class="puzzle-title" id="puzzle-title">載入中...</h1>
+                <p class="puzzle-desc" id="puzzle-desc"></p>
+                
+                <div style="margin-top:40px; padding-top:20px; border-top:1px solid #334155;">
+                    <div style="font-size:0.8rem; color:#64748b; margin-bottom:10px;">進度 Progress</div>
+                    <div id="progress-text" style="font-weight:bold; color:var(--chess-gold);">Question 0 / 0</div>
+                </div>
+            </div>
+        </aside>
+    </main>
+
+    <script>
+        const game = new Chess();
+        let puzzles = [];
+        let currentIdx = 0;
+        let selectedSquare = null;
+        let hintsList = [];
+
+        const PIECE_SVG = {
+            'w': { 'p': 'https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg', 'r': 'https://upload.wikimedia.org/wikipedia/commons/7/72/Chess_rlt45.svg', 'n': 'https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg', 'b': 'https://upload.wikimedia.org/wikipedia/commons/b/b1/Chess_blt45.svg', 'q': 'https://upload.wikimedia.org/wikipedia/commons/1/15/Chess_qlt45.svg', 'k': 'https://upload.wikimedia.org/wikipedia/commons/4/42/Chess_klt45.svg' },
+            'b': { 'p': 'https://upload.wikimedia.org/wikipedia/commons/c/c7/Chess_pdt45.svg', 'r': 'https://upload.wikimedia.org/wikipedia/commons/f/ff/Chess_rdt45.svg', 'n': 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Chess_ndt45.svg', 'b': 'https://upload.wikimedia.org/wikipedia/commons/9/98/Chess_bdt45.svg', 'q': 'https://upload.wikimedia.org/wikipedia/commons/4/47/Chess_qdt45.svg', 'k': 'https://upload.wikimedia.org/wikipedia/commons/f/f0/Chess_kdt45.svg' }
+        };
+
+        async function init() {
+            try {
+                const res = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/main/chess-data.json?t=' + Date.now());
+                const data = await res.json();
+                puzzles = data.puzzles;
+                loadPuzzle(0);
+            } catch (e) {
+                console.error("無法載入殘局資料", e);
+                document.getElementById('puzzle-title').innerText = "載入失敗";
+            }
+        }
+
+        function loadPuzzle(idx) {
+            currentIdx = idx;
+            const p = puzzles[idx];
+            game.load(p.fen);
+            selectedSquare = null;
+            hintsList = [];
+            
+            document.getElementById('puzzle-title').innerText = p.title;
+            document.getElementById('puzzle-desc').innerText = p.description;
+            document.getElementById('progress-text').innerText = `Challenge ${idx + 1} / ${puzzles.length}`;
+            
+            const badge = document.getElementById('diff-badge');
+            badge.innerText = p.difficulty;
+            badge.className = `diff-tag diff-${p.difficulty.toLowerCase()}`;
+            
+            document.getElementById('success-overlay').style.display = 'none';
+            document.getElementById('btn-finish-text').innerText = (idx === puzzles.length - 1) ? "完成挑戰" : "下一個挑戰";
+            
+            renderBoard();
+        }
+
+        function renderBoard() {
+            const boardEl = document.getElementById('board');
+            boardEl.innerHTML = '';
+            
+            // 始終以挑戰者的視角（通常是白方）渲染
+            const ranks = [8, 7, 6, 5, 4, 3, 2, 1];
+            const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+
+            ranks.forEach(rank => {
+                files.forEach(file => {
+                    const coords = file + rank;
+                    const square = document.createElement('div');
+                    square.className = `square ${(ranks.indexOf(rank) + files.indexOf(file)) % 2 === 0 ? 'light' : 'dark'}`;
+                    
+                    if (selectedSquare === coords) square.classList.add('selected');
+                    
+                    if (hintsList.includes(coords)) {
+                        const targetPiece = game.get(coords);
+                        square.classList.add(targetPiece ? 'capture-hint' : 'hint');
+                    }
+
+                    square.onclick = () => handleSquareClick(coords);
+                    
+                    const piece = game.get(coords);
+                    if (piece) {
+                        const img = document.createElement('img');
+                        img.src = PIECE_SVG[piece.color][piece.type];
+                        img.className = 'piece';
+                        square.appendChild(img);
+                    }
+                    boardEl.appendChild(square);
+                });
+            });
+        }
+
+        function handleSquareClick(coords) {
+            const p = puzzles[currentIdx];
+
+            // 如果點擊提示格
+            if (hintsList.includes(coords)) {
+                const moveAttempt = selectedSquare + coords;
+                
+                // 核心邏輯：判斷是否為正確解答
+                // 注意：有的 solution 可能是 SAN (如 Nxd5)，有的是座標 (如 d1d8)
+                // 這裡我們進行簡化判斷
+                const moveObj = game.move({ from: selectedSquare, to: coords, promotion: 'q' });
+                
+                if (moveObj && (moveAttempt === p.solution || moveObj.san === p.solution)) {
+                    // 成功
+                    selectedSquare = null;
+                    hintsList = [];
+                    renderBoard();
+                    document.getElementById('success-overlay').style.display = 'flex';
+                } else {
+                    // 失敗：不准移動並閃爍紅框
+                    game.undo();
+                    const boardWrapper = document.getElementById('board-outer');
+                    boardWrapper.classList.add('wrong-move');
+                    setTimeout(() => boardWrapper.classList.remove('wrong-move'), 400);
+                    selectedSquare = null;
+                    hintsList = [];
+                    renderBoard();
+                }
+                return;
+            }
+
+            const piece = game.get(coords);
+            // 只能選擇自己的棋子 (根據 FEN 的 turn)
+            if (piece && piece.color === game.turn()) {
+                selectedSquare = coords;
+                hintsList = game.moves({ square: coords, verbose: true }).map(m => m.to);
+            } else {
+                selectedSquare = null;
+                hintsList = [];
+            }
+            renderBoard();
+        }
+
+        function nextPuzzle() {
+            if (currentIdx < puzzles.length - 1) {
+                loadPuzzle(currentIdx + 1);
+            } else {
+                location.href = 'index.html';
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

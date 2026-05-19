@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>棋步教學 - 酷學習</title>
+    <link rel="stylesheet" href="../styles/style.css">
+    <link rel="stylesheet" href="../styles/header.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <style>
+        :root {
+            --chess-gold: #fbbf24;
+            --chess-bg: #0f172a;
+            --chess-card: #1e293b;
+            --sq-light: #e2e8f0;
+            --sq-dark: #475569;
+        }
+
+        body { background-color: var(--chess-bg); color: #fff; margin: 0; font-family: "Noto Sans TC", sans-serif; }
+        header { background: rgba(30, 41, 59, 0.9) !important; border-bottom: 2px solid #334155 !important; }
+        .header-title-area, .back-link { color: var(--chess-gold) !important; }
+
+        .learn-layout { 
+            display: grid; 
+            grid-template-columns: 1fr 380px; 
+            gap: 30px; 
+            max-width: 1200px; 
+            margin: 30px auto; 
+            padding: 0 20px; 
+        }
+
+        /* 棋盤外框佈局：左側與底部顯示座標 */
+        .board-wrapper {
+            display: grid;
+            grid-template-columns: 30px 1fr;
+            grid-template-rows: 1fr 30px;
+            background: #1e293b;
+            padding: 15px;
+            border-radius: 12px;
+            border: 4px solid #334155;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+
+        .coord-label { color: #94a3b8; font-weight: bold; font-size: 0.9rem; font-family: monospace; display: flex; align-items: center; justify-content: center; }
+
+        .board-container { 
+            position: relative; width: 100%; aspect-ratio: 1/1; 
+        }
+
+        .chess-board { display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); width: 100%; height: 100%; }
+        .square { display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; }
+        .square.light { background-color: var(--sq-light); }
+        .square.dark { background-color: var(--sq-dark); }
+        .square.selected { background-color: var(--chess-gold) !important; }
+        
+        /* 提示點 */
+        .square.hint::after { content: ''; width: 16px; height: 16px; background: rgba(0, 0, 0, 0.12); border-radius: 50%; position: absolute; z-index: 5; }
+        
+        /* 目標格：綠色 */
+        .square.target { background-color: rgba(16, 185, 129, 0.6) !important; box-shadow: inset 0 0 15px #059669; }
+
+        .piece { width: 90%; height: 90%; z-index: 2; transition: transform 0.2s; pointer-events: none; }
+
+        /* 教學說明卡片 */
+        .instr-card { 
+            background: var(--chess-card); 
+            border: 1px solid #334155; 
+            border-radius: 20px; 
+            padding: 30px; 
+            height: fit-content;
+        }
+
+        .lesson-tag { color: var(--chess-gold); font-family: 'Cinzel', serif; font-size: 0.9rem; margin-bottom: 10px; display: block; }
+        .lesson-title { font-size: 1.8rem; font-weight: 900; margin-bottom: 20px; color: #fff; }
+        .lesson-desc { font-size: 1.1rem; color: #94a3b8; line-height: 1.8; margin-bottom: 30px; }
+
+        /* 成功過關遮罩 */
+        .success-overlay {
+            position: absolute; inset: 0; background: rgba(15, 23, 42, 0.9);
+            z-index: 100; border-radius: 4px; display: none;
+            align-items: center; justify-content: center; flex-direction: column;
+            backdrop-filter: blur(6px);
+        }
+
+        /* 正常矩形按鈕 */
+        .btn-overlay-next {
+            padding: 15px 40px;
+            background-color: var(--chess-gold);
+            border: none;
+            border-radius: 12px;
+            color: #000;
+            font-weight: 900;
+            font-size: 1.2rem;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(251, 191, 36, 0.3);
+            transition: transform 0.2s;
+        }
+        .btn-overlay-next:hover { transform: scale(1.05); }
+
+        .btn-nav-standard { display: flex; gap: 10px; }
+        .btn-chess { flex: 1; padding: 12px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; }
+        .btn-prev { background: #334155; color: #fff; }
+        .btn-next-std { background: var(--chess-gold); color: #000; }
+
+        @media (max-width: 900px) {
+            .learn-layout { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">
+            <a href="index.html" class="back-link">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            </a>
+            <span class="header-title-area">基礎走法教學</span>
+        </div>
+    </header>
+
+    <main class="learn-layout">
+        <!-- 棋盤區 -->
+        <div class="board-wrapper">
+            <!-- 左側數字 -->
+            <div style="display:flex; flex-direction:column; height:100%; justify-content:space-around;">
+                <span class="coord-label">8</span><span class="coord-label">7</span><span class="coord-label">6</span><span class="coord-label">5</span><span class="coord-label">4</span><span class="coord-label">3</span><span class="coord-label">2</span><span class="coord-label">1</span>
+            </div>
+
+            <!-- 棋盤本體 -->
+            <div class="board-container">
+                <div id="board" class="chess-board"></div>
+                <!-- 過關遮罩 -->
+                <div id="success-overlay" class="success-overlay">
+                    <div style="font-size: 4rem; margin-bottom: 10px;">🌟</div>
+                    <h2 style="color:var(--chess-gold); margin-bottom: 10px;">太棒了！</h2>
+                    <p style="color:#cbd5e1; margin-bottom: 30px;">你已掌握了這個棋子的走法</p>
+                    <button class="btn-overlay-next" id="overlay-btn-text" onclick="nextLesson()">下一課</button>
+                </div>
+            </div>
+
+            <!-- 底部字母 -->
+            <div></div>
+            <div style="display:flex; width:100%; justify-content:space-around; padding-top:10px;">
+                <span class="coord-label">a</span><span class="coord-label">b</span><span class="coord-label">c</span><span class="coord-label">d</span><span class="coord-label">e</span><span class="coord-label">f</span><span class="coord-label">g</span><span class="coord-label">h</span>
+            </div>
+        </div>
+
+        <!-- 教學說明卡 -->
+        <aside class="instr-card">
+            <span class="lesson-tag" id="lesson-index">Lesson 1</span>
+            <h1 class="lesson-title" id="lesson-title">載入中...</h1>
+            <p class="lesson-desc" id="lesson-desc"></p>
+            
+            <div class="btn-nav-standard">
+                <button class="btn-chess btn-prev" id="btn-prev" onclick="prevLesson()">上一課</button>
+                <button class="btn-chess btn-next-std" id="btn-next" onclick="nextLesson()">下一課</button>
+            </div>
+        </aside>
+    </main>
+
+    <script>
+        const game = new Chess();
+        let currentLessonIdx = 0;
+        let selectedSquare = null;
+        let hintsList = [];
+
+        const PIECE_SVG = {
+            'w': { 'p': 'https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg', 'r': 'https://upload.wikimedia.org/wikipedia/commons/7/72/Chess_rlt45.svg', 'n': 'https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg', 'b': 'https://upload.wikimedia.org/wikipedia/commons/b/b1/Chess_blt45.svg', 'q': 'https://upload.wikimedia.org/wikipedia/commons/1/15/Chess_qlt45.svg', 'k': 'https://upload.wikimedia.org/wikipedia/commons/4/42/Chess_klt45.svg' },
+            'b': { 'p': 'https://upload.wikimedia.org/wikipedia/commons/c/c7/Chess_pdt45.svg', 'r': 'https://upload.wikimedia.org/wikipedia/commons/f/ff/Chess_rdt45.svg', 'n': 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Chess_ndt45.svg', 'b': 'https://upload.wikimedia.org/wikipedia/commons/9/98/Chess_bdt45.svg', 'q': 'https://upload.wikimedia.org/wikipedia/commons/4/47/Chess_qdt45.svg', 'k': 'https://upload.wikimedia.org/wikipedia/commons/f/f0/Chess_kdt45.svg' }
+        };
+
+        const LESSONS = [
+            {
+                title: "騎士 (Knight)",
+                desc: "騎士（馬）是以『L』字型移動：走兩格再轉一格。它是唯一可以跳過棋子的。請點擊白馬並移動到 <b>e5</b>。",
+                fen: "8/8/8/8/8/5N2/8/8 w - - 0 1", // 馬在 f3
+                target: "e5",
+                type: "n"
+            },
+            {
+                title: "主教 (Bishop)",
+                desc: "主教只能沿著斜線移動。請注意主教腳下的格子顏色。請將主教移動到 <b>g4</b>。",
+                fen: "8/8/8/8/8/8/8/3B4 w - - 0 1", // 主教在 d1 (光格), 目標 g4 (光格)
+                target: "g4",
+                type: "b"
+            },
+            {
+                title: "城堡 (Rook)",
+                desc: "城堡可以直線或橫線移動不限格數。請移動到 <b>a8</b>。",
+                fen: "8/8/8/8/8/8/8/R7 w - - 0 1",
+                target: "a8",
+                type: "r"
+            },
+            {
+                title: "皇后 (Queen)",
+                desc: "皇后是威力最強的棋子，結合了城堡與主教的走法。請移動到 <b>h5</b>。",
+                fen: "8/8/8/8/8/8/8/3Q4 w - - 0 1",
+                target: "h5",
+                type: "q"
+            },
+            {
+                title: "王車易位 (Castling)",
+                desc: "這是保護國王的特殊動作。請點擊 <b>國王</b> 並移動到 <b>g1</b> 完成易位。",
+                fen: "r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R w KQkq - 0 1",
+                target: "g1",
+                type: "k"
+            }
+        ];
+
+        function init() { loadLesson(0); }
+
+        function loadLesson(idx) {
+            currentLessonIdx = idx;
+            const lesson = LESSONS[idx];
+            game.load(lesson.fen);
+            selectedSquare = null;
+            hintsList = [];
+            
+            document.getElementById('lesson-index').innerText = `Lesson ${idx + 1}`;
+            document.getElementById('lesson-title').innerText = lesson.title;
+            document.getElementById('lesson-desc').innerHTML = lesson.desc;
+            document.getElementById('success-overlay').style.display = 'none';
+            
+            // 判斷是否為最後一課，改變按鈕文字
+            const nextBtnText = (idx === LESSONS.length - 1) ? "完成教學" : "下一課";
+            document.getElementById('overlay-btn-text').innerText = nextBtnText;
+            document.getElementById('btn-next').innerText = nextBtnText;
+
+            document.getElementById('btn-prev').disabled = idx === 0;
+            renderBoard();
+        }
+
+        function renderBoard() {
+            const boardEl = document.getElementById('board');
+            boardEl.innerHTML = '';
+            const lesson = LESSONS[currentLessonIdx];
+            const ranks = [8, 7, 6, 5, 4, 3, 2, 1];
+            const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+
+            ranks.forEach(rank => {
+                files.forEach(file => {
+                    const coords = file + rank;
+                    const square = document.createElement('div');
+                    square.className = `square ${(ranks.indexOf(rank) + files.indexOf(file)) % 2 === 0 ? 'light' : 'dark'}`;
+                    
+                    if (selectedSquare === coords) square.classList.add('selected');
+                    if (hintsList.includes(coords)) square.classList.add('hint');
+                    if (lesson.target === coords) square.classList.add('target');
+
+                    square.onclick = () => handleSquareClick(coords);
+                    
+                    const piece = game.get(coords);
+                    if (piece) {
+                        const img = document.createElement('img');
+                        img.src = PIECE_SVG[piece.color][piece.type];
+                        img.className = 'piece';
+                        square.appendChild(img);
+                    }
+                    boardEl.appendChild(square);
+                });
+            });
+        }
+
+        function handleSquareClick(coords) {
+            const lesson = LESSONS[currentLessonIdx];
+
+            // 限制：只能移動到綠色 target 格子
+            if (hintsList.includes(coords)) {
+                if (coords !== lesson.target) return; // 點擊其他灰色圓點不予理會
+
+                const movingPiece = game.get(selectedSquare);
+                // 針對最後一關：必須是國王在移動才算過關
+                if (lesson.type === 'k' && movingPiece.type !== 'k') {
+                    selectedSquare = null;
+                    hintsList = [];
+                    renderBoard();
+                    return;
+                }
+
+                game.move({ from: selectedSquare, to: coords, promotion: 'q' });
+                selectedSquare = null;
+                hintsList = [];
+                showSuccess();
+                renderBoard();
+                return;
+            }
+
+            const piece = game.get(coords);
+            if (piece && piece.color === 'w') {
+                selectedSquare = coords;
+                hintsList = game.moves({ square: coords, verbose: true }).map(m => m.to);
+            } else {
+                selectedSquare = null;
+                hintsList = [];
+            }
+            renderBoard();
+        }
+
+        function showSuccess() { document.getElementById('success-overlay').style.display = 'flex'; }
+
+        function nextLesson() {
+            if (currentLessonIdx < LESSONS.length - 1) {
+                loadLesson(currentLessonIdx + 1);
+            } else {
+                // 最後一關按鈕動作：回首頁
+                location.href = 'index.html';
+            }
+        }
+
+        function prevLesson() { if (currentLessonIdx > 0) loadLesson(currentLessonIdx - 1); }
+
+        init();
+    </script>
+</body>
+</html>

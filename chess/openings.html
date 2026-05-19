@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>互動開局庫 - 酷學習</title>
+    <link rel="stylesheet" href="../styles/style.css">
+    <link rel="stylesheet" href="../styles/header.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <style>
+        :root {
+            --chess-gold: #fbbf24;
+            --chess-bg: #0f172a;
+            --chess-card: #1e293b;
+            --sq-light: #e2e8f0;
+            --sq-dark: #475569;
+        }
+
+        body { background-color: var(--chess-bg); color: #fff; margin: 0; font-family: "Noto Sans TC", sans-serif; }
+        header { background: rgba(30, 41, 59, 0.9) !important; border-bottom: 2px solid #334155 !important; }
+        .header-title-area, .back-link { color: var(--chess-gold) !important; }
+
+        .opening-layout { 
+            display: grid; 
+            grid-template-columns: 1fr 420px; 
+            gap: 30px; 
+            max-width: 1300px; 
+            margin: 30px auto; 
+            padding: 0 20px; 
+        }
+
+        /* 棋盤佈局 (左側數字，底部字母) */
+        .board-wrapper {
+            display: grid;
+            grid-template-columns: 30px 1fr;
+            grid-template-rows: 1fr 30px;
+            background: #1e293b;
+            padding: 15px;
+            border-radius: 12px;
+            border: 4px solid #334155;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            height: fit-content;
+        }
+        .coord-label { color: #94a3b8; font-weight: bold; font-size: 0.9rem; font-family: monospace; display: flex; align-items: center; justify-content: center; }
+
+        .board-container { position: relative; width: 100%; aspect-ratio: 1/1; }
+        .chess-board { display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); width: 100%; height: 100%; }
+        .square { display: flex; align-items: center; justify-content: center; position: relative; }
+        .square.light { background-color: var(--sq-light); }
+        .square.dark { background-color: var(--sq-dark); }
+        .square.last-move { background-color: rgba(251, 191, 36, 0.35) !important; }
+
+        .piece { width: 90%; height: 90%; z-index: 2; transition: transform 0.2s; pointer-events: none; }
+
+        /* 右側資訊區 */
+        .info-panel { display: flex; flex-direction: column; gap: 20px; height: fit-content; }
+        
+        .opening-select-box {
+            background: var(--chess-card);
+            border: 1px solid #334155;
+            border-radius: 16px;
+            padding: 20px;
+        }
+        .opening-select-box select {
+            width: 100%; background: #0f172a; color: var(--chess-gold);
+            border: 1px solid #475569; padding: 12px; border-radius: 8px;
+            font-size: 1rem; font-weight: bold; outline: none;
+        }
+
+        .details-card { 
+            background: var(--chess-card); 
+            border: 1px solid #334155; 
+            border-radius: 20px; 
+            padding: 25px; 
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+        .op-title { font-size: 1.6rem; font-weight: 900; color: var(--chess-gold); margin-bottom: 10px; }
+        .op-meta { font-size: 0.85rem; color: #64748b; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; }
+        .op-desc { font-size: 1rem; color: #cbd5e1; line-height: 1.8; margin-bottom: 25px; }
+
+        /* 步驟註解 */
+        .step-comment {
+            background: rgba(251, 191, 36, 0.05);
+            border-left: 4px solid var(--chess-gold);
+            padding: 15px;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 20px;
+        }
+        .step-comment b { color: var(--chess-gold); display: block; margin-bottom: 5px; }
+
+        /* 導覽按鈕 */
+        .step-ctrl { display: flex; gap: 10px; margin-top: auto; }
+        .btn-chess { flex: 1; padding: 15px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-prev { background: #334155; color: #fff; }
+        .btn-next { background: var(--chess-gold); color: #000; }
+        .btn-chess:disabled { opacity: 0.2; cursor: not-allowed; }
+
+        @media (max-width: 900px) {
+            .opening-layout { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">
+            <a href="index.html" class="back-link">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            </a>
+            <span class="header-title-area">互動開局圖鑑</span>
+        </div>
+    </header>
+
+    <main class="opening-layout">
+        <!-- 棋盤區 -->
+        <div class="board-wrapper">
+            <div style="display:flex; flex-direction:column; height:100%; justify-content:space-around;">
+                <span class="coord-label">8</span><span class="coord-label">7</span><span class="coord-label">6</span><span class="coord-label">5</span><span class="coord-label">4</span><span class="coord-label">3</span><span class="coord-label">2</span><span class="coord-label">1</span>
+            </div>
+            <div class="board-container">
+                <div id="board" class="chess-board"></div>
+            </div>
+            <div></div>
+            <div style="display:flex; width:100%; justify-content:space-around; padding-top:10px;">
+                <span class="coord-label">a</span><span class="coord-label">b</span><span class="coord-label">c</span><span class="coord-label">d</span><span class="coord-label">e</span><span class="coord-label">f</span><span class="coord-label">g</span><span class="coord-label">h</span>
+            </div>
+        </div>
+
+        <!-- 資訊區 -->
+        <div class="info-panel">
+            <div class="opening-select-box">
+                <div style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 8px; font-weight: bold;">選擇開局類型</div>
+                <select id="opening-selector" onchange="changeOpening(this.value)">
+                    <!-- 由 JS 填充 -->
+                </select>
+            </div>
+
+            <aside class="details-card">
+                <div id="op-header">
+                    <h1 class="op-title" id="display-title">載入中...</h1>
+                    <div class="op-meta" id="display-meta">Theory & Strategy</div>
+                </div>
+                
+                <p class="op-desc" id="display-desc"></p>
+
+                <div id="step-info" class="step-comment" style="display:none;">
+                    <b id="move-san">1. e4</b>
+                    <span id="move-comment"></span>
+                </div>
+
+                <div class="step-ctrl">
+                    <button class="btn-chess btn-prev" id="btn-reset" onclick="resetOpening()">重置</button>
+                    <button class="btn-chess btn-prev" id="btn-prev" onclick="prevStep()">上一步</button>
+                    <button class="btn-chess btn-next" id="btn-next" onclick="nextStep()">下一步</button>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    <script>
+        const game = new Chess();
+        let openingsData = [];
+        let currentOpening = null;
+        let currentStepIdx = -1; // -1 代表初始局面
+
+        const PIECE_SVG = {
+            'w': { 'p': 'https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg', 'r': 'https://upload.wikimedia.org/wikipedia/commons/7/72/Chess_rlt45.svg', 'n': 'https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg', 'b': 'https://upload.wikimedia.org/wikipedia/commons/b/b1/Chess_blt45.svg', 'q': 'https://upload.wikimedia.org/wikipedia/commons/1/15/Chess_qlt45.svg', 'k': 'https://upload.wikimedia.org/wikipedia/commons/4/42/Chess_klt45.svg' },
+            'b': { 'p': 'https://upload.wikimedia.org/wikipedia/commons/c/c7/Chess_pdt45.svg', 'r': 'https://upload.wikimedia.org/wikipedia/commons/f/ff/Chess_rdt45.svg', 'n': 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Chess_ndt45.svg', 'b': 'https://upload.wikimedia.org/wikipedia/commons/9/98/Chess_bdt45.svg', 'q': 'https://upload.wikimedia.org/wikipedia/commons/4/47/Chess_qdt45.svg', 'k': 'https://upload.wikimedia.org/wikipedia/commons/f/f0/Chess_kdt45.svg' }
+        };
+
+        async function init() {
+            try {
+                // 抓取 GitHub 上的資料 (或使用本地測試資料)
+                const res = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/main/chess-data.json');
+                const data = await res.json();
+                openingsData = data.openings;
+
+                // 填充選擇器
+                const selector = document.getElementById('opening-selector');
+                selector.innerHTML = openingsData.map((op, idx) => `<option value="${idx}">${op.name}</option>`).join('');
+
+                changeOpening(0);
+            } catch (e) {
+                console.error("資料載入失敗", e);
+                // 預備用的備份資料
+                openingsData = [{ name: "義大利開局", desc: "最經典的開局之一。", steps: [{move:"e4", comment:"佔領中心"}, {move:"e5", comment:"黑方對應"}] }];
+                renderBoard();
+            }
+        }
+
+        function changeOpening(idx) {
+            currentOpening = openingsData[idx];
+            resetOpening();
+            document.getElementById('display-title').innerText = currentOpening.name;
+            document.getElementById('display-desc').innerText = currentOpening.description;
+        }
+
+        function resetOpening() {
+            game.reset();
+            currentStepIdx = -1;
+            updateUI();
+        }
+
+        function nextStep() {
+            if (currentStepIdx < currentOpening.steps.length - 1) {
+                currentStepIdx++;
+                const step = currentOpening.steps[currentStepIdx];
+                game.move(step.move);
+                updateUI();
+            }
+        }
+
+        function prevStep() {
+            if (currentStepIdx >= 0) {
+                game.undo();
+                currentStepIdx--;
+                updateUI();
+            }
+        }
+
+        function renderBoard() {
+            const boardEl = document.getElementById('board');
+            boardEl.innerHTML = '';
+            const history = game.history({ verbose: true });
+            const lastMove = history.length > 0 ? history[history.length - 1] : null;
+
+            const ranks = [8, 7, 6, 5, 4, 3, 2, 1];
+            const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+
+            ranks.forEach(rank => {
+                files.forEach(file => {
+                    const coords = file + rank;
+                    const square = document.createElement('div');
+                    square.className = `square ${(ranks.indexOf(rank) + files.indexOf(file)) % 2 === 0 ? 'light' : 'dark'}`;
+                    
+                    // 高亮最後一手
+                    if (lastMove && (coords === lastMove.from || coords === lastMove.to)) {
+                        square.classList.add('last-move');
+                    }
+
+                    const piece = game.get(coords);
+                    if (piece) {
+                        const img = document.createElement('img');
+                        img.src = PIECE_SVG[piece.color][piece.type];
+                        img.className = 'piece';
+                        square.appendChild(img);
+                    }
+                    boardEl.appendChild(square);
+                });
+            });
+        }
+
+        function updateUI() {
+            renderBoard();
+            const stepInfo = document.getElementById('step-info');
+            
+            if (currentStepIdx >= 0) {
+                const step = currentOpening.steps[currentStepIdx];
+                stepInfo.style.display = 'block';
+                document.getElementById('move-san').innerText = `${Math.floor(currentStepIdx/2 + 1)}${currentStepIdx % 2 === 0 ? '.' : '...'} ${step.move}`;
+                document.getElementById('move-comment').innerText = step.comment;
+            } else {
+                stepInfo.style.display = 'none';
+            }
+
+            document.getElementById('btn-prev').disabled = currentStepIdx === -1;
+            document.getElementById('btn-next').disabled = currentStepIdx === currentOpening.steps.length - 1;
+        }
+
+        init();
+    </script>
+</body>
+</html>

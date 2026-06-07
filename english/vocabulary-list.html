@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>單字列表 - 酷學習</title>
+    <link rel="stylesheet" href="../styles/style.css">
+    <link rel="stylesheet" href="../styles/header.css">
+    <style>
+        body { background-color: #f8fafc; }
+        .list-layout { display: flex; max-width: 1200px; width: 100%; margin: 0 auto; position: relative; gap: 20px; }
+        
+        /* --- 修改後的控制列樣式 --- */
+.control-sticky {
+    position: sticky; 
+    /* 這裡的 top 必須配合 header.css 的高度，通常 header + margin 約為 80px */
+    top: calc(var(--header-height, 70px) + 8px);
+    z-index: 1100;
+    width: 100%;
+    background: #f8fafc; /* 使用實色，避免透明度導致的文字重疊感 */
+    padding: 15px 20px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+/* 關鍵修正：建立一個向上延伸的遮罩屏障 */
+.control-sticky::before {
+    content: "";
+    position: absolute;
+    top: -120px; /* 向上延伸，封住 header 下方的空隙 */
+    left: 0;
+    right: 0;
+    height: 120px;
+    background: #f8fafc; /* 與背景色一致 */
+    z-index: -1;
+}
+
+.search-row {
+    display: flex;
+    gap: 12px;
+    max-width: 980px; /* 與 Header 的 max-width 一致 */
+    margin: 0 auto;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.search-input { flex: 1; padding: 12px 20px; border-radius: 50px; border: 2px solid #e2e8f0; outline: none; font-size: 1rem; }
+.search-input:focus { border-color: var(--primary); }
+
+.mode-toggle { display: flex; background: #e2e8f0; padding: 4px; border-radius: 50px; gap: 4px; }
+.toggle-btn { border: none; padding: 8px 16px; border-radius: 50px; font-size: 0.85rem; font-weight: bold; cursor: pointer; color: #64748b; }
+.toggle-btn.active { background: #fff; color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+
+.vocab-list-container { flex: 1; padding: 20px; }
+.group-section { margin-bottom: 40px; scroll-margin-top: calc(var(--header-height, 70px) + 120px); }
+.group-header { font-size: 1.5rem; font-weight: 900; color: var(--primary); border-bottom: 2px solid var(--primary); margin-bottom: 15px; }
+
+.word-item {
+    background: #fff; padding: 15px 20px; border-radius: 12px; margin-bottom: 8px;
+    display: flex; justify-content: space-between; align-items: center;
+    text-decoration: none; color: inherit; border: 1px solid #f1f5f9; transition: 0.2s;
+}
+.word-item:hover { transform: translateX(5px); border-color: var(--primary); }
+.word-text { font-size: 1.2rem; font-weight: 800; color: #1e293b; }
+.word-pos { font-size: 1rem; color: #94a3b8; font-style: italic; margin-left: 8px; }
+.word-ch { color: #64748b; font-size: 0.95rem; }
+
+.index-rail {
+    width: 50px; position: sticky; top: 150px; height: calc(100vh - 180px);
+    display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 2px;
+}
+.index-item {
+    font-size: 0.75rem; font-weight: 900; color: #94a3b8; text-decoration: none;
+    width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%;
+}
+.index-item:hover { background: #e0f2fe; color: var(--primary); }
+
+/* 確保搜尋欄在大螢幕下不會貼邊，維持與 Header 一致的對齊 */
+@media (min-width: 980px) {
+    .control-sticky {
+        padding-left: 0;
+        padding-right: 0;
+    }
+}
+
+/* 手機版調整：因為手機版 Header 可能較矮，調整 top 值 */
+@media (max-width: 768px) {
+    .list-layout { display: block; gap: 0; padding: 0 12px; }
+    .control-sticky { top: calc(var(--header-height, 70px) + 4px); padding: 14px 14px; }
+    .search-row { flex-direction: column; align-items: stretch; gap: 10px; }
+    .search-input { width: 100%; }
+    .mode-toggle { width: 100%; justify-content: space-between; }
+    .toggle-btn { flex: 1; padding: 10px 12px; min-width: 0; }
+    .vocab-list-container { padding: 16px 0 40px; }
+    .group-section { scroll-margin-top: calc(var(--header-height, 70px) + 140px); }
+    .group-header { font-size: 1.25rem; margin-bottom: 14px; }
+    .word-item { padding: 15px 14px; justify-content: space-between; gap: 12px; }
+    .word-item:hover { transform: none; }
+    .word-item > div:first-child { min-width: 0; flex: 1; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .word-text { font-size: 1.05rem; }
+    .word-pos { margin-left: 0; }
+    .word-ch { font-size: 0.92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 46%; text-align: right; }
+    .index-rail {
+        display: flex;
+        position: fixed;
+        right: 8px;
+        top: calc(var(--header-height, 70px) + 150px);
+        width: 40px;
+        max-height: calc(100vh - (var(--header-height, 70px) + 166px));
+        padding: 8px 0;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 6px;
+        background: rgba(255,255,255,0.98);
+        border: 1px solid rgba(15, 23, 42, 0.08);
+        border-radius: 24px;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+        z-index: 1200;
+    }
+    .index-item {
+        width: 32px;
+        height: 32px;
+        font-size: 0.72rem;
+    }
+    .vocab-list-container { padding-right: 56px; }
+}
+
+/* 更窄手機版進一步優化 */
+@media (max-width: 500px) {
+    .control-sticky { padding: 12px 12px; }
+    .search-input { padding: 12px 16px; }
+    .toggle-btn { padding: 10px 10px; font-size: 0.8rem; }
+    .group-section { margin-bottom: 32px; }
+    .index-rail { right: 6px; width: 36px; }
+    .index-item { width: 30px; height: 30px; font-size: 0.68rem; }
+}
+
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <a href="english.html" class="back-link">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </a>
+            <span class="header-title-area">單字探索列表</span>
+        </div>
+    </header>
+
+    <div class="control-sticky">
+        <div class="search-row">
+            <input type="text" id="search-input" class="search-input" placeholder="搜尋單字或中文..." oninput="handleSearch()">
+            <div class="mode-toggle">
+                <button class="toggle-btn active" id="btn-alpha" onclick="switchMode('alpha')">A-Z</button>
+                <button class="toggle-btn" id="btn-level" onclick="switchMode('level')">分級</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="list-layout">
+        <main class="vocab-list-container" id="vocab-root"></main>
+        <aside class="index-rail" id="index-rail"></aside>
+    </div>
+
+    <script>
+        let allWords = [];
+        let currentMode = 'alpha';
+
+        async function init() {
+            try {
+                const response = await fetch('data/vocabulary.json');
+                if (!response.ok) throw new Error('Vocabulary JSON load failed');
+                allWords = await response.json();
+                render();
+            } catch (e) {
+                document.getElementById('vocab-root').innerHTML = "資料載入失敗，請確認 JSON 檔案路徑。";
+            }
+        }
+
+        function switchMode(mode) {
+            currentMode = mode;
+            document.getElementById('btn-alpha').classList.toggle('active', mode === 'alpha');
+            document.getElementById('btn-level').classList.toggle('active', mode === 'level');
+            render();
+        }
+
+        function render(filter = "") {
+            const root = document.getElementById('vocab-root');
+            const rail = document.getElementById('index-rail');
+            root.innerHTML = ''; rail.innerHTML = '';
+
+            let filtered = allWords.filter(w => 
+                w.word.toLowerCase().includes(filter.toLowerCase()) || w.ch.includes(filter)
+            );
+
+            let groups = {};
+            if (currentMode === 'alpha') {
+                "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").forEach(c => groups[c] = []);
+                filtered.forEach(w => {
+                    let first = w.word[0].toUpperCase();
+                    if (groups[first]) groups[first].push(w);
+                });
+            } else {
+                [1,2,3,4,5,6].forEach(l => groups[`Level ${l}`] = []);
+                filtered.forEach(w => {
+                    if (groups[`Level ${w.level}`]) groups[`Level ${w.level}`].push(w);
+                });
+            }
+
+            Object.keys(groups).forEach(key => {
+                if (groups[key].length === 0) return;
+
+                // 渲染側邊索引
+                const a = document.createElement('a');
+                a.className = 'index-item';
+                a.innerText = key.replace('Level ', 'L');
+                a.href = `#${key}`;
+                rail.appendChild(a);
+
+                // 渲染列表區塊
+                const sec = document.createElement('section');
+                sec.id = key;
+                sec.className = 'group-section';
+                sec.innerHTML = `<h2 class="group-header">${key}</h2>`;
+                
+                groups[key].sort((a, b) => a.word.localeCompare(b.word)).forEach(w => {
+                    const item = document.createElement('a');
+                    item.className = 'word-item';
+                    item.href = `vocabulary-detail.html?word=${encodeURIComponent(w.word)}&mode=${currentMode}`;
+                    item.innerHTML = `
+                        <div><span class="word-text">${w.word}</span><span class="word-pos">${w.pos}</span></div>
+                        <div class="word-ch">${w.ch}</div>
+                    `;
+                    sec.appendChild(item);
+                });
+                root.appendChild(sec);
+            });
+        }
+
+        function handleSearch() { render(document.getElementById('search-input').value); }
+        init();
+    </script>
+</body>
+</html>

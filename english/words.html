@@ -3,43 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="index, follow">
     <title>單字背誦</title>
     <link rel="stylesheet" href="../styles/style.css">
     <link rel="stylesheet" href="../styles/header.css">
+    <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
     <style>
-        body { padding-bottom: 100px; }
-        .head-actions { display: flex; gap: 8px; }
+        body { padding-bottom: 110px; } /* 預留底欄高度 */
+        .head-actions { display: flex; gap: 8px; align-items: center; }
+        
+        /* 搜尋與篩選區塊 */
         .search-section { margin-bottom: 15px; position: sticky; top: 80px; z-index: 90; background-color: var(--bg-color); padding: 10px 0; }
         .search-row { display: flex; gap: 10px; width: 100%; }
         .search-input-group { position: relative; flex: 1; }
         .search-icon-hint { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #999; pointer-events: none; }
         .search-input { width: 100%; padding: 12px 15px 12px 42px; border-radius: 12px; border: 1px solid #ddd; font-size: 1rem; background-color: #fff; outline: none; }
         .pos-select { padding: 0 10px; border-radius: 12px; border: 1px solid #ddd; background-color: #fff; font-size: 0.9rem; min-width: 110px; cursor: pointer; }
+        
+        /* 列表樣式與播放中高亮 */
         .word-list-item { padding: 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
         .w-info h3 { margin: 0; font-size: 1.2rem; }
         .w-info p { margin: 4px 0 0; color: #666; display: none; }
         .w-info p.show { display: block; }
-        .playing { background: var(--primary-light) !important; border: 2px solid var(--primary) !important; }
+        
+        /* 網格卡片樣式與高亮 */
         .word-card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; }
-        .flash-card-mini { padding: 20px; text-align: center; min-height: 150px; display: flex; flex-direction: column; justify-content: center; position: relative; }
-        .btn-header-icon { background: none; border: none; cursor: pointer; color: var(--primary); display: flex; align-items: center; padding: 5px; }
+        .flash-card-mini { padding: 20px; text-align: center; min-height: 150px; display: flex; flex-direction: column; justify-content: center; position: relative; cursor: pointer; }
+        
+        /* 播放狀態與常錯樣式 */
+        .word-item-base { position: relative; overflow: hidden; }
+        .is-mistake::after { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background-color: #e74c3c; z-index: 1; }
+        .playing { background: var(--primary-light) !important; border: 2px solid var(--primary) !important; }
+        .playing:not(.is-mistake)::after { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background-color: var(--primary); z-index: 1; }
+        .flash-card-mini.playing { transform: scale(1.03); }
+
+        /* 按鈕樣式統一 */
+        .btn-header-icon { background: none; border: none; cursor: pointer; color: var(--primary); display: flex; align-items: center; padding: 5px; border-radius: 50%; transition: background 0.2s; }
+        .btn-header-icon:hover { background: rgba(11,118,209,0.08); }
         .btn-header-icon svg { width: 24px; height: 24px; }
-        .btn-star.active { color: #f1c40f; fill: #f1c40f; }
+        
+        /* 按鈕啟動狀態 */
+        .btn-star.active { color: #f1c40f !important; fill: #f1c40f !important; }
+        .btn-mistake { color: #ccc; transition: color 0.2s; }
+        .btn-mistake.active { color: #e74c3c !important; }
+        .btn-header-icon.mistake-active { color: #e74c3c; background: rgba(231, 76, 60, 0.1); }
+
+        /* 底部播放控制底欄 */
+        .bottom-nav-fixed { position: fixed; bottom: 0; left: 0; right: 0; height: 85px; background: #fff; box-shadow: 0 -2px 10px rgba(0,0,0,0.08); z-index: 100; display: flex; align-items: center; }
+        .bottom-nav-content { width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; max-width: 800px; margin: 0 auto; }
+        .play-ctrl-group { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .play-main-btn { width: 50px; height: 50px; background: var(--primary, #0b76d1); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; box-shadow: 0 4px 10px rgba(11,118,209,0.3); border: none; cursor: pointer; }
+        .play-main-btn svg { width: 24px; height: 24px; fill: #fff; }
+        .select-styled { border: 1px solid #ddd; border-radius: 6px; padding: 4px 8px; font-size: 0.9rem; background:#fff; outline: none; cursor: pointer; }
     </style>
 </head>
 <body>
     <header>
         <div class="logo">
-            <a href="english.html" class="back-link">
+            <a href="english-materials.html" class="back-link">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
             </a>
             <img src="../images/logo.png" alt="Logo" height="40">
             <span style="font-weight:bold; color:var(--primary);">單字背誦</span>
         </div>
         <div class="header-right">
+            <!-- 恢復：測驗連結入口 -->
+            <a href="quiz.html" class="btn-header-icon" title="測驗">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            </a>
             <button class="btn-header-icon" onclick="toggleView()" title="切換視圖"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 14h4v-4H4v4zm0 5h4v-4H4v4zM4 9h4V5H4v4zm5 5h12v-4H9v4zm0 5h12v-4H9v4zM9 5v4h12V5H9z"/></svg></button>
             <button class="btn-header-icon" onclick="toggleLang()" title="中英切換"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0014.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg></button>
-            <button class="btn-header-icon" id="btn-fav-filter" onclick="toggleFavFilter()" title="最愛篩選"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg></button>
+            <!-- 恢復：常錯單字篩選按鈕 -->
+            <button class="btn-header-icon" id="btn-mistake-filter" onclick="toggleMistakeFilter()" title="只顯示常錯單字"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg></button>
+            <button class="btn-header-icon" id="btn-fav" onclick="toggleFavFilter()" title="只顯示最愛"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg></button>
         </div>
     </header>
 
@@ -48,8 +84,9 @@
             <div class="search-row">
                 <div class="search-input-group">
                     <svg class="search-icon-hint" viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-                    <input type="text" id="search-input" class="search-input" placeholder="搜尋英文或中文...">
+                    <input type="text" id="search-input" class="search-input" placeholder="搜尋英文或中文..." autocomplete="off">
                 </div>
+                <!-- 改良：保持原結構，程式會自動填入詞性選項 -->
                 <select id="pos-filter" class="pos-select"><option value="">所有詞性</option></select>
             </div>
         </div>
@@ -57,42 +94,128 @@
         <div id="grid-view" class="word-card-grid" style="display:none;"></div>
     </div>
 
+    <!-- 恢復：底部循環語音播放底欄 -->
+    <div class="bottom-nav-fixed">
+        <div class="bottom-nav-content">
+            <div class="play-ctrl-group" onclick="toggleLoopAll()" style="cursor:pointer; color:#666;" id="loop-btn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46A7.93 7.93 0 0020 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74A7.93 7.93 0 004 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
+                <span style="font-size:0.75rem; font-weight: bold;">全部循環</span>
+            </div>
+            <div class="play-ctrl-group">
+                <button class="play-main-btn" onclick="playSequence()">
+                    <svg id="play-icon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                </button>
+                <span id="play-txt" style="font-size:0.75rem; color:#666; font-weight: bold;">循環播放</span>
+            </div>
+            <div class="play-ctrl-group">
+                <select id="rpt-cnt" class="select-styled">
+                    <option value="1">播放 1 次</option>
+                    <option value="2">播放 2 次</option>
+                    <option value="3">播放 3 次</option>
+                    <option value="4">播放 4 次</option>
+                    <option value="5">播放 5 次</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
     <script>
         let allWords=[], dispWords=[], favs=JSON.parse(localStorage.getItem('my_favs')||'[]');
-        let isList=true, showCh=false, onlyFav=false, searchText='', filterPos='';
+        // 恢復：讀取常錯單字清單
+        let mistakes=JSON.parse(localStorage.getItem('english_mistakes')||'[]');
+        
+        let isList=true, showCh=false, onlyFav=false, onlyMistake=false, searchText='', filterPos='';
+        // 恢復：自動朗讀狀態變數
+        let isPlaying=false, loopAll=false, currIdx=0;
 
         (async()=>{
             const sel = JSON.parse(localStorage.getItem('sel_lessons')||'[]');
-            if(!sel.length) { location.href='english.html'; return; }
-            const res = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/english.json'); const d=await res.json();
+            if(!sel.length) { alert('未選課'); location.href='english.html'; return; }
+            
+            // 使用新版的 GitHub 遠端資料庫
+            const res = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/english.json'); 
+            const d = await res.json();
             d.sources.forEach(s=>{ s.lessons.forEach(l=>{
                 if(sel.some(x=>x.source===s.name && x.lesson===l.lesson)) allWords.push(...l.vocabulary);
             })});
             
-            document.getElementById('search-input').oninput = (e) => { searchText = e.target.value.toLowerCase(); refresh(); };
-            document.getElementById('pos-filter').onchange = (e) => { filterPos = e.target.value; refresh(); };
+            // 動態生成選取詞性（避免舊版硬編碼導致的單字對不上問題）
+            populatePosFilter();
+
+            document.getElementById('search-input').oninput = (e) => { 
+                searchText = e.target.value.toLowerCase().trim(); 
+                stop(); currIdx = 0; refresh(); 
+            };
+            document.getElementById('pos-filter').onchange = (e) => { 
+                filterPos = e.target.value; 
+                stop(); currIdx = 0; refresh(); 
+            };
             refresh();
         })();
 
+        // 動態收集單字資料中的所有不重複詞性並填入選單
+        function populatePosFilter() {
+            const posSelect = document.getElementById('pos-filter');
+            posSelect.innerHTML = '<option value="">所有詞性</option>';
+            const posSet = new Set();
+            allWords.forEach(w => { if (w.pos && w.pos.trim()) posSet.add(w.pos.trim()); });
+            Array.from(posSet).sort().forEach(pos => {
+                const opt = document.createElement('option');
+                opt.value = pos;
+                opt.textContent = pos;
+                posSelect.appendChild(opt);
+            });
+        }
+
         function refresh() {
-            dispWords = allWords.filter(w => {
-                const matchSearch = w.word.toLowerCase().includes(searchText) || w.chinese.includes(searchText);
-                const matchPos = !filterPos || (w.pos && w.pos.includes(filterPos));
-                const matchFav = !onlyFav || favs.includes(w.word);
-                return matchSearch && matchPos && matchFav;
+            let baseList = [];
+            if(onlyMistake) baseList = allWords.filter(w => mistakes.includes(w.word));
+            else if(onlyFav) baseList = allWords.filter(w => favs.includes(w.word));
+            else baseList = allWords;
+
+            dispWords = baseList.filter(w => {
+                const matchSearch = !searchText || w.word.toLowerCase().includes(searchText) || w.chinese.includes(searchText);
+                const matchPos = !filterPos || (w.pos === filterPos);
+                return matchSearch && matchPos;
             });
             renderList(); renderGrid();
         }
 
         function renderList() {
             const c = document.getElementById('list-view'); c.innerHTML='';
+            if(!dispWords.length) {
+                const msg = searchText || filterPos ? '找不到符合條件的單字' : (onlyMistake ? '目前沒有常錯單字記錄' : (onlyFav ? '尚無最愛單字' : '無符合單字'));
+                c.innerHTML=`<p style="text-align:center; color:#666; margin-top:40px;">${msg}</p>`;
+                return;
+            }
             dispWords.forEach((w,i)=>{
-                const el = document.createElement('div'); el.className='std-card word-list-item';
+                const el = document.createElement('div');
+                const isM = mistakes.includes(w.word);
+                const isF = favs.includes(w.word);
+
+                el.className = `std-card word-list-item word-item-base ${isM ? 'is-mistake' : ''} ${i===currIdx && isPlaying ? 'playing' : ''}`;
+                el.id = `list-${i}`;
+                
+                // 改良：直接調用 clickItem，並利用 event.stopPropagation() 防止按鈕觸發點擊
+                el.onclick = () => clickItem(i);
+
+                const displayText = w.standard_ans || w.word;
+                const posText = w.pos ? ` <small>(${w.pos})</small>` : '';
+
                 el.innerHTML = `
-                    <div class="w-info"><h3>${w.word} <small>(${w.pos})</small></h3><p class="${showCh?'show':''}">${w.chinese}</p></div>
-                    <div class="head-actions"><button class="btn-header-icon btn-star ${favs.includes(w.word)?'active':''}" onclick="togFav('${w.word}',this)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg></button></div>
+                    <div class="w-info">
+                        <h3>${displayText}${posText}</h3>
+                        <p class="${showCh?'show':''}">${w.chinese}</p>
+                    </div>
+                    <div class="list-actions" style="display: flex; gap: 5px; align-items: center;">
+                        <button class="btn-header-icon btn-mistake ${isM?'active':''}" onclick="togMistake('${w.word}', this); event.stopPropagation();" title="標記為常錯">
+                            <svg viewBox="0 0 24 24" style="width:22px;height:22px;fill:currentColor;"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+                        </button>
+                        <button class="btn-header-icon btn-star ${isF?'active':''}" onclick="togFav('${w.word}', this); event.stopPropagation();" title="加入最愛">
+                            <svg viewBox="0 0 24 24" fill="currentColor" style="width:22px;height:22px;"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                        </button>
+                    </div>
                 `;
-                el.onclick = (e) => { if(e.target.tagName!=='BUTTON' && e.target.tagName!=='svg' && e.target.tagName!=='path') speak(w.word); };
                 c.appendChild(el);
             });
         }
@@ -100,18 +223,143 @@
         function renderGrid() {
             const c = document.getElementById('grid-view'); c.innerHTML='';
             dispWords.forEach((w,i)=>{
-                const el = document.createElement('div'); el.className='std-card flash-card-mini';
-                el.innerHTML = `<div style="font-weight:bold;font-size:1.2rem;">${w.word}</div><div class="${showCh?'':'show'}" style="color:#666;font-size:0.9rem;">${w.chinese}</div>`;
-                el.onclick = () => speak(w.word);
+                const el = document.createElement('div');
+                const isM = mistakes.includes(w.word);
+                const isF = favs.includes(w.word);
+
+                el.className = `std-card flash-card-mini word-item-base ${isM ? 'is-mistake' : ''} ${i===currIdx && isPlaying ? 'playing' : ''}`;
+                el.id = `grid-${i}`;
+                el.onclick = () => clickItem(i);
+
+                const displayText = w.standard_ans || w.word;
+                const posHtml = w.pos ? `<div style="font-size:0.8rem; color:#999; margin-top: 5px;">(${w.pos})</div>` : '';
+
+                el.innerHTML = `
+                    <button class="btn-header-icon btn-mistake ${isM?'active':''}" onclick="togMistake('${w.word}', this); event.stopPropagation();" title="標記為常錯" style="position: absolute; top: 8px; left: 8px; z-index: 2;">
+                        <svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:currentColor;"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+                    </button>
+                    <button class="btn-header-icon btn-star ${isF?'active':''}" onclick="togFav('${w.word}', this); event.stopPropagation();" title="加入最愛" style="position: absolute; top: 8px; right: 8px; z-index: 2;">
+                        <svg viewBox="0 0 24 24" fill="currentColor" style="width:20px;height:20px;"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                    </button>
+                    <div style="font-weight:bold; font-size:1.3rem; color: var(--primary); line-height: 1.2; margin-bottom: 5px;">${displayText}</div>
+                    <div class="grid-chinese" style="color:#666; font-size:0.9rem; display: ${showCh ? 'block' : 'none'};">${w.chinese}</div>
+                    ${posHtml}
+                `;
                 c.appendChild(el);
             });
         }
 
-        function toggleView() { isList=!isList; document.getElementById('list-view').style.display=isList?'block':'none'; document.getElementById('grid-view').style.display=isList?'none':'grid'; }
+        // 點擊手動點朗讀，並停止自動輪播
+        function clickItem(i) {
+            stop(); currIdx=i;
+            document.querySelectorAll('.playing').forEach(e=>e.classList.remove('playing'));
+            const lItem = document.getElementById(`list-${i}`); if(lItem) lItem.classList.add('playing');
+            const gItem = document.getElementById(`grid-${i}`); if(gItem) gItem.classList.add('playing');
+            speak(dispWords[i].word);
+        }
+
+        function toggleView() { 
+            isList=!isList; 
+            document.getElementById('list-view').style.display=isList?'block':'none'; 
+            document.getElementById('grid-view').style.display=isList?'none':'grid'; 
+            scrollCurr();
+        }
         function toggleLang() { showCh=!showCh; refresh(); }
-        function toggleFavFilter() { onlyFav=!onlyFav; document.getElementById('btn-fav-filter').classList.toggle('active', onlyFav); refresh(); }
-        function togFav(w,btn) { if(favs.includes(w)) favs=favs.filter(x=>x!==w); else favs.push(w); localStorage.setItem('my_favs', JSON.stringify(favs)); btn.classList.toggle('active'); }
-        function speak(t) { window.speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(t); u.lang='en-US'; window.speechSynthesis.speak(u); }
+        
+        function toggleFavFilter() { 
+            onlyFav=!onlyFav; 
+            if(onlyFav) { onlyMistake = false; document.getElementById('btn-mistake-filter').classList.remove('mistake-active'); }
+            document.getElementById('btn-fav').classList.toggle('active', onlyFav); 
+            currIdx=0; stop(); refresh(); 
+        }
+
+        function toggleMistakeFilter() {
+            onlyMistake = !onlyMistake;
+            if(onlyMistake) { onlyFav = false; document.getElementById('btn-fav').classList.remove('active'); }
+            document.getElementById('btn-mistake-filter').classList.toggle('mistake-active', onlyMistake);
+            currIdx=0; stop(); refresh(); 
+        }
+
+        function togFav(w, btn) {
+            if(favs.includes(w)) favs=favs.filter(x=>x!==w); else favs.push(w);
+            localStorage.setItem('my_favs', JSON.stringify(favs));
+            if(onlyFav) refresh(); 
+            else {
+                // 自動尋找畫面上相同單字的星號按鈕同步狀態
+                const relatedBtns = document.querySelectorAll(`button[onclick*="togFav('${w}'"]`);
+                relatedBtns.forEach(b => b.classList.toggle('active'));
+            }
+        }
+
+        function togMistake(w, btn) {
+            if(mistakes.includes(w)) mistakes=mistakes.filter(x=>x!==w); else mistakes.push(w);
+            localStorage.setItem('english_mistakes', JSON.stringify(mistakes));
+            if(onlyMistake) refresh(); 
+            else {
+                const listEl = [...document.querySelectorAll('.word-list-item')].find(el => el.innerHTML.includes(`'${w}'`));
+                const gridEl = [...document.querySelectorAll('.flash-card-mini')].find(el => el.innerHTML.includes(`'${w}'`));
+                const toggleClass = mistakes.includes(w) ? 'add' : 'remove';
+                if(listEl) listEl.classList[toggleClass]('is-mistake');
+                if(gridEl) gridEl.classList[toggleClass]('is-mistake');
+
+                const relatedBtns = document.querySelectorAll(`button[onclick*="togMistake('${w}'"]`);
+                relatedBtns.forEach(b => b.classList.toggle('active'));
+            }
+        }
+
+        /* 恢復：自動循環朗讀控制邏輯 */
+        function toggleLoopAll() { 
+            loopAll=!loopAll; 
+            document.getElementById('loop-btn').style.color = loopAll ? 'var(--primary)' : '#666'; 
+        }
+
+        function playSequence() {
+            if(isPlaying) stop(); 
+            else { isPlaying=true; updatePlayUI(true); currIdx=0; playStep(0); }
+        }
+
+        function playStep(cnt) {
+            if(!isPlaying) return;
+            if(currIdx >= dispWords.length) {
+                if(loopAll) { currIdx=0; } else { stop(); return; }
+            }
+            document.querySelectorAll('.playing').forEach(e=>e.classList.remove('playing'));
+            const lItem = document.getElementById(`list-${currIdx}`); if(lItem) lItem.classList.add('playing');
+            const gItem = document.getElementById(`grid-${currIdx}`); if(gItem) gItem.classList.add('playing');
+            scrollCurr();
+
+            const max = parseInt(document.getElementById('rpt-cnt').value);
+            speak(dispWords[currIdx].word, () => {
+                if(!isPlaying) return;
+                if(cnt < max-1) setTimeout(()=>playStep(cnt+1), 500);
+                else { currIdx++; setTimeout(()=>playStep(0), 800); }
+            });
+        }
+
+        function stop() { 
+            isPlaying=false; 
+            window.speechSynthesis.cancel(); 
+            updatePlayUI(false); 
+            document.querySelectorAll('.playing').forEach(e=>e.classList.remove('playing')); 
+        }
+
+        function updatePlayUI(on) {
+            document.getElementById('play-icon').innerHTML = on ? '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
+            document.getElementById('play-txt').innerText = on ? '暫停' : '循環播放';
+        }
+
+        function scrollCurr() {
+            const id = isList ? `list-${currIdx}` : `grid-${currIdx}`;
+            const el = document.getElementById(id);
+            if(el) el.scrollIntoView({behavior:'smooth', block:'center'});
+        }
+
+        function speak(txt, cb) {
+            window.speechSynthesis.cancel();
+            const u = new SpeechSynthesisUtterance(txt); u.lang='en-US'; u.rate=0.9;
+            if(cb) u.onend = cb;
+            window.speechSynthesis.speak(u);
+        }
     </script>
 </body>
 </html>

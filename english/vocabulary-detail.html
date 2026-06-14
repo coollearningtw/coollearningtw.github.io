@@ -188,6 +188,9 @@
         let irregularForms = {};
         let currentWordKey = '';
         let currentMode = 'level';
+        const VOCAB_LEVEL_URLS = [1, 2, 3, 4, 5, 6].map(level =>
+            `https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/vocabulary/level${level}.json`
+        );
         const tooltipEl = document.createElement('div');
         tooltipEl.className = 'example-tooltip';
         document.body.appendChild(tooltipEl);
@@ -443,14 +446,18 @@
 
             try {
                 const [vocabRes, irregularRes] = await Promise.all([
-                    fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/vocabulary.json'),
+                    Promise.all(VOCAB_LEVEL_URLS.map(url => fetch(url))),
                     fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/irregular-forms.json')
                 ]);
 
-                if (!vocabRes.ok) throw new Error('Vocabulary JSON load failed');
+                if (vocabRes.some(response => !response.ok)) throw new Error('Vocabulary JSON load failed');
                 if (!irregularRes.ok) throw new Error('Irregular forms JSON load failed');
 
-                const [data, irregularData] = await Promise.all([vocabRes.json(), irregularRes.json()]);
+                const [levelData, irregularData] = await Promise.all([
+                    Promise.all(vocabRes.map(response => response.json())),
+                    irregularRes.json()
+                ]);
+                const data = levelData.flat();
                 irregularForms = irregularData;
 
                 const index = buildVocabIndex(data);

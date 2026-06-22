@@ -31,7 +31,7 @@
         }
         .nb-delete-btn { right: 10px; background: #fee2e2; color: #ef4444; }
         .nb-delete-btn:hover { background: #fecaca; }
-        .nb-edit-btn { right: 44px; background: #e0f2fe; color: #0b76d1; font-size: 14px; }
+        .nb-edit-btn { right: 44px; background: #e0f2fe; color: #0b76d1; }
         .nb-edit-btn:hover { background: #bae6fd; }
         .nb-card:hover .nb-delete-btn, .nb-card:hover .nb-edit-btn { display: flex; }
 
@@ -54,6 +54,7 @@
         .t-btn {
             background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 12px;
             cursor: pointer; font-weight: bold; color: #334155; transition: 0.2s; font-size: 0.9rem;
+            display: flex; align-items: center; justify-content: center; gap: 4px;
         }
         .t-btn:hover { background: #e0f2fe; color: #0b76d1; border-color: #0b76d1; }
         .t-select, .t-color {
@@ -118,7 +119,16 @@
             font-family: monospace; pointer-events: none; 
         }
 
-        /* === 彈出視窗 (Modal) === */
+        /* 向量圖標 */
+        .panel-icon {
+            width: 18px;
+            height: 18px;
+            fill: currentColor;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        /* 彈出視窗 (Modal) */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(15,23,42,0.6); display: none; align-items: center; justify-content: center; z-index: 2000;
@@ -139,7 +149,6 @@
             opacity: 0; transition: 0.3s; pointer-events: none; z-index: 3000;
         }
 
-        /* ========== 響應式設計 (Responsive Web Design) ========== */
         @media (max-width: 820px) {
             #editor-view { padding: 0; }
             .editor-toolbar { 
@@ -181,8 +190,16 @@
 
     <!-- 儀表板 (筆記本列表) -->
     <div id="dashboard">
+        <!-- 資料轉移橫幅 (僅在登入且有本地資料時顯示) -->
+        <div id="migration-banner" class="std-card" style="background:#f0fdf4; border:1.5px solid #bbf7d0; padding:15px; margin-bottom:15px; display:none; align-items:center; justify-content:space-between; gap:10px;">
+            <div style="color:#166534; font-size:0.9rem; text-align:left; font-weight:bold;">
+                偵測到本機有未同步的「舊筆記數據」，是否將其全部轉移並備份至您的雲端帳號？
+            </div>
+            <button class="btn" id="btn-migration" style="background:#10b981; padding:8px 16px; font-size:0.85rem; flex-shrink:0;">確認轉移</button>
+        </div>
+
         <h2 style="color: #334155; margin-bottom: 5px;">我的筆記本</h2>
-        <p style="color: #64748b; margin-top: 0;">自動儲存於瀏覽器中，隨時編輯與匯出。</p>
+        <p style="color: #64748b; margin-top: 0;">自動儲存於雲端資料庫中，防止紀錄因快取清除而丟失。</p>
         <div class="notebook-grid" id="nb-list"></div>
     </div>
 
@@ -190,7 +207,10 @@
     <div id="editor-view">
         <div class="editor-toolbar">
             <div class="toolbar-group">
-                <button class="t-btn" onclick="closeEditor()">⬅ 返回</button>
+                <button class="t-btn" onclick="closeEditor()">
+                    <svg class="panel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                    返回
+                </button>
                 <span id="current-nb-title" style="font-weight:bold; color:#0b76d1; margin-left:10px;">筆記本名稱</span>
                 <button onclick="openEditModal()" title="編輯筆記本設定" style="background:none; border:none; color:#64748b; cursor:pointer; margin-left:4px; display:flex; align-items:center;">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
@@ -223,7 +243,6 @@
                     <option value="Courier New">Courier</option>
                 </select>
                 
-                <!-- 新增：畫布縮放比例調整 -->
                 <select class="t-select" id="zoom-select" onchange="adjustCanvasZoom()" title="顯示比例">
                     <option value="auto">適應寬度</option>
                     <option value="1">100%</option>
@@ -233,7 +252,9 @@
             </div>
 
             <div class="toolbar-group">
-                <button class="t-btn" onclick="insertIndent()" style="color:#d97706;">⇥ 縮排 (全形空白)</button>
+                <button class="t-btn" onclick="insertIndent()" style="color:#d97706;">
+                    縮排
+                </button>
             </div>
 
             <div class="toolbar-group">
@@ -304,22 +325,115 @@
         </div>
     </div>
 
-    <div id="save-toast">✔ 已自動儲存</div>
+    <div id="save-toast">已自動儲存</div>
+
+    <!-- 載入 Supabase SDK 及其相關連線與驗證 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../scripts/supabase-config.js"></script>
+    <script src="../scripts/auth-helper.js"></script>
 
     <script>
         const STORAGE_KEY = 'cool_learning_notebooks';
-        let notebooks =[];
+        let notebooks = [];
         let currentNotebookId = null;
         let editingNotebookId = null; 
         let saveTimeout = null;
+        let currentUser = null;
 
-        function init() {
-            const data = localStorage.getItem(STORAGE_KEY);
-            if (data) notebooks = JSON.parse(data);
+        // =========================================================================
+        // 核心同步：動態監聽登入狀態並實作「雲端筆記」讀寫與移轉
+        // =========================================================================
+        if (window.supabaseClient) {
+            window.supabaseClient.auth.onAuthStateChange(async (event, session) => {
+                currentUser = session ? session.user : null;
+                
+                if (currentUser) {
+                    // === 雲端模式 ===
+                    try {
+                        // 1. 取得雲端所有的筆記本
+                        const { data: cloudNbs, error } = await window.supabaseClient
+                            .from('notebooks')
+                            .select('*')
+                            .eq('user_id', currentUser.id)
+                            .order('updated_at', { ascending: false });
+
+                        if (error) throw error;
+                        notebooks = cloudNbs || [];
+
+                        // 2. 檢測是否有未同步的本機舊筆記
+                        const localData = localStorage.getItem(STORAGE_KEY);
+                        const localNbs = localData ? JSON.parse(localData) : [];
+
+                        if (localNbs.length > 0) {
+                            // 顯示轉移 Banner
+                            const banner = document.getElementById('migration-banner');
+                            banner.style.display = 'flex';
+                            
+                            document.getElementById('btn-migration').onclick = async () => {
+                                document.getElementById('btn-migration').disabled = true;
+                                document.getElementById('btn-migration').innerText = '轉移中...';
+
+                                // 將本機每本筆記本整批打包寫入 Supabase
+                                const insertPromises = localNbs.map(nb => {
+                                    return window.supabaseClient
+                                        .from('notebooks')
+                                        .insert([{
+                                            user_id: currentUser.id,
+                                            title: nb.title,
+                                            settings: nb.settings,
+                                            pages: nb.pages
+                                        }]);
+                                });
+
+                                const results = await Promise.all(insertPromises);
+                                const hasError = results.some(r => r.error);
+
+                                if (hasError) {
+                                    alert("部分筆記本資料同步失敗，請重試！");
+                                    document.getElementById('btn-migration').disabled = false;
+                                    document.getElementById('btn-migration').innerText = '確認轉移';
+                                } else {
+                                    // 轉移成功：清空本機 LocalStorage 避免重複觸發
+                                    localStorage.removeItem(STORAGE_KEY);
+                                    banner.style.display = 'none';
+
+                                    // 重新自雲端獲取最新筆記本並刷新
+                                    const { data: refreshedNbs } = await window.supabaseClient
+                                        .from('notebooks')
+                                        .select('*')
+                                        .eq('user_id', currentUser.id)
+                                        .order('updated_at', { ascending: false });
+
+                                    notebooks = refreshedNbs || [];
+                                    alert("您的所有本機筆記本已成功搬移至雲端保管！");
+                                    renderDashboard();
+                                }
+                            };
+                        }
+                    } catch (e) {
+                        console.warn("讀取雲端筆記本失敗，自動退回本地儲存：", e);
+                        loadLocalNotebooks();
+                    }
+                } else {
+                    // === 訪客本地儲存模式 ===
+                    loadLocalNotebooks();
+                }
+
+                renderDashboard();
+            });
+        } else {
+            loadLocalNotebooks();
             renderDashboard();
         }
 
-        // === 儀表板邏輯 ===
+        function loadLocalNotebooks() {
+            const data = localStorage.getItem(STORAGE_KEY);
+            notebooks = data ? JSON.parse(data) : [];
+        }
+
+        // =========================================================================
+        // 儀表板與卡片控制
+        // =========================================================================
         function renderDashboard() {
             const list = document.getElementById('nb-list');
             list.innerHTML = '';
@@ -328,10 +442,14 @@
                 const card = document.createElement('div');
                 card.className = 'nb-card';
                 card.innerHTML = `
-                    <div class="nb-card-title">${nb.title}</div>
+                    <div class="nb-card-title">${escapeHtml(nb.title)}</div>
                     <div class="nb-card-meta">共 ${nb.pages.length} 頁 | ${nb.settings.sizeName}</div>
-                    <button class="nb-edit-btn" title="編輯筆記本設定" onclick="openEditModalFromDash(event, '${nb.id}')">✎</button>
-                    <button class="nb-delete-btn" title="刪除筆記本" onclick="deleteNotebook(event, '${nb.id}')">✕</button>
+                    <button class="nb-edit-btn" title="編輯設定" onclick="openEditModalFromDash(event, '${nb.id}')">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                    </button>
+                    <button class="nb-delete-btn" title="刪除筆記本" onclick="deleteNotebook(event, '${nb.id}')">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
                 `;
                 card.onclick = () => openEditor(nb.id);
                 list.appendChild(card);
@@ -340,23 +458,38 @@
             const addBtn = document.createElement('div');
             addBtn.className = 'nb-card nb-add-card';
             addBtn.innerHTML = `
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                 <div style="margin-top:10px;">建立新筆記本</div>
             `;
             addBtn.onclick = () => openCreateModal();
             list.appendChild(addBtn);
         }
 
-        function deleteNotebook(e, id) {
+        async function deleteNotebook(e, id) {
             e.stopPropagation();
             if(confirm('確定要刪除這本筆記嗎？此動作無法復原。')) {
-                notebooks = notebooks.filter(n => n.id !== id);
-                saveData();
+                if (currentUser) {
+                    // 雲端刪除
+                    try {
+                        const { error } = await window.supabaseClient
+                            .from('notebooks')
+                            .delete()
+                            .eq('id', id);
+                        if (error) throw error;
+                        notebooks = notebooks.filter(n => n.id !== id);
+                    } catch (err) { alert("刪除失敗：" + err.message); }
+                } else {
+                    // 本地刪除
+                    notebooks = notebooks.filter(n => n.id !== id);
+                    saveData();
+                }
                 renderDashboard();
             }
         }
 
-        // === 建立/編輯設定 Modal 邏輯 ===
+        // =========================================================================
+        // 建立與編輯彈窗設定
+        // =========================================================================
         function openCreateModal() {
             editingNotebookId = null; 
             document.getElementById('setup-modal-title').innerText = "建立新筆記本";
@@ -384,8 +517,8 @@
 
         function populateSetupModal(id) {
             const nb = notebooks.find(n => n.id === id);
-            document.getElementById('setup-modal-title').innerText = "編輯筆記本設定";
-            document.getElementById('setup-modal-submit').innerText = "儲存設定";
+            document.getElementById('setup-modal-title').innerText = "編輯設定";
+            document.getElementById('setup-modal-submit').innerText = "儲存";
             
             document.getElementById('nb-title').value = nb.title;
             document.getElementById('nb-size').value = `${nb.settings.width}x${nb.settings.height}`;
@@ -395,41 +528,76 @@
             document.getElementById('create-modal').style.display = 'flex';
         }
 
-        function saveSetupNotebook() {
+        async function saveSetupNotebook() {
             const title = document.getElementById('nb-title').value || '未命名筆記';
             const sizeSel = document.getElementById('nb-size');
             const lhSel = document.getElementById('nb-lineheight');
             const pad = parseInt(document.getElementById('nb-padding').value) || 40;
             const [width, height] = sizeSel.value.split('x').map(Number);
             
+            const newSettings = {
+                sizeName: sizeSel.options[sizeSel.selectedIndex].text,
+                width: width,
+                height: height,
+                lineHeight: parseInt(lhSel.value),
+                padding: pad
+            };
+
             if (editingNotebookId === null) {
-                const newNb = {
-                    id: 'nb_' + Date.now(),
-                    title: title,
-                    settings: {
-                        sizeName: sizeSel.options[sizeSel.selectedIndex].text,
-                        width: width,
-                        height: height,
-                        lineHeight: parseInt(lhSel.value),
-                        padding: pad
-                    },
-                    pages: ['']
-                };
-                notebooks.push(newNb);
-                saveData();
-                document.getElementById('create-modal').style.display = 'none';
-                renderDashboard();
-                openEditor(newNb.id);
+                // 新建筆記本
+                if (currentUser) {
+                    try {
+                        const { data, error } = await window.supabaseClient
+                            .from('notebooks')
+                            .insert([{
+                                user_id: currentUser.id,
+                                title: title,
+                                settings: newSettings,
+                                pages: ['']
+                            }])
+                            .select()
+                            .single();
+                        if (error) throw error;
+                        notebooks.unshift(data);
+                        document.getElementById('create-modal').style.display = 'none';
+                        renderDashboard();
+                        openEditor(data.id);
+                    } catch (err) { alert("建立雲端筆記本失敗：" + err.message); }
+                } else {
+                    const newNb = {
+                        id: 'nb_' + Date.now(),
+                        title: title,
+                        settings: newSettings,
+                        pages: ['']
+                    };
+                    notebooks.unshift(newNb);
+                    saveData();
+                    document.getElementById('create-modal').style.display = 'none';
+                    renderDashboard();
+                    openEditor(newNb.id);
+                }
             } else {
+                // 編輯筆記本
                 const nb = notebooks.find(n => n.id === editingNotebookId);
                 nb.title = title;
-                nb.settings.sizeName = sizeSel.options[sizeSel.selectedIndex].text;
-                nb.settings.width = width;
-                nb.settings.height = height;
-                nb.settings.lineHeight = parseInt(lhSel.value);
-                nb.settings.padding = pad;
+                nb.settings = newSettings;
                 
-                saveData();
+                if (currentUser) {
+                    try {
+                        const { error } = await window.supabaseClient
+                            .from('notebooks')
+                            .update({
+                                title: title,
+                                settings: newSettings,
+                                updated_at: new Date().toISOString()
+                            })
+                            .eq('id', nb.id);
+                        if (error) throw error;
+                    } catch (err) { alert("同步雲端失敗：" + err.message); }
+                } else {
+                    saveData();
+                }
+                
                 document.getElementById('create-modal').style.display = 'none';
                 
                 if (currentNotebookId === editingNotebookId) {
@@ -440,7 +608,9 @@
             }
         }
 
-        // === 編輯器邏輯 ===
+        // =========================================================================
+        // 編輯器邏輯
+        // =========================================================================
         function openEditor(id) {
             currentNotebookId = id;
             document.getElementById('dashboard').style.display = 'none';
@@ -506,11 +676,9 @@
                 container.appendChild(wrapper);
             });
             
-            // 繪製紙張後立即套用縮放比例
             adjustCanvasZoom();
         }
 
-        // 處理畫布的縮放
         function adjustCanvasZoom() {
             if (!currentNotebookId) return;
             const nb = notebooks.find(n => n.id === currentNotebookId);
@@ -521,7 +689,6 @@
             if (zoomSel.value === 'auto') {
                 const screenWidth = window.innerWidth;
                 const targetWidth = nb.settings.width;
-                // 給予左右各一點留白(手機 10px, 電腦 20px)
                 const margin = screenWidth > 820 ? 40 : 20; 
                 if (screenWidth < targetWidth + margin) {
                     scale = (screenWidth - margin) / targetWidth;
@@ -552,7 +719,6 @@
             const el = e.target;
             const index = parseInt(el.dataset.pageIndex);
             const nb = notebooks.find(n => n.id === currentNotebookId);
-            const wrapper = el.parentElement;
             
             if (e.key === 'Enter') {
                 const availableHeight = nb.settings.height - (nb.settings.padding * 2);
@@ -644,8 +810,25 @@
             saveData();
         }
 
-        function saveData() {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(notebooks));
+        async function saveData() {
+            if (currentUser) {
+                // 雲端儲存
+                const nb = notebooks.find(n => n.id === currentNotebookId);
+                if (nb) {
+                    await window.supabaseClient
+                        .from('notebooks')
+                        .update({
+                            title: nb.title,
+                            settings: nb.settings,
+                            pages: nb.pages,
+                            updated_at: new Date().toISOString()
+                        })
+                        .eq('id', nb.id);
+                }
+            } else {
+                // 本地儲存
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(notebooks));
+            }
         }
 
         function showSaveToast() {
@@ -654,7 +837,9 @@
             setTimeout(() => toast.style.opacity = '0', 2000);
         }
 
-        // === 匯出邏輯 ===
+        // =========================================================================
+        // 匯出功能
+        // =========================================================================
         function openExportModal() {
             forceSaveContent();
             document.getElementById('export-modal').style.display = 'flex';
@@ -699,7 +884,6 @@
                 w.querySelector('.page-num-display').style.display = showPageNum ? 'block' : 'none';
                 if (showLines) addLinesToElement(w);
                 
-                // 匯出前強制將縮放改回 100%，以防圖片產生變形或解析度降低
                 w.style.zoom = 1;
                 if (CSS.supports && !CSS.supports('zoom: 1')) {
                     w.style.transform = 'none';
@@ -759,11 +943,16 @@
                 if (tempLines) tempLines.remove();
             });
             
-            // 匯出結束後，把使用者原本的縮放比例套用回來
             adjustCanvasZoom();
         }
 
-        init();
+        // 輔助跳脫 HTML
+        function escapeHtml(s) { 
+            return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); 
+        }
+
+        // 啟動加載
+        // 由於我們引入了 auth-helper.js，頁首狀態、保護與 Supabase 初始化會由其自動處理並廣播狀態。
     </script>
 </body>
 </html>

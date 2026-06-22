@@ -104,14 +104,14 @@
         }
 
         /* 技能館網格 */
-            .skills-grid, .skills-flex-grid {
-                display: flex;
-                gap: 20px;
-                width: 100%;
-            }
+        .skills-grid, .skills-flex-grid {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+        }
 
         /* 技能卡片通用基礎 */
-            .skill-card, .skills-flex-grid .subject-card {
+        .skill-card, .skills-flex-grid .subject-card {
             position: relative;
             border-radius: 24px;
             padding: 30px;
@@ -122,8 +122,8 @@
             min-height: 140px;
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             border: 1px solid rgba(255, 255, 255, 0.2);
-                flex: 1 1 0;
-                min-width: 0;
+            flex: 1 1 0;
+            min-width: 0;
         }
 
         .skill-card:hover {
@@ -165,62 +165,37 @@
             line-height: 1.4;
         }
 
-        /* --- 個別卡片樣式設計 --- */
+        /* --- 技能卡片樣式設計 --- */
 
-        /* 日語館：櫻花粉 + 浮動假名背景 */
+        /* 日語館 */
         .card-jp {
             background: linear-gradient(135deg, #fff5f7 0%, #fce7f3 100%);
             color: #db2777;
             border-color: #f9a8d4;
         }
-        .card-jp .card-bg-decoration {
-            position: absolute;
-            right: -10px;
-            bottom: -20px;
-            font-size: 8rem;
-            font-weight: 900;
-            opacity: 0.1;
-            font-family: "serif";
-            transform: rotate(-15deg);
-        }
 
-        /* 西洋棋：石板黑 + 質感木紋感 */
+        /* 西洋棋 */
         .card-chess {
             background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
             color: #f8fafc;
             border-color: #475569;
         }
         .card-chess .skill-icon { background: rgba(255, 255, 255, 0.1); color: #fbbf24; }
-        .card-chess .card-bg-decoration {
-            position: absolute;
-            right: 10px;
-            top: -10px;
-            font-size: 7rem;
-            opacity: 0.1;
-        }
 
-        /* 魔術方塊：白底 + 四色幾何裝飾 */
+        /* 魔術方塊 */
         .card-cube {
             background: #ffffff;
             color: #1e293b;
             border: 2px solid #e2e8f0;
         }
         .card-cube .skill-icon { background: #f1f5f9; color: #3b82f6; }
-        .cube-accent {
-            position: absolute;
-            top: 0; right: 0; width: 80px; height: 80px;
-            background: linear-gradient(45deg, #ef4444 25%, #3b82f6 25%, #3b82f6 50%, #fbbf24 50%, #fbbf24 75%, #22c55e 75%);
-            clip-path: polygon(100% 0, 0 0, 100% 100%);
-            opacity: 0.6;
-        }
 
-        /* 手機版適應 */
-            @media (max-width: 600px) {
-                .skills-grid, .skills-flex-grid {
-                    flex-direction: column;
-                }
-                .skill-info h3 { font-size: 1.2rem; }
+        @media (max-width: 600px) {
+            .skills-grid, .skills-flex-grid {
+                flex-direction: column;
             }
+            .skill-info h3 { font-size: 1.2rem; }
+        }
 
         @media (max-width: 768px) {
             .subject-card.top-row, .subject-card.bottom-row {
@@ -231,31 +206,35 @@
 </head>
 <body>
     <header>
-        <div class="logo" id="main-logo-area">
+        <div class="logo" id="main-logo-area" style="cursor: pointer;">
             <img src="images/logo.png" alt="Logo" height="50px">
-            <img src="images/logo_text.png" alt="知識酷字標" height="40">
+            <img src="images/logo_text.png" alt="酷學習" height="28" class="logo-text">
+            <!-- 將指南移至左側，避免被 auth-helper.js 覆蓋 -->
+            <a href="guide/index.html" class="guide-link" style="font-weight:bold; color:var(--primary,#0b76d1); margin-left:15px; font-size: 0.95rem; text-decoration: none;">使用指南</a>
         </div>
-        <div class="links">
-            <a href="guide/index.html" class="guide-link" style="font-weight:bold; color:var(--primary,#0b76d1); margin-left:18px;">使用指南</a>
-        </div>
+        <!-- 右側由 auth-helper.js 自動渲染登入資訊 -->
+        <div class="header-right" id="auth-header-right"></div>
     </header>
 
     <div class="main-layout">
+        <!-- 簽到系統區塊 -->
         <section class="checkin-section">
             <div class="checkin-card">
                 <div class="checkin-left">
                     <h2>每日簽到</h2>
                     <p>累積天數：<span id="totalDays">0</span> 天</p>
-                    <p id="checkinMsg" class="checkin-msg"></p>
+                    <p id="checkinMsg" class="checkin-msg">讀取簽到數據中...</p>
                 </div>
                 <div class="checkin-right">
-                    <button id="checkinBtn" class="checkin-btn">簽到</button>
+                    <button id="checkinBtn" class="checkin-btn" disabled>簽到</button>
                 </div>
             </div>
         </section>
 
+        <!-- 學科主導航區塊 -->
         <section class="subjects-section">
             <div class="subject-grid">
+                <!-- 國文 -->
                 <a href="chinese/chinese.html" class="subject-card top-row">
                     <div class="card-tag" style="background: #e74c3c;">NEW</div>
                     <div class="subject-icon">
@@ -264,6 +243,7 @@
                     <span class="subject-name">國文</span>
                 </a>
                 
+                <!-- 數學 -->
                 <a href="#" class="subject-card top-row" style="pointer-events:none; opacity:0.6;">
                     <div class="subject-icon">
                         <svg viewBox="0 0 24 24" fill="#f1c40f"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2m-7 3c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1m4 12h-2v-2h2v2m0-4h-2v-2h2v2m-4 4H8v-2h2v2m0-4H8v-2h2v2m-2-4h2v2H8V10m6-2h-2V6h2v2z"/></svg>
@@ -271,6 +251,7 @@
                     <span class="subject-name">數學</span>
                 </a>
 
+                <!-- 英文 -->
                 <a href="english/english.html" class="subject-card bottom-row">
                     <div class="subject-icon">
                         <svg viewBox="0 0 24 24" fill="#0b76d1"><path d="M11.5 4L6 20h2.2l1.1-4h5.4l1.1 4H18L12.5 4h-1M10 13l2-6 2 6h-4z"/></svg>
@@ -278,6 +259,7 @@
                     <span class="subject-name">English</span>
                 </a>
 
+                <!-- 自然 -->
                 <a href="science/science.html" class="subject-card bottom-row">
                     <div class="card-tag" style="background: #2ecc71;">NEW</div>
                     <div class="subject-icon">
@@ -286,6 +268,7 @@
                     <span class="subject-name">自然</span>
                 </a>
 
+                <!-- 社會 -->
                 <a href="#" class="subject-card bottom-row" style="pointer-events:none; opacity:0.6;">
                     <div class="subject-icon">
                         <svg viewBox="0 0 24 24" fill="#9b59b6"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2m-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
@@ -296,51 +279,52 @@
         </section>
     </div>
 
-    <!-- === 技能與興趣館 (非學科區塊) === -->
-    <h2 style="display: flex; align-items: center; gap: 12px; margin-top: 50px; margin-bottom: 20px; max-width: 980px; padding: 0 20px; margin-left: auto; margin-right: auto; color: #1e293b; font-size: 2rem; font-weight: 900;">
+    <!-- 技能與興趣館 -->
+    <h2 style="display: flex; align-items: center; gap: 12px; margin-top: 50px; margin-bottom: 20px; max-width: 980px; padding: 0 20px; margin-left: auto; margin-right: auto; color: #1e293b; font-size: 1.8rem; font-weight: 900;">
         <span style="display: inline-block; width: 6px; height: 36px; background: linear-gradient(to bottom, #f472b6, #fb923c); border-radius: 999px;"></span>
         技能與興趣館
     </h2>
 
     <div class="main-layout" style="margin-top: 0;">
-            <div class="skills-flex-grid">
-                <!-- 日語館卡片 -->
-                <a href="japanese/index.html" class="subject-card card-jp" style="position:relative;">
-                    <div class="subject-icon" style="background:rgba(255,255,255,0.2); width:60px; height:60px; display:flex; align-items:center; justify-content:center; border-radius:16px;">
-                        <svg viewBox="0 0 24 24" style="width:40px; height:40px;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/><circle cx="12" cy="12" r="5" fill="#ef4444"/></svg>
-                    </div>
-                    <span class="subject-name" style="color:#db2777;">日語研究室</span>
-                    <span style="font-size:0.95rem; color:#db2777; opacity:0.8; margin-top:6px;">五十音、基礎單字與動漫流行語學習</span>
-                    <div class="card-bg-decoration" style="position:absolute; right:-10px; bottom:-20px; font-size:8rem; font-weight:900; opacity:0.1; font-family:'serif'; transform:rotate(-15deg); pointer-events:none;">あ</div>
-                </a>
-                <!-- 西洋棋卡片 -->
-                <a href="chess/index.html" class="subject-card card-chess" style="position: relative;">
-                    <div class="subject-icon" style="background:rgba(255,255,255,0.1); color:#fbbf24; width:60px; height:60px; display:flex; align-items:center; justify-content:center; border-radius:16px; font-size:40px; font-weight:bold;">
-                        ♟
-                    </div>
-                    <span class="subject-name" style="color:#fbbf24;">西洋棋學院</span>
-                    <span style="font-size:0.95rem; color:#fbbf24; opacity:0.8; margin-top:6px;">策略開局、殘局挑戰與互動棋譜觀測</span>
-                    <div class="card-bg-decoration" style="position:absolute; right:10px; top:-10px; font-size:7rem; opacity:0.1; pointer-events:none;">♟</div>
-                </a>
-                <!-- 魔術方塊卡片 -->
-                <a href="rubiks/index.html" class="subject-card card-cube" style="pointer-events:none; opacity:0.6;">
-                    <div class="subject-icon" style="background:#f1f5f9; color:#3b82f6; width:60px; height:60px; display:flex; align-items:center; justify-content:center; border-radius:16px;">
-                        <svg viewBox="0 0 24 24" style="width:40px; height:40px;"><path d="M21 16.5C21 16.88 20.79 17.21 20.47 17.38L12.57 21.82C12.41 21.94 12.21 22 12 22C11.79 22 11.59 21.94 11.43 21.82L3.53 17.38C3.21 17.21 3 16.88 3 16.5V7.5C3 7.12 3.21 6.79 3.53 6.62L11.43 2.18C11.59 2.06 11.79 2 12 2C12.21 2 12.41 2.06 12.57 2.18L20.47 6.62C20.79 6.79 21 7.12 21 7.5V16.5Z"/></svg>
-                    </div>
-                    <span class="subject-name" style="color:#3b82f6;">魔術方塊 3D</span>
-                    <span style="font-size:0.95rem; color:#3b82f6; opacity:0.8; margin-top:6px;">3D 公式演示，掌握 CFOP 進階轉法</span>
-                    <div class="cube-accent" style="position:absolute; top:0; right:0; width:80px; height:80px; background:linear-gradient(45deg, #ef4444 25%, #3b82f6 25%, #3b82f6 50%, #fbbf24 50%, #fbbf24 75%, #22c55e 75%); clip-path:polygon(100% 0, 0 0, 100% 100%); opacity:0.6;"></div>
-                </a>
-            </div>
+        <div class="skills-flex-grid">
+            <!-- 日語 -->
+            <a href="japanese/index.html" class="subject-card card-jp" style="position:relative;">
+                <div class="subject-icon" style="background:rgba(255,255,255,0.2); width:60px; height:60px; display:flex; align-items:center; justify-content:center; border-radius:16px;">
+                    <svg viewBox="0 0 24 24" style="width:40px; height:40px;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/><circle cx="12" cy="12" r="5" fill="#ef4444"/></svg>
+                </div>
+                <span class="subject-name" style="color:#db2777;">日語研究室</span>
+                <span style="font-size:0.9rem; color:#db2777; opacity:0.8; margin-top:6px;">五十音、基礎單字與發音</span>
+                <div class="card-bg-decoration" style="position:absolute; right:-10px; bottom:-20px; font-size:8rem; font-weight:900; opacity:0.1; font-family:'serif'; transform:rotate(-15deg); pointer-events:none;">あ</div>
+            </a>
+            <!-- 西洋棋 -->
+            <a href="chess/index.html" class="subject-card card-chess" style="position: relative;">
+                <div class="subject-icon" style="background:rgba(255,255,255,0.1); color:#fbbf24; width:60px; height:60px; display:flex; align-items:center; justify-content:center; border-radius:16px; font-size:40px; font-weight:bold; line-height:1;">
+                    ♟
+                </div>
+                <span class="subject-name" style="color:#fbbf24;">西洋棋學院</span>
+                <span style="font-size:0.9rem; color:#fbbf24; opacity:0.8; margin-top:6px;">策略開局、殘局與線上對戰</span>
+                <div class="card-bg-decoration" style="position:absolute; right:10px; top:-10px; font-size:7rem; opacity:0.1; pointer-events:none;">♟</div>
+            </a>
+            <!-- 魔術方塊 (未開放) -->
+            <a href="rubiks/index.html" class="subject-card card-cube" style="pointer-events:none; opacity:0.6;">
+                <div class="subject-icon" style="background:#f1f5f9; color:#3b82f6; width:60px; height:60px; display:flex; align-items:center; justify-content:center; border-radius:16px;">
+                    <svg viewBox="0 0 24 24" style="width:40px; height:40px;"><path d="M21 16.5C21 16.88 20.79 17.21 20.47 17.38L12.57 21.82C12.41 21.94 12.21 22 12 22C11.79 22 11.59 21.94 11.43 21.82L3.53 17.38C3.21 17.21 3 16.88 3 16.5V7.5C3 7.12 3.21 6.79 3.53 6.62L11.43 2.18C11.59 2.06 11.79 2 12 2C12.21 2 12.41 2.06 12.57 2.18L20.47 6.62C20.79 6.79 21 7.12 21 7.5V16.5Z"/></svg>
+                </div>
+                <span class="subject-name" style="color:#3b82f6;">魔術方塊 3D</span>
+                <span style="font-size:0.9rem; color:#3b82f6; opacity:0.8; margin-top:6px;">3D公式演示 (開發中)</span>
+                <div class="cube-accent"></div>
+            </a>
+        </div>
     </div>
 
-    <!-- 原本的 main-layout 結束後，加入新的區塊 -->
-    <h2 style="display: flex; align-items: center; gap: 12px; margin-top: 40px; margin-bottom: 20px; max-width: 980px; padding: 0 20px; margin-left: auto; margin-right: auto; color: var(--primary); font-size: 2rem; font-weight: bold;">
-    <span style="display: inline-block;width: 6px;height: 36px;background: var(--primary);border-radius: 999px;"></span>學習助手</h2>
+    <!-- 學習助手 -->
+    <h2 style="display: flex; align-items: center; gap: 12px; margin-top: 40px; margin-bottom: 20px; max-width: 980px; padding: 0 20px; margin-left: auto; margin-right: auto; color: var(--primary); font-size: 1.8rem; font-weight: bold;">
+        <span style="display: inline-block; width: 6px; height: 36px; background: var(--primary); border-radius: 999px;"></span>
+        學習助手
+    </h2>
     <div class="main-layout" style="margin-top: 0;">
-        <!-- 橫向佔滿的工具列 -->
         <div style="width: 100%; display: flex; gap: 20px; flex-wrap: wrap;">
-            <!-- 虛擬筆記本卡片 -->
+            <!-- 虛擬筆記本 -->
             <a href="tools/notebook.html" class="subject-card" style="flex: 1; min-width: 250px; flex-direction: row; justify-content: flex-start; gap: 20px; height: auto; padding: 25px;">
                 <div class="card-tag" style="background: #db2777;">NEW</div>
                 <div class="subject-icon" style="background: #fdf2f8; padding: 15px; border-radius: 16px; margin: 0;">
@@ -348,20 +332,22 @@
                 </div>
                 <div style="text-align: left;">
                     <div style="font-size: 1.3rem; font-weight: bold; color: #db2777; margin-bottom: 5px;">虛擬筆記本</div>
-                    <div style="color: #64748b; font-size: 0.95rem;">自訂紙張、隨心筆記，支援匯出圖檔與Word</div>
+                    <div style="color: #64748b; font-size: 0.95rem;">手寫質感筆記，支援導出圖檔與 Word</div>
                 </div>
             </a>
+            <!-- 英文對戰 -->
             <a href="english/english-battle.html" class="subject-card" style="flex: 1; min-width: 250px; flex-direction: row; justify-content: flex-start; gap: 20px; height: auto; padding: 25px;">
                 <div class="card-tag" style="background: #ef4444;">NEW</div>
-                <div class="subject-icon" style="background: #fef2f2; padding: 15px; border-radius: 16px; margin: 0;">
-                    <!-- 對戰圖示改為VS文字 -->
-                    <span style="display:inline-block;width:40px;height:40px;line-height:40px;text-align:center;font-size:2rem;font-weight:bold;color:#ef4444;background:#fef2f2;border-radius:16px;">VS</span>
+                <div class="subject-icon" style="background: #fef2f2; padding: 15px; border-radius: 16px; margin: 0; display:flex; align-items:center; justify-content:center;">
+                    <span style="font-size:2rem; font-weight:bold; color:#ef4444; font-family:'Cinzel', sans-serif;">VS</span>
                 </div>
                 <div style="text-align: left;">
-                    <div style="font-size: 1.3rem; font-weight: bold; color: #ef4444; margin-bottom: 5px;">英文對戰競技場</div>
-                    <div style="color: #64748b; font-size: 0.95rem;">1 VS 1 即時對戰，挑戰你的單字量與反應速度！</div>
+                    <div style="font-size: 1.3rem; font-weight: bold; color: #ef4444; margin-bottom: 5px;">單字知識王</div>
+                    <div style="color: #64748b; font-size: 0.95rem;">1 VS 1 即時對戰，挑戰你的單字極限！</div>
                 </div>
             </a>
+        </div>
+    </div>
 
     <!-- 懸浮回報按鈕 -->
     <button id="feedback-fab" title="問題回報與建議">
@@ -376,8 +362,7 @@
                 <h3>問題回報 & 內容建議</h3>
                 <button id="feedback-close-btn" class="feedback-close" style="color:#555">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                        <line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>
                     </svg>
                 </button>
             </div>
@@ -416,33 +401,196 @@
         </div>
     </div>
 
+    <!-- 核心 Supabase、PWA 載入腳本 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="scripts/supabase-config.js"></script>
+    <script src="scripts/auth-helper.js"></script>
+    <script src="scripts/announcement.js"></script>
+    <script src="scripts/utils.js"></script>
+    <script src="scripts/feedback.js"></script>
+
+    <!-- 1. 雙模與資料轉移簽到邏輯：監聽全域 Auth 狀態，並支援本地紀錄合併轉移 -->
     <script>
-        (function(){
+        (async () => {
             const totalDaysEl = document.getElementById('totalDays');
             const msgEl = document.getElementById('checkinMsg');
             const btn = document.getElementById('checkinBtn');
-            function todayKey() { return new Date().toISOString().slice(0,10); }
-            function getTotalDays() { return parseInt(localStorage.getItem('checkin_totalDays') || '0', 10); }
-            function getLastDate() { return localStorage.getItem('checkin_lastDate'); }
-            function setCheckinDoneForToday() {
-                localStorage.setItem('checkin_lastDate', todayKey());
-                localStorage.setItem('checkin_totalDays', String(getTotalDays() + 1));
-            }
-            function updateUI() {
-                totalDaysEl.textContent = getTotalDays();
-                if (getLastDate() === todayKey()) {
-                    btn.disabled = true; btn.textContent = '今日已簽到'; msgEl.textContent = '已成功簽到，明天再來！';
+            const todayStr = new Date().toISOString().slice(0, 10);
+
+            let currentAuthUser = null;
+
+            // 核心響應式函數：不論何時登入狀態改變，皆會立刻重新渲染本卡片
+            async function renderCheckinSystem(user) {
+                currentAuthUser = user;
+                
+                // 1. 讀取瀏覽器 LocalStorage 中的本地簽到資料 (訪客資料)
+                const localDays = parseInt(localStorage.getItem('checkin_totalDays') || '0', 10);
+                const localLastDate = localStorage.getItem('checkin_lastDate');
+
+                if (user) {
+                    // =========================================================================
+                    // 雲端同步簽到模式 (已登入狀態)
+                    // =========================================================================
+                    try {
+                        // 2. 獲取當前雲端用戶 profiles 的簽到數據
+                        let { data: profile, error } = await window.supabaseClient
+                            .from('profiles')
+                            .select('checkin_count, last_checkin_date')
+                            .eq('id', user.id)
+                            .single();
+
+                        if (error) throw error;
+
+                        let cloudCount = (profile && profile.checkin_count) ? parseInt(profile.checkin_count) : 0;
+                        let cloudLastDate = profile ? profile.last_checkin_date : null;
+
+                        // 3. 【資料轉移判定】如果瀏覽器本地有舊資料，且使用者已登入
+                        if (localDays > 0) {
+                            // 變更 UI 為「轉移提示卡片」
+                            totalDaysEl.textContent = `${cloudCount} (+${localDays})`;
+                            msgEl.innerHTML = `偵測到本機有 <strong>${localDays} 天</strong> 未同步資料，是否將紀錄合併轉移至您的雲端帳號？`;
+                            
+                            btn.disabled = false;
+                            btn.textContent = '確認轉移資料';
+                            // 視覺引導：轉移按鈕改為綠色風格
+                            btn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)'; 
+                            btn.style.boxShadow = '0 6px 18px rgba(16,185,129,0.2)';
+                            btn.style.color = '#fff';
+
+                            btn.onclick = async () => {
+                                btn.disabled = true;
+                                btn.textContent = '正在轉移中...';
+
+                                // 合併本地天數與雲端天數
+                                const mergedCount = cloudCount + localDays;
+                                // 判斷最後簽到日期 (取較新者)
+                                const mergedDate = (localLastDate && (!cloudLastDate || localLastDate > cloudLastDate)) ? localLastDate : cloudLastDate;
+
+                                // 寫入 Supabase 資料庫
+                                const { error: updateErr } = await window.supabaseClient
+                                    .from('profiles')
+                                    .update({
+                                        checkin_count: mergedCount,
+                                        last_checkin_date: mergedDate
+                                    })
+                                    .eq('id', user.id);
+
+                                if (updateErr) {
+                                    console.error("雲端資料轉移失敗：", updateErr);
+                                    alert("資料同步失敗，請確認資料庫是否已開通 checkin 欄位。");
+                                    renderCheckinSystem(user);
+                                } else {
+                                    // 轉移成功：清除瀏覽器本地的 Guest 資料 (避免重複詢問)
+                                    localStorage.removeItem('checkin_totalDays');
+                                    localStorage.removeItem('checkin_lastDate');
+
+                                    alert(`🎉 資料轉移成功！已將 ${localDays} 天本地紀錄合併至您的雲端帳號。`);
+                                    
+                                    // 重新刷新，進入標準雲端簽到模式
+                                    renderCheckinSystem(user);
+                                }
+                            };
+                            return; // 優先處理轉移流程，直接返回
+                        }
+
+                        // 4. 標準雲端簽到流程 (重設為原本的藍色按鈕樣式)
+                        btn.style.background = ''; 
+                        btn.style.boxShadow = '';
+                        btn.style.color = '';
+
+                        const hasCheckedInToday = (cloudLastDate === todayStr);
+                        totalDaysEl.textContent = cloudCount;
+
+                        if (hasCheckedInToday) {
+                            btn.disabled = true;
+                            btn.textContent = '今日已簽到';
+                            msgEl.textContent = '已成功同步雲端簽到，明天再來！';
+                        } else {
+                            btn.disabled = false;
+                            btn.textContent = '雲端簽到';
+                            msgEl.textContent = '點擊完成今日簽到，累積天數會同步至您的帳號。';
+                        }
+
+                        btn.onclick = async () => {
+                            if (hasCheckedInToday) return;
+                            btn.disabled = true;
+                            btn.textContent = '同步中...';
+
+                            cloudCount++;
+                            cloudLastDate = todayStr;
+
+                            const { error: updateErr } = await window.supabaseClient
+                                .from('profiles')
+                                .update({
+                                    checkin_count: cloudCount,
+                                    last_checkin_date: todayStr
+                                })
+                                .eq('id', user.id);
+
+                            if (updateErr) {
+                                console.error("簽到更新失敗：", updateErr);
+                                alert("簽到同步失敗，請重試！");
+                                btn.disabled = false;
+                                btn.textContent = '雲端簽到';
+                            } else {
+                                renderCheckinSystem(user);
+                            }
+                        };
+
+                    } catch (e) {
+                        console.warn("讀取雲端簽到數據失敗，自動退回訪客模式：", e);
+                        handleLocalStorageFallback(localDays, localLastDate);
+                    }
+
                 } else {
-                    btn.disabled = false; btn.textContent = '簽到'; msgEl.textContent = '每天簽到可累積天數。';
+                    // =========================================================================
+                    // 訪客本地儲存模式 (未登入狀態)
+                    // =========================================================================
+                    btn.style.background = ''; 
+                    btn.style.boxShadow = '';
+                    btn.style.color = '';
+                    handleLocalStorageFallback(localDays, localLastDate);
                 }
             }
-            btn.addEventListener('click', function(){
-                if (getLastDate() === todayKey()) return;
-                setCheckinDoneForToday(); updateUI(); msgEl.textContent = '簽到成功，已累積 ' + getTotalDays() + ' 天';
-            });
-            updateUI();
+
+            function handleLocalStorageFallback(localDays, localLastDate) {
+                totalDaysEl.textContent = localDays;
+                const hasCheckedInToday = (localLastDate === todayStr);
+
+                if (hasCheckedInToday) {
+                    btn.disabled = true;
+                    btn.textContent = '今日已簽到';
+                    msgEl.textContent = '已儲存於瀏覽器，登入帳號可防止進度遺失。';
+                } else {
+                    btn.disabled = false;
+                    btn.textContent = '訪客簽到';
+                    msgEl.textContent = '天數儲存於本機。建議登入以將進度同步至雲端。';
+                }
+
+                btn.onclick = function() {
+                    if (hasCheckedInToday) return;
+                    const newDays = localDays + 1;
+                    localStorage.setItem('checkin_lastDate', todayStr);
+                    localStorage.setItem('checkin_totalDays', String(newDays));
+                    renderCheckinSystem(null); // 重新渲染訪客 UI
+                };
+            }
+
+            // =========================================================================
+            // 核心修改：利用 Supabase 全域認證監聽器，確保登入解析完成後立即重繪 UI
+            // =========================================================================
+            if (window.supabaseClient) {
+                window.supabaseClient.auth.onAuthStateChange((event, session) => {
+                    const user = session ? session.user : null;
+                    renderCheckinSystem(user);
+                });
+            } else {
+                handleLocalStorageFallback(0, null);
+            }
         })();
     </script>
+
+    <!-- 2. PWA Service Worker 註冊 -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -452,25 +600,50 @@
             });
         }
     </script>
-    <script src="scripts/announcement.js"></script>
-    <script src="scripts/utils.js"></script>
-    <script src="scripts/feedback.js"></script>
-</script>
-<script>
-// 連點 LOGO 5 下進入管理員首頁
-(() => {
-    const logoArea = document.getElementById('main-logo-area');
-    let clickCount = 0;
-    let timer = null;
-    logoArea.addEventListener('click', function() {
-        clickCount++;
-        clearTimeout(timer);
-        timer = setTimeout(() => { clickCount = 0; }, 600);
-        if (clickCount === 5) {
-            window.location.href = 'admin/index.html';
-        }
-    });
-})();
-</script>
+
+    <script>
+    // 3. 連點五下 Logo 跳轉管理後台安全彩蛋 (新增：管理員預審機制，非管理員點擊完全不跳轉)
+        (() => {
+            const logoArea = document.getElementById('main-logo-area');
+            let clickCount = 0;
+            let timer = null;
+            
+            logoArea.addEventListener('click', async function() {
+                clickCount++;
+                clearTimeout(timer);
+                timer = setTimeout(() => { clickCount = 0; }, 600);
+                
+                if (clickCount === 5) {
+                    clickCount = 0; // 重置計數器
+                    
+                    // 執行預審：檢查 Supabase 是否有登入，且角色是否為 admin
+                    if (window.supabaseClient) {
+                        try {
+                            const { data: { session } } = await window.supabaseClient.auth.getSession();
+                            
+                            if (session && session.user) {
+                                const { data: profile } = await window.supabaseClient
+                                    .from('profiles')
+                                    .select('role')
+                                    .eq('id', session.user.id)
+                                    .single();
+                                
+                                // 只有當確定是管理員時，才允許執行跳轉
+                                if (profile && profile.role === 'admin') {
+                                    window.location.href = 'admin/index.html';
+                                    return;
+                                }
+                            }
+                        } catch (err) {
+                            console.error("管理員預審發生錯誤:", err);
+                        }
+                    }
+                    
+                    // 如果不是管理員，完全不跳轉，假裝什麼都沒發生
+                    console.log("安全提示：未檢測到管理員權限，拒絕跳轉。");
+                }
+            });
+        })();
+    </script>
 </body>
 </html>

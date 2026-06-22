@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>安全登入驗證 - 酷學習</title>
+    <link rel="icon" type="image/png" href="../images/logo-gold.png">
+    <link rel="stylesheet" href="../styles/style.css">
+    <link rel="stylesheet" href="../styles/header.css">
+    <style>
+        .auth-layout {
+            max-width: 450px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .auth-card {
+            background: #fff;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border: 1px solid #e2e8f0;
+            padding: 30px;
+        }
+
+        .auth-tabs {
+            display: flex;
+            border-bottom: 2px solid #e2e8f0;
+            margin-bottom: 25px;
+        }
+
+        .auth-tab {
+            flex: 1;
+            text-align: center;
+            padding: 12px 0;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #64748b;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: 0.2s;
+        }
+
+        .auth-tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .form-section {
+            display: none;
+        }
+
+        .form-section.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+            text-align: left;
+            position: relative;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: #475569;
+            margin-bottom: 6px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 1rem;
+            outline: none;
+            box-sizing: border-box;
+            background: #f8fafc;
+            transition: 0.2s;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary);
+            background: #fff;
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+
+        .form-control:disabled {
+            background: #e2e8f0;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .password-input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .password-input-wrapper input {
+            padding-right: 44px;
+        }
+        .password-toggle-btn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #94a3b8;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.15s;
+        }
+        .password-toggle-btn:hover {
+            color: var(--primary);
+        }
+        .eye-icon {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+
+        .required {
+            color: #ef4444;
+            margin-left: 2px;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 12px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .btn-submit:disabled {
+            background: #cbd5e1;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+
+        .auth-msg {
+            font-size: 0.85rem;
+            text-align: center;
+            margin-top: 15px;
+            min-height: 20px;
+        }
+        .auth-msg.error { color: #ef4444; font-weight: bold; }
+        .auth-msg.success { color: #10b981; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">
+            <a href="../index.html" class="back-link">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            </a>
+            <img src="../images/logo.png" alt="Logo" height="40">
+            <span class="header-title-area">安全登入驗證</span>
+        </div>
+    </header>
+
+    <main class="page-container auth-layout">
+        <div class="auth-card">
+            <div class="auth-tabs" id="auth-tabs-bar">
+                <div class="auth-tab active" id="tab-login" onclick="switchTab('login')">用戶登入</div>
+                <div class="auth-tab" id="tab-register" onclick="switchTab('register')">註冊帳號</div>
+            </div>
+
+            <!-- 訊息提示 -->
+            <div id="auth-message" class="auth-msg"></div>
+
+            <!-- 1. 登入表單 -->
+            <form id="form-login" class="form-section active" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label for="login-username">帳號 ID <span class="required">*</span></label>
+                    <input type="text" id="login-username" class="form-control" placeholder="請輸入註冊時的帳號 ID" required>
+                </div>
+                <div class="form-group">
+                    <label for="login-password">密碼 <span class="required">*</span></label>
+                    <div class="password-input-wrapper">
+                        <input type="password" id="login-password" class="form-control" placeholder="請輸入密碼" required>
+                        <button type="button" class="password-toggle-btn" onclick="togglePassword('login-password', this)" title="切換顯示">
+                            <svg class="eye-icon" viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.76-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <button type="submit" id="btn-login-submit" class="btn btn-submit">登入</button>
+            </form>
+
+            <!-- 2. 註冊表單 -->
+            <form id="form-register" class="form-section" onsubmit="handleRegister(event)">
+                <div class="form-group">
+                    <label for="reg-customid">設定帳號 ID (註冊後為您的專屬 ID) <span class="required">*</span></label>
+                    <input type="text" id="reg-customid" class="form-control" placeholder="例如：alex.123 (僅限小寫/數字/點/下劃線)" required pattern="^[a-z0-9._]+$">
+                </div>
+                <div class="form-group">
+                    <label for="reg-username">顯示名稱 (公開展示姓名) <span class="required">*</span></label>
+                    <input type="text" id="reg-username" class="form-control" placeholder="例如：快樂學習者" required>
+                </div>
+                <div class="form-group">
+                    <label for="reg-password">密碼 <span class="required">*</span></label>
+                    <div class="password-input-wrapper">
+                        <input type="password" id="reg-password" class="form-control" placeholder="密碼需大於 6 位數" required minlength="6">
+                        <button type="button" class="password-toggle-btn" onclick="togglePassword('reg-password', this)" title="切換顯示">
+                            <svg class="eye-icon" viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.76-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div style="border-top: 1px dashed #e2e8f0; margin-top: 20px; padding-top: 15px;">
+                    <span style="font-size: 0.8rem; font-weight: 800; color: #94a3b8; display: block; margin-bottom: 12px; letter-spacing: 0.5px;">個人就學資訊 (選填)</span>
+                    
+                    <div class="form-group">
+                        <label for="reg-county">就讀縣市</label>
+                        <select id="reg-county" class="form-control" onchange="handleCountyChange()">
+                            <option value="">選擇縣市...</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="reg-stage">學習階段</label>
+                        <select id="reg-stage" class="form-control" onchange="handleStageChange()" disabled>
+                            <option value="">選擇階段...</option>
+                            <option value="國中">國中</option>
+                            <option value="高中">高中</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="reg-school">學校名稱</label>
+                        <select id="reg-school" class="form-control" disabled>
+                            <option value="">選擇學校...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" id="btn-reg-submit" class="btn btn-submit">註冊並登入</button>
+            </form>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../scripts/supabase-config.js"></script>
+
+    <script>
+        let allSchools = []; 
+
+        // 1. 新增：登入保護機制（若在背景偵測到已是登入狀態，直接強制導向個人設定檔）
+        if (window.supabaseClient) {
+            window.supabaseClient.auth.onAuthStateChange((event, session) => {
+                if (session) {
+                    window.location.href = '../profile.html';
+                }
+            });
+        }
+
+        function togglePassword(inputId, btn) {
+            const input = document.getElementById(inputId);
+            const eyeOpen = `<path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.76-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>`;
+            const eyeClosed = `<path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.76-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3zm1.18-5.32c.16-.01.32-.01.48-.01 5 0 9.27 3.11 11 7.5-.53 1.35-1.36 2.53-2.41 3.47l-1.42-1.42c.86-.68 1.54-1.54 1.98-2.55-1.56-3.53-5.06-5.83-9.05-5.83-.16 0-.32 0-.48.01l-1.1-1.1zM2.81 2.81L1.39 4.22l2.45 2.45C2.12 7.94 1 9.84 1 12c1.73 4.39 6 7.5 11 7.5 2.16 0 4.19-.58 5.92-1.58l2.85 2.85 1.41-1.41L2.81 2.81zM12 17.5c-3.04 0-5.5-2.46-5.5-5.5 0-.49.07-.97.19-1.42l6.73 6.73c-.45.12-.93.19-1.42.19z"/>`;
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                btn.querySelector('svg').innerHTML = eyeClosed;
+            } else {
+                input.type = 'password';
+                btn.querySelector('svg').innerHTML = eyeOpen;
+            }
+        }
+
+        function switchTab(mode) {
+            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.form-section').forEach(f => f.classList.remove('active'));
+            document.getElementById('auth-message').innerText = '';
+            document.getElementById('auth-message').className = 'auth-msg';
+
+            if (mode === 'login') {
+                document.getElementById('tab-login').classList.add('active');
+                document.getElementById('form-login').classList.add('active');
+            } else {
+                document.getElementById('tab-register').classList.add('active');
+                document.getElementById('form-register').classList.add('active');
+                loadDropdownData(); 
+            }
+        }
+
+        async function loadDropdownData() {
+            const countySelect = document.getElementById('reg-county');
+            if (countySelect.options.length > 1) return; 
+
+            try {
+                const { data, error } = await window.supabaseClient
+                    .from('schools')
+                    .select('id, county, stage, name')
+                    .in('stage', ['國中', '高中']);
+
+                if (error) throw error;
+                allSchools = data;
+
+                const counties = [...new Set(allSchools.map(s => s.county))].sort();
+                counties.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c; opt.textContent = c;
+                    countySelect.appendChild(opt);
+                });
+            } catch (e) {
+                console.error("無法載入就學資訊對照表", e);
+            }
+        }
+
+        function handleCountyChange() {
+            const county = document.getElementById('reg-county').value;
+            const stageSelect = document.getElementById('reg-stage');
+            const schoolSelect = document.getElementById('reg-school');
+
+            stageSelect.value = '';
+            schoolSelect.value = '';
+            schoolSelect.innerHTML = '<option value="">選擇學校...</option>';
+            schoolSelect.disabled = true;
+
+            if (county) {
+                stageSelect.disabled = false;
+            } else {
+                stageSelect.disabled = true;
+            }
+        }
+
+        function handleStageChange() {
+            const county = document.getElementById('reg-county').value;
+            const stage = document.getElementById('reg-stage').value;
+            const schoolSelect = document.getElementById('reg-school');
+
+            schoolSelect.value = '';
+            schoolSelect.innerHTML = '<option value="">選擇學校...</option>';
+
+            if (county && stage) {
+                const filtered = allSchools.filter(s => s.county === county && s.stage === stage);
+                filtered.sort((a,b) => a.name.localeCompare(b.name, 'zh-Hant'));
+                
+                filtered.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s.id; 
+                    opt.textContent = s.name;
+                    schoolSelect.appendChild(opt);
+                });
+                schoolSelect.disabled = false;
+            } else {
+                schoolSelect.disabled = true;
+            }
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const msg = document.getElementById('auth-message');
+            const btn = document.getElementById('btn-login-submit');
+            
+            const customId = document.getElementById('login-username').value.trim().toLowerCase();
+            const password = document.getElementById('login-password').value;
+
+            const virtualEmail = `${customId}@coollearning.tw`;
+
+            msg.className = 'auth-msg'; msg.innerText = '正在登入中...';
+            btn.disabled = true;
+
+            try {
+                const { data, error } = await window.supabaseClient.auth.signInWithPassword({
+                    email: virtualEmail,
+                    password: password
+                });
+
+                if (error) throw error;
+
+                msg.className = 'auth-msg success';
+                msg.innerText = '登入成功！即將跳轉至首頁...';
+                
+                sessionStorage.setItem('global_user_logged_in', 'true');
+                setTimeout(() => { window.location.href = '../index.html'; }, 1000);
+
+            } catch (err) {
+                msg.className = 'auth-msg error';
+                msg.innerText = `登入失敗：帳號 ID 或密碼輸入錯誤`;
+                btn.disabled = false;
+            }
+        }
+
+        async function handleRegister(e) {
+            e.preventDefault();
+            const msg = document.getElementById('auth-message');
+            const btn = document.getElementById('btn-reg-submit');
+
+            const customId = document.getElementById('reg-customid').value.trim().toLowerCase();
+            const username = document.getElementById('reg-username').value.trim();
+            const password = document.getElementById('reg-password').value;
+            const county = document.getElementById('reg-county').value;
+            const stage = document.getElementById('reg-stage').value;
+            const schoolId = document.getElementById('reg-school').value;
+
+            if(!/^[a-z0-9._]+$/.test(customId)) {
+                msg.className = 'auth-msg error';
+                msg.innerText = '註冊失敗：帳號 ID 格式不符，僅限小寫英文字母、數字、英文點(.)與下劃線(_)。';
+                return;
+            }
+
+            const hasAnySchoolInfo = (county !== '' || stage !== '' || schoolId !== '');
+            const hasAllSchoolInfo = (county !== '' && stage !== '' && schoolId !== '');
+
+            if (hasAnySchoolInfo && !hasAllSchoolInfo) {
+                msg.className = 'auth-msg error';
+                msg.innerText = '註冊失敗：就學資訊若要填寫，「縣市」、「階段」與「學校」缺一不可。';
+                return; 
+            }
+
+            const virtualEmail = `${customId}@coollearning.tw`;
+
+            msg.className = 'auth-msg'; msg.innerText = '建立帳號中...';
+            btn.disabled = true;
+
+            try {
+                const { data, error } = await window.supabaseClient.auth.signUp({
+                    email: virtualEmail,
+                    password: password,
+                    options: {
+                        data: {
+                            username: username, 
+                            custom_id: customId, 
+                            county: county || null,
+                            stage: stage || null,
+                            school_id: schoolId || null
+                        }
+                    }
+                });
+
+                if (error) throw error;
+
+                msg.className = 'auth-msg success';
+                msg.innerText = '註冊成功！即將自動為您登入並跳轉...';
+                
+                sessionStorage.setItem('global_user_logged_in', 'true');
+                setTimeout(() => { window.location.href = '../index.html'; }, 1500);
+
+            } catch (err) {
+                msg.className = 'auth-msg error';
+                msg.innerText = `註冊失敗：此帳號 ID 已被他人使用。`;
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

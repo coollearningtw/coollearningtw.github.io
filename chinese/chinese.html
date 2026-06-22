@@ -55,6 +55,7 @@
     <header>
         <div class="logo">
             <a href="../index.html" class="back-link">
+                <!-- 向量回退圖標 -->
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
             </a>
             <img src="../images/logo.png" alt="Logo" height="40">
@@ -63,6 +64,14 @@
     </header>
 
     <div class="page-container">
+        <!-- 雲端書架移轉橫幅 (僅有當本機存有舊資料且已登入時才會動態顯示) -->
+        <div id="migration-banner" class="std-card" style="background:#f0fdf4; border:1.5px solid #bbf7d0; padding:15px; margin-bottom:15px; display:none; align-items:center; justify-content:space-between; gap:10px;">
+            <div style="color:#166534; font-size:0.9rem; text-align:left; font-weight:bold;">
+                偵測到本機有未同步的「國文自訂書架」，是否將其合併備份至您的雲端帳號？
+            </div>
+            <button class="btn" id="btn-migration" style="background:#10b981; padding:8px 16px; font-size:0.85rem; flex-shrink:0;">確認轉移</button>
+        </div>
+
         <div class="shelf-container">
             <div class="shelf-controls">
                 <span class="switch-label">管理國文書架</span>
@@ -73,7 +82,7 @@
         <div id="lessons-root"></div>
     </div>
 
-    <!-- 底部導航：新增作者與賞析 -->
+    <!-- 底部導航 -->
     <div class="bottom-nav-fixed">
         <div class="bottom-nav-content">
             <button class="nav-item-btn" id="btn-author" onclick="goTo('chinese-author')" disabled>
@@ -95,16 +104,133 @@
         </div>
     </div>
 
+    <!-- 載入 Supabase SDK、連線設定與身分驗證輔助 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../scripts/supabase-config.js"></script>
+    <script src="../scripts/auth-helper.js"></script>
+
     <script>
         let chineseData = [], shelves = [], activeShelfId = 'all', isManageMode = false;
+        let currentUser = null;
+        let cloudShelves = [];
+
+        // =========================================================================
+        // 雙模同步與自訂國文書架合併邏輯 (整合 user_progress 1對1 表)
+        // =========================================================================
+        if (window.supabaseClient) {
+            window.supabaseClient.auth.onAuthStateChange(async (event, session) => {
+                currentUser = session ? session.user : null;
+                
+                if (currentUser) {
+                    // === 雲端模式 ===
+                    try {
+                        // 1. 取得一對一進度表中的雲端自訂國文書架
+                        const { data, error } = await window.supabaseClient
+                            .from('user_progress')
+                            .select('chinese_shelves')
+                            .eq('user_id', currentUser.id)
+                            .single();
+                        
+                        if (error) throw error;
+                        cloudShelves = data.chinese_shelves || [];
+                        shelves = cloudShelves;
+
+                        // 2. 檢測是否有未同步的本機舊書架
+                        const localData = localStorage.getItem('chinese_shelves');
+                        const localShelves = localData ? JSON.parse(localData) : [];
+
+                        if (localShelves.length > 0) {
+                            const banner = document.getElementById('migration-banner');
+                            if (banner) banner.style.display = 'flex';
+
+                            document.getElementById('btn-migration').onclick = async () => {
+                                document.getElementById('btn-migration').disabled = true;
+                                document.getElementById('btn-migration').innerText = '轉移中...';
+
+                                // 合併本機書架與雲端書架，並對重複書架進行課程合流
+                                let merged = [...cloudShelves];
+                                localShelves.forEach(ls => {
+                                    const match = merged.find(cs => cs.id === ls.id);
+                                    if (!match) {
+                                        merged.push(ls);
+                                    } else {
+                                        ls.courses.forEach(lc => {
+                                            if (!match.courses.some(mc => mc.source === lc.source && mc.lesson === lc.lesson)) {
+                                                match.courses.push(lc);
+                                            }
+                                        });
+                                    }
+                                });
+
+                                // 寫入 user_progress 表
+                                const { error: updateErr } = await window.supabaseClient
+                                    .from('user_progress')
+                                    .update({ chinese_shelves: merged })
+                                    .eq('user_id', currentUser.id);
+
+                                if (updateErr) {
+                                    console.error("雲端資料轉移失敗：", updateErr);
+                                    alert("轉移失敗，請重試！");
+                                    document.getElementById('btn-migration').disabled = false;
+                                    document.getElementById('btn-migration').innerText = '確認轉移';
+                                } else {
+                                    localStorage.removeItem('chinese_shelves');
+                                    banner.style.display = 'none';
+
+                                    shelves = merged;
+                                    alert("您的本地國文書架已成功搬移並合併至雲端！");
+                                    renderTabs();
+                                    renderLessons();
+                                }
+                            };
+                        }
+                    } catch (e) {
+                        console.warn("讀取雲端國文書架失敗，自動退回本地儲存：", e);
+                        loadLocalShelves();
+                    }
+                } else {
+                    // === 訪客本地儲存模式 ===
+                    loadLocalShelves();
+                }
+
+                renderTabs();
+                renderLessons();
+            });
+        } else {
+            loadLocalShelves();
+            renderTabs();
+            renderLessons();
+        }
+
+        function loadLocalShelves() {
+            const data = localStorage.getItem('chinese_shelves');
+            shelves = data ? JSON.parse(data) : [];
+        }
+
+        async function saveShelves() {
+            if (currentUser) {
+                // 雲端儲存
+                await window.supabaseClient
+                    .from('user_progress')
+                    .update({ chinese_shelves: shelves })
+                    .eq('user_id', currentUser.id);
+            } else {
+                // 本地儲存
+                localStorage.setItem('chinese_shelves', JSON.stringify(shelves));
+            }
+        }
+
+        // =========================================================================
+        // 課程資料加載與渲染
+        // =========================================================================
 
         async function init() {
             try {
                 const res = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/chinese.json'); 
                 const data = await res.json();
                 chineseData = data.sources; 
-                shelves = JSON.parse(localStorage.getItem('chinese_shelves') || '[]');
-                renderTabs(); renderLessons();
+                
+                // 註：Auth 狀態改變時會自動調用 renderTabs / renderLessons，此處不需要重複調用
             } catch (e) { console.error("資料載入失敗", e); }
         }
 
@@ -114,7 +240,8 @@
             shelves.forEach(s => {
                 const tab = document.createElement('div');
                 tab.className = `shelf-tab ${activeShelfId===s.id?'active':''}`;
-                tab.innerHTML = s.name + (isManageMode ? ' ✎' : '');
+                // 全面去 Emoji：將原本的 ✎ 符號替換為安全文字 "(編輯)"
+                tab.innerHTML = s.name + (isManageMode ? ' <span style="font-size:11px; font-weight:bold; color:#e74c3c;">(編輯)</span>' : '');
                 tab.onclick = () => isManageMode ? editShelf(s) : switchShelf(s.id);
                 root.appendChild(tab);
             });
@@ -122,7 +249,7 @@
             add.className = 'shelf-tab'; add.style.color = '#e74c3c'; add.innerText = '+ 新增書架';
             add.onclick = () => {
                 const n = prompt('書架名稱:');
-                if(n) { shelves.push({id:'s_'+Date.now(), name:n, courses:[]}); save(); renderTabs(); }
+                if(n) { shelves.push({id:'s_'+Date.now(), name:n, courses:[]}); saveShelves(); renderTabs(); }
             };
             root.appendChild(add);
         }
@@ -140,14 +267,13 @@
                 lessons.forEach(l => {
                     const hasAnno = l.annotations && l.annotations.length > 0;
                     const hasContent = l.content && l.content.length > 0;
-                    const hasAuthor = l.author && l.author.trim() !== '';
+                    const hasAuthor = l.authorName || l.authorIntro;
                     const hasAppr = l.appreciation && l.appreciation.trim() !== '';
                     const isEnabled = l.enabled !== false;
                     
                     const card = document.createElement('div'); 
                     card.className = `lesson-card std-card ${isManageMode?'manage-mode':''} ${!isEnabled ? 'is-disabled' : ''}`;
                     
-                    // 寫入 dataset 用於後續按鈕檢測
                     card.dataset.source = src.name; 
                     card.dataset.lesson = l.lesson;
                     card.dataset.hasAnno = hasAnno; 
@@ -188,13 +314,17 @@
                 const idx = prompt(`要加入到哪個書架？\n${list}`) - 1;
                 if(shelves[idx]) {
                     const exists = shelves[idx].courses.some(c => c.source === src && c.lesson === les);
-                    if(!exists) { shelves[idx].courses.push({source:src, lesson:les}); save(); alert('已加入 ' + shelves[idx].name); }
+                    if(!exists) { 
+                        shelves[idx].courses.push({source:src, lesson:les}); 
+                        saveShelves(); 
+                        alert('已加入 ' + shelves[idx].name); 
+                    }
                     else alert('已在書架中');
                 }
             } else {
                 const s = shelves.find(x => x.id === activeShelfId);
                 s.courses = s.courses.filter(c => !(c.source === src && c.lesson === les));
-                save(); renderLessons();
+                saveShelves(); renderLessons();
             }
         }
 
@@ -215,13 +345,11 @@
             document.getElementById('btn-appreciation').disabled = !canAppr;
         }
 
-        function save() { localStorage.setItem('chinese_shelves', JSON.stringify(shelves)); }
-
         function editShelf(s) {
             const n = prompt('修改名稱 (留空則刪除書架):', s.name);
             if(n === '') { shelves = shelves.filter(x => x.id !== s.id); activeShelfId = 'all'; }
             else if(n) { s.name = n; }
-            save(); renderTabs(); renderLessons();
+            saveShelves(); renderTabs(); renderLessons();
         }
 
         document.getElementById('manage-toggle').onchange = (e) => { isManageMode = e.target.checked; renderTabs(); renderLessons(); };

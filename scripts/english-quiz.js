@@ -37,6 +37,31 @@ document.addEventListener('DOMContentLoaded', () => {
   let revealed = false;
   let optionAnswered = false;
 
+  // --- 雲端同步與監聽狀態變數 ---
+  let currentUser = null;
+  let cloudMistakes = []; // 快取雲端常錯單字
+
+  // 監聽登入狀態並加載雲端數據 (連線至新一對一表 user_progress，用 user_id)
+  if (window.supabaseClient) {
+      window.supabaseClient.auth.onAuthStateChange(async (event, session) => {
+          currentUser = session ? session.user : null;
+          if (currentUser) {
+              try {
+                  const { data, error } = await window.supabaseClient
+                      .from('user_progress')
+                      .select('english_mistakes')
+                      .eq('user_id', currentUser.id)
+                      .single();
+                  if (!error && data) {
+                      cloudMistakes = data.english_mistakes || [];
+                  }
+              } catch (e) {
+                  console.error("無法同步雲端常錯單字：", e);
+              }
+          }
+      });
+  }
+
   // ============================================================
   // 1. 資料初始化
   // ============================================================
@@ -148,25 +173,40 @@ document.addEventListener('DOMContentLoaded', () => {
     renderQuestion(currentQuestion);
   }
 
+  // 測驗結束寫入 (支援已登入者寫入雲端新表 user_progress)
   function endQuiz() {
     clearTimer();
     quizSection.style.display = 'none';
     setupSection.style.display = 'block'; 
 
-    let globalMistakes = JSON.parse(localStorage.getItem('english_mistakes') || '[]');
+    let currentMistakes = currentUser ? [...cloudMistakes] : JSON.parse(localStorage.getItem('english_mistakes') || '[]');
     let hasNewMistake = false;
     
     currentSessionWrongs.forEach(q => {
-        if(!globalMistakes.includes(q.word)) {
-            globalMistakes.push(q.word);
+        if(!currentMistakes.includes(q.word)) {
+            currentMistakes.push(q.word);
             hasNewMistake = true;
         }
         if(!wrongQuestions.some(wq => wq.word === q.word && wq.chinese === q.chinese)) {
             wrongQuestions.push(q);
         }
     });
+
     if(hasNewMistake) {
-        localStorage.setItem('english_mistakes', JSON.stringify(globalMistakes));
+        if (currentUser) {
+            // 同步至雲端新表 user_progress，條件為 user_id
+            window.supabaseClient.from('user_progress')
+                .update({ english_mistakes: currentMistakes })
+                .eq('user_id', currentUser.id)
+                .then(({ error }) => {
+                    if (!error) {
+                        cloudMistakes = currentMistakes; 
+                        console.log("常錯單字紀錄已成功同步至雲端。");
+                    }
+                });
+        } else {
+            localStorage.setItem('english_mistakes', JSON.stringify(currentMistakes));
+        }
     }
 
     mistakeArea.style.display = 'block';
@@ -177,7 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
         mistakeBtn.textContent = `錯題訂正 (${wrongQuestions.length} 題)`;
     } else {
         mistakeBtn.style.display = 'none';
-        lastScoreInfo.innerHTML += ` <span style="color:#2ecc71">🎉 全對！</span>`;
+        lastScoreInfo.innerHTML += ` <span style="color:#2ecc71">全對！</span>`;
     }
   }
 
@@ -246,7 +286,6 @@ document.addEventListener('DOMContentLoaded', () => {
         startTimer(10, t=>timerEl.textContent=`剩餘 ${t}s`, onTimeout);
 
     } else {
-        // --- 拼字模式 (Spell) ---
         const h = mkHeader(q.chinese, q.pos, speakBtnHtml);
         questionArea.appendChild(h); bindSpeak(h);
         
@@ -262,7 +301,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     const inp = document.createElement('input');
                     inp.type = 'text';
-                    // 套用通用 Class 與 積木 Class
                     inp.className = 'spell-input phrasal-block'; 
                     inp.dataset.answer = b.answer;
                     inp.autocomplete = 'off';
@@ -301,6 +339,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // 以下其餘邏輯（checkChoice, revealAnswer, recordWrong 等）維持不變...
   function checkChoice(btn, val, correct) {
     if (optionAnswered) return; optionAnswered = true; clearTimer();
     const isCorrect = (val === correct);
@@ -329,8 +368,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (userVal !== correctVal) {
                     allOk = false;
                     input.classList.add('wrong'); 
-                } else {
-                    // 正確時保持原樣，不強制變色
                 }
             });
             isCorrect = allOk;

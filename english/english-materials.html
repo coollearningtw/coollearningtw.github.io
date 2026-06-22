@@ -9,7 +9,7 @@
     <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
     <style>
         body { padding-bottom: 110px; }
-        .back-link { text-decoration: none; color: inherit !important; margin-right: 15px; font-size: 1.5rem; }
+        .back-link { text-decoration: none; color: inherit !important; margin-right: 15px; font-size: 1.5rem; display: flex; align-items: center; }
         .shelf-container { margin-bottom: 20px; padding: 10px; background: #fff; border-radius: var(--radius); box-shadow: var(--shadow); border: 1px solid #eef; }
         .shelf-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .switch-label { font-size: 0.9rem; font-weight: bold; color: #555; }
@@ -31,13 +31,11 @@
         .lesson-card { background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 30px 10px 15px; text-align: center; cursor: pointer; transition: all 0.2s ease; user-select: none; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: bold; color: #555; box-shadow: 0 2px 8px rgba(0,0,0,0.02); min-height: 95px; position: relative; overflow: hidden; }
         .lesson-card.selected:not(.manage-mode) { border: 2.5px solid var(--primary); background-color: var(--primary-light); color: var(--primary); transform: translateY(-2px); }
         
-        /* --- 狀態樣式 --- */
         .status-ribbon { position: absolute; top: 0; left: 0; right: 0; font-size: 0.65rem; padding: 2px 0; font-weight: 900; text-align: center; color: #fff; z-index: 5; }
         .status-ribbon.red { background-color: #e57373; }
         .status-ribbon.yellow { background-color: #ffb74d; }
         .status-ribbon.green { background-color: #81c784; }
         .lesson-card.is-disabled { opacity: 0.6; cursor: not-allowed !important; pointer-events: none; }
-        /* -------------- */
 
         .lesson-card.empty:not(.manage-mode) { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
         .card-badges { display: flex; gap: 4px; margin-top: 6px; }
@@ -57,10 +55,24 @@
 </head>
 <body>
     <header>
-        <div class="logo"><a href="english.html" class="back-link">⬅</a> <span>英文科選課</span></div>
+        <div class="logo">
+            <!-- 恢復並美化原始 Header 回退按鈕 -->
+            <a href="english.html" class="back-link">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            </a>
+            <span>英文科選課</span>
+        </div>
     </header>
 
     <div class="page-container">
+        <!-- 雲端書架移轉橫幅 (有本地舊資料且登入時自動提示) -->
+        <div id="migration-banner" class="std-card" style="background:#f0fdf4; border:1.5px solid #bbf7d0; padding:15px; margin-bottom:15px; display:none; align-items:center; justify-content:space-between; gap:10px;">
+            <div style="color:#166534; font-size:0.9rem; text-align:left; font-weight:bold;">
+                偵測到本機有未同步的「英文自訂書架」，是否將其合併備份至您的雲端帳號？
+            </div>
+            <button class="btn" id="btn-migration" style="background:#10b981; padding:8px 16px; font-size:0.85rem; flex-shrink:0;">確認轉移</button>
+        </div>
+
         <div class="shelf-container">
             <div class="shelf-controls">
                 <span class="switch-label">管理書架</span>
@@ -84,12 +96,126 @@
         </div>
     </div>
 
+    <!-- 載入 Supabase SDK、連線設定檔與驗證輔助 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../scripts/supabase-config.js"></script>
+    <script src="../scripts/auth-helper.js"></script>
+
     <script>
         let mergedData = [], transData = [];
         let shelves = [], activeShelfId = 'all', isManageMode = false;
+        let currentUser = null;
+        let cloudShelves = [];
 
-        const loadShelves = () => { const data = localStorage.getItem('course_shelves'); shelves = data ? JSON.parse(data) : []; };
-        const saveShelves = () => localStorage.setItem('course_shelves', JSON.stringify(shelves));
+        // =========================================================================
+        // 雙模同步與自訂書架合併邏輯
+        // =========================================================================
+        if (window.supabaseClient) {
+            window.supabaseClient.auth.onAuthStateChange(async (event, session) => {
+                currentUser = session ? session.user : null;
+                
+                if (currentUser) {
+                    // === 雲端模式 ===
+                    try {
+                        // 1. 取得一對一表中的雲端自訂書架
+                        const { data, error } = await window.supabaseClient
+                            .from('user_progress')
+                            .select('english_shelves')
+                            .eq('user_id', currentUser.id)
+                            .single();
+                        
+                        if (error) throw error;
+                        cloudShelves = data.english_shelves || [];
+                        shelves = cloudShelves;
+
+                        // 2. 檢測是否存在未同步的本機舊書架
+                        const localData = localStorage.getItem('course_shelves');
+                        const localShelves = localData ? JSON.parse(localData) : [];
+
+                        if (localShelves.length > 0) {
+                            const banner = document.getElementById('migration-banner');
+                            banner.style.display = 'flex';
+
+                            document.getElementById('btn-migration').onclick = async () => {
+                                document.getElementById('btn-migration').disabled = true;
+                                document.getElementById('btn-migration').innerText = '轉移中...';
+
+                                // 合併本機書架與雲端書架，並對重複的書架進行課程內容合流
+                                let merged = [...cloudShelves];
+                                localShelves.forEach(ls => {
+                                    const match = merged.find(cs => cs.id === ls.id);
+                                    if (!match) {
+                                        merged.push(ls);
+                                    } else {
+                                        ls.courses.forEach(lc => {
+                                            if (!match.courses.some(mc => mc.source === lc.source && mc.lesson === lc.lesson)) {
+                                                match.courses.push(lc);
+                                            }
+                                        });
+                                    }
+                                });
+
+                                // 寫入 user_progress 表
+                                const { error: updateErr } = await window.supabaseClient
+                                    .from('user_progress')
+                                    .update({ english_shelves: merged })
+                                    .eq('user_id', currentUser.id);
+
+                                if (updateErr) {
+                                    console.error("雲端資料轉移失敗：", updateErr);
+                                    alert("轉移失敗，請重試！");
+                                    document.getElementById('btn-migration').disabled = false;
+                                    document.getElementById('btn-migration').innerText = '確認轉移';
+                                } else {
+                                    localStorage.removeItem('course_shelves');
+                                    banner.style.display = 'none';
+
+                                    shelves = merged;
+                                    alert("您的本地英文書架已成功搬移並合併至雲端！");
+                                    renderTabs();
+                                    renderLessons();
+                                }
+                            };
+                        }
+                    } catch (e) {
+                        console.warn("讀取雲端書架失敗，自動退回本地儲存：", e);
+                        loadLocalShelves();
+                    }
+                } else {
+                    // === 訪客本地儲存模式 ===
+                    loadLocalShelves();
+                }
+
+                renderTabs();
+                renderLessons();
+            });
+        } else {
+            loadLocalShelves();
+            renderTabs();
+            renderLessons();
+        }
+
+        function loadLocalShelves() {
+            const data = localStorage.getItem('course_shelves');
+            shelves = data ? JSON.parse(data) : [];
+        }
+
+        async function saveShelves() {
+            if (currentUser) {
+                // 雲端儲存
+                await window.supabaseClient
+                    .from('user_progress')
+                    .update({ english_shelves: shelves })
+                    .eq('user_id', currentUser.id);
+            } else {
+                // 本地儲存
+                localStorage.setItem('course_shelves', JSON.stringify(shelves));
+            }
+        }
+
+        // =========================================================================
+        // 課程資料加載與渲染
+        // =========================================================================
 
         async function init() {
             try {
@@ -108,7 +234,8 @@
                     return src;
                 });
                 transData = transRes.sources;
-                loadShelves(); renderTabs(); renderLessons();
+                
+                // 註：這裏不需要重複調用 render，因為上面 Auth 狀態改變時會自動調用
             } catch (e) { console.error("資料載入失敗", e); }
         }
 
@@ -121,11 +248,15 @@
             shelves.forEach(s => {
                 const tab = document.createElement('div');
                 tab.className = `shelf-tab ${activeShelfId === s.id ? 'active' : ''}`;
-                tab.innerHTML = `${s.name}${isManageMode ? ' <span style="font-size:10px;">✎</span>' : ''}`;
+                // 全面去 Emoji：將原本的 ✎ 符號替換為安全文字 "(編輯)"
+                tab.innerHTML = `${s.name}${isManageMode ? ' <span style="font-size:11px; font-weight:bold; color:var(--primary);">(編輯)</span>' : ''}`;
                 tab.onclick = () => {
                     if (isManageMode) {
-                        const newN = prompt('修改名稱:', s.name);
-                        if (newN === '') { shelves = shelves.filter(x => x.id !== s.id); if (activeShelfId === s.id) activeShelfId = 'all'; }
+                        const newN = prompt('修改書架名稱 (留空將刪除此書架):', s.name);
+                        if (newN === '') { 
+                            shelves = shelves.filter(x => x.id !== s.id); 
+                            if (activeShelfId === s.id) activeShelfId = 'all'; 
+                        }
                         else if (newN) { s.name = newN; }
                         saveShelves(); renderTabs(); renderLessons();
                     } else { switchShelf(s.id); }
@@ -208,6 +339,7 @@
 
         function switchShelf(id) { activeShelfId = id; document.querySelectorAll('.lesson-card.selected').forEach(c => c.classList.remove('selected')); renderTabs(); renderLessons(); }
         function toggleManage() { isManageMode = document.getElementById('manage-toggle').checked; renderTabs(); renderLessons(); }
+        
         function goTo(page) {
             const isT = page === 'translation';
             const selected = document.querySelectorAll(isT ? '.trans-logic.selected' : '.normal-logic.selected');
@@ -215,6 +347,7 @@
             localStorage.setItem(isT ? 'sel_trans_lessons' : 'sel_lessons', JSON.stringify(data));
             window.location.href = page + '.html';
         }
+        
         document.getElementById('manage-toggle').onchange = toggleManage;
         init();
     </script>

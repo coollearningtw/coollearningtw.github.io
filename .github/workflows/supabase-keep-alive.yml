@@ -1,0 +1,21 @@
+name: Supabase Keep Alive
+
+on:
+  schedule:
+    # 使用 cron 排程：每 3 天的凌晨 0:00 (UTC 時間) 執行一次
+    # 如果要調整頻率，可自行修改 cron 表達式
+    - cron: '0 0 */3 * *'
+  
+  # 允許在 GitHub 網頁介面上手動點擊執行（方便測試）
+  workflow_dispatch:
+
+jobs:
+  ping_supabase:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Send API Request to Supabase
+        run: |
+          curl -i -X GET "${{ secrets.SUPABASE_URL }}/rest/v1/schools?select=id&limit=1" \
+          -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+          -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}"

@@ -38,21 +38,18 @@
         }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* === 修正：積木填空樣式與對齊 === */
-        
-        /* 1. 作答區容器改為靠左 */
+        /* 積木填空樣式與對齊 */
         .quiz-spell-wrapper {
             display: flex;
             flex-wrap: wrap;
             align-items: center;
-            justify-content: flex-start; /* 改為靠左 */
+            justify-content: flex-start;
             gap: 10px;
             margin: 20px 0;
-            padding: 10px 15px; /* 增加左側內邊距 */
+            padding: 10px 15px;
             min-height: 80px;
         }
 
-        /* 2. 顯示文字樣式 */
         .quiz-text-block {
             font-size: 1.8rem;
             font-weight: bold;
@@ -60,16 +57,15 @@
             user-select: none;
         }
 
-        /* 3. 調整積木輸入框，使其與原本 .spell-input 樣式一致 */
         .quiz-input-blank {
-            border: 1px solid #e2e8f0; /* 統一邊框 */
+            border: 1px solid #e2e8f0;
             border-radius: 8px;
             width: 140px;
-            text-align: left; /* 配合輸入英文的對齊方向 */
+            text-align: left;
             padding: 12px 15px;
             font-size: 1.2rem;
             outline: none;
-            background: #f8fafc; /* 與原輸入框背景色一致 */
+            background: #f8fafc;
             color: #334155;
             box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
             transition: all 0.2s ease;
@@ -81,29 +77,26 @@
             box-shadow: 0 0 0 3px rgba(11, 118, 209, 0.1);
         }
 
-        /* 答錯時晃動紅框 */
         .quiz-input-blank.wrong {
             border-color: #ef4444 !important;
             background-color: #fef2f2 !important;
             animation: shake 0.4s ease;
         }
 
-        /* 確保原本的 .spell-input 也是靠左 */
         .spell-input {
             text-align: left !important;
             padding-left: 15px !important;
             margin-left: 15px !important;
         }
 
-        /* 片語積木輸入框樣式：縮短為 80px (約為原本 150px-160px 的一半) */
-.spell-input.phrasal-block {
-    width: 160px !important; 
-    display: inline-block !important;
-    margin: 0 !important;
-    padding: 10px 12px !important;
-    flex: 0 1 auto !important; 
-    text-align: center !important; /* 填空題置中對齊較美觀 */
-}
+        .spell-input.phrasal-block {
+            width: 160px !important; 
+            display: inline-block !important;
+            margin: 0 !important;
+            padding: 10px 12px !important;
+            flex: 0 1 auto !important; 
+            text-align: center !important;
+        }
 
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
@@ -121,7 +114,10 @@
 <body>
     <header>
         <div class="logo">
-            <a href="english.html" style="text-decoration:none; color:var(--primary); font-size:1.5rem; margin-right:10px;">⬅</a>
+            <a href="english.html" style="text-decoration:none; color:var(--primary); font-size:1.5rem; margin-right:10px;">
+                <!-- 向量回退圖標 -->
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            </a>
             <img src="../images/logo.png" alt="知識庫" height="40px" style="margin-right: 10px;">
             <span>測驗模式</span>
         </div>
@@ -206,7 +202,10 @@
       </div>
     </div>
 
-    <!-- 載入核心邏輯腳本 -->
+    <!-- 載入 Supabase SDK、設定檔、輔助腳本與核心邏輯 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../scripts/supabase-config.js"></script>
+    <script src="../scripts/auth-helper.js"></script>
     <script src="../scripts/english-quiz.js"></script>
 </body>
 </html>

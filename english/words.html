@@ -55,38 +55,52 @@
         .play-main-btn { width: 50px; height: 50px; background: var(--primary, #0b76d1); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; box-shadow: 0 4px 10px rgba(11,118,209,0.3); border: none; cursor: pointer; }
         .play-main-btn svg { width: 24px; height: 24px; fill: #fff; }
         .select-styled { border: 1px solid #ddd; border-radius: 6px; padding: 4px 8px; font-size: 0.9rem; background:#fff; outline: none; cursor: pointer; }
+
+        /* 小螢幕顯示時，自動隱藏標題文字 "單字背誦" */
+        @media (max-width: 600px) {
+            .header-title-text {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 <body>
     <header>
         <div class="logo">
             <a href="english-materials.html" class="back-link">
+                <!-- 向量回退按鈕 -->
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
             </a>
             <img src="../images/logo.png" alt="Logo" height="40">
-            <span style="font-weight:bold; color:var(--primary);">單字背誦</span>
+            <span class="header-title-text" style="font-weight:bold; color:var(--primary); margin-left: 5px;">單字背誦</span>
         </div>
         <div class="header-right">
-            <!-- 恢復：測驗連結入口 -->
+            <!-- 測驗連結入口 -->
             <a href="quiz.html" class="btn-header-icon" title="測驗">
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
             </a>
             <button class="btn-header-icon" onclick="toggleView()" title="切換視圖"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 14h4v-4H4v4zm0 5h4v-4H4v4zM4 9h4V5H4v4zm5 5h12v-4H9v4zm0 5h12v-4H9v4zM9 5v4h12V5H9z"/></svg></button>
             <button class="btn-header-icon" onclick="toggleLang()" title="中英切換"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0014.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg></button>
-            <!-- 恢復：常錯單字篩選按鈕 -->
             <button class="btn-header-icon" id="btn-mistake-filter" onclick="toggleMistakeFilter()" title="只顯示常錯單字"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg></button>
             <button class="btn-header-icon" id="btn-fav" onclick="toggleFavFilter()" title="只顯示最愛"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg></button>
         </div>
     </header>
 
     <div class="page-container">
+        <!-- 資料轉移橫幅 -->
+        <div id="migration-banner" class="std-card" style="background:#f0fdf4; border:1.5px solid #bbf7d0; padding:15px; margin-bottom:15px; display:none; align-items:center; justify-content:space-between; gap:10px;">
+            <div style="color:#166534; font-size:0.9rem; text-align:left; font-weight:bold;">
+                偵測到本機有未同步的「最愛」與「常錯」單字，是否將其合併轉移至您的雲端帳號？
+            </div>
+            <button class="btn" id="btn-migration" style="background:#10b981; padding:8px 16px; font-size:0.85rem; flex-shrink:0;">確認轉移</button>
+        </div>
+
         <div class="search-section">
             <div class="search-row">
                 <div class="search-input-group">
                     <svg class="search-icon-hint" viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
                     <input type="text" id="search-input" class="search-input" placeholder="搜尋英文或中文..." autocomplete="off">
                 </div>
-                <!-- 改良：保持原結構，程式會自動填入詞性選項 -->
                 <select id="pos-filter" class="pos-select"><option value="">所有詞性</option></select>
             </div>
         </div>
@@ -94,7 +108,7 @@
         <div id="grid-view" class="word-card-grid" style="display:none;"></div>
     </div>
 
-    <!-- 恢復：底部循環語音播放底欄 -->
+    <!-- 底部播放控制底欄 -->
     <div class="bottom-nav-fixed">
         <div class="bottom-nav-content">
             <div class="play-ctrl-group" onclick="toggleLoopAll()" style="cursor:pointer; color:#666;" id="loop-btn">
@@ -119,27 +133,118 @@
         </div>
     </div>
 
+    <!-- 載入 Supabase SDK 及其相關連線與驗證 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../scripts/supabase-config.js"></script>
+    <script src="../scripts/auth-helper.js"></script>
+
     <script>
-        let allWords=[], dispWords=[], favs=JSON.parse(localStorage.getItem('my_favs')||'[]');
-        // 恢復：讀取常錯單字清單
-        let mistakes=JSON.parse(localStorage.getItem('english_mistakes')||'[]');
-        
+        let allWords=[], dispWords=[], favs=[], mistakes=[];
         let isList=true, showCh=false, onlyFav=false, onlyMistake=false, searchText='', filterPos='';
-        // 恢復：自動朗讀狀態變數
         let isPlaying=false, loopAll=false, currIdx=0;
+        let currentUser = null;
+
+        // =========================================================================
+        // 核心同步：動態監聽登入狀態並實作雲端/訪客雙模與轉移 (整合 user_progress 1對1 表)
+        // =========================================================================
+        if (window.supabaseClient) {
+            window.supabaseClient.auth.onAuthStateChange(async (event, session) => {
+                currentUser = session ? session.user : null;
+                
+                if (currentUser) {
+                    // === 雲端模式 ===
+                    try {
+                        // 1. 取得新一對一表 user_progress 中該用戶的進度資料
+                        const { data: progress, error } = await window.supabaseClient
+                            .from('user_progress')
+                            .select('my_favs, english_mistakes')
+                            .eq('user_id', currentUser.id)
+                            .single();
+
+                        if (error) throw error;
+
+                        const cloudFavs = progress.my_favs || [];
+                        const cloudMistakes = progress.english_mistakes || [];
+
+                        // 2. 檢測是否有未同步的本機舊資料
+                        const localFavs = JSON.parse(localStorage.getItem('my_favs') || '[]');
+                        const localMistakes = JSON.parse(localStorage.getItem('english_mistakes') || '[]');
+
+                        if (localFavs.length > 0 || localMistakes.length > 0) {
+                            const banner = document.getElementById('migration-banner');
+                            banner.style.display = 'flex';
+                            
+                            document.getElementById('btn-migration').onclick = async () => {
+                                document.getElementById('btn-migration').disabled = true;
+                                document.getElementById('btn-migration').innerText = '轉移中...';
+
+                                const mergedFavs = [...new Set([...cloudFavs, ...localFavs])];
+                                const mergedMistakes = [...new Set([...cloudMistakes, ...localMistakes])];
+
+                                // 寫入新一對一表 user_progress 
+                                const { error: updateErr } = await window.supabaseClient
+                                    .from('user_progress')
+                                    .update({
+                                        my_favs: mergedFavs,
+                                        english_mistakes: mergedMistakes
+                                    })
+                                    .eq('user_id', currentUser.id); // 條件為 user_id
+
+                                if (updateErr) {
+                                    console.error("雲端資料轉移失敗：", updateErr);
+                                    alert("轉移失敗，請重試！");
+                                    document.getElementById('btn-migration').disabled = false;
+                                    document.getElementById('btn-migration').innerText = '確認轉移';
+                                } else {
+                                    localStorage.removeItem('my_favs');
+                                    localStorage.removeItem('english_mistakes');
+                                    banner.style.display = 'none';
+
+                                    favs = mergedFavs;
+                                    mistakes = mergedMistakes;
+                                    alert("單字學習數據已成功合併至雲端！");
+                                    refresh();
+                                }
+                            };
+                        } else {
+                            favs = cloudFavs;
+                            mistakes = cloudMistakes;
+                        }
+                    } catch (e) {
+                        console.warn("讀取雲端單字紀錄失敗，自動退回本地儲存：", e);
+                        loadLocalData();
+                    }
+                } else {
+                    // === 訪客本地儲存模式 ===
+                    loadLocalData();
+                }
+
+                refresh();
+            });
+        } else {
+            loadLocalData();
+            refresh();
+        }
+
+        function loadLocalData() {
+            favs = JSON.parse(localStorage.getItem('my_favs') || '[]');
+            mistakes = JSON.parse(localStorage.getItem('english_mistakes') || '[]');
+        }
+
+        // =========================================================================
+        // 核心渲染與控制邏輯
+        // =========================================================================
 
         (async()=>{
             const sel = JSON.parse(localStorage.getItem('sel_lessons')||'[]');
-            if(!sel.length) { alert('未選課'); location.href='english.html'; return; }
+            if(!sel.length) { alert('未選課'); location.href='english-materials.html'; return; }
             
-            // 使用新版的 GitHub 遠端資料庫
             const res = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/english.json'); 
             const d = await res.json();
             d.sources.forEach(s=>{ s.lessons.forEach(l=>{
                 if(sel.some(x=>x.source===s.name && x.lesson===l.lesson)) allWords.push(...l.vocabulary);
             })});
             
-            // 動態生成選取詞性（避免舊版硬編碼導致的單字對不上問題）
             populatePosFilter();
 
             document.getElementById('search-input').oninput = (e) => { 
@@ -153,7 +258,6 @@
             refresh();
         })();
 
-        // 動態收集單字資料中的所有不重複詞性並填入選單
         function populatePosFilter() {
             const posSelect = document.getElementById('pos-filter');
             posSelect.innerHTML = '<option value="">所有詞性</option>';
@@ -179,6 +283,9 @@
                 return matchSearch && matchPos;
             });
             renderList(); renderGrid();
+            
+            document.getElementById('btn-fav').classList.toggle('active', onlyFav);
+            document.getElementById('btn-mistake-filter').classList.toggle('mistake-active', onlyMistake);
         }
 
         function renderList() {
@@ -195,8 +302,6 @@
 
                 el.className = `std-card word-list-item word-item-base ${isM ? 'is-mistake' : ''} ${i===currIdx && isPlaying ? 'playing' : ''}`;
                 el.id = `list-${i}`;
-                
-                // 改良：直接調用 clickItem，並利用 event.stopPropagation() 防止按鈕觸發點擊
                 el.onclick = () => clickItem(i);
 
                 const displayText = w.standard_ans || w.word;
@@ -249,7 +354,6 @@
             });
         }
 
-        // 點擊手動點朗讀，並停止自動輪播
         function clickItem(i) {
             stop(); currIdx=i;
             document.querySelectorAll('.playing').forEach(e=>e.classList.remove('playing'));
@@ -268,46 +372,62 @@
         
         function toggleFavFilter() { 
             onlyFav=!onlyFav; 
-            if(onlyFav) { onlyMistake = false; document.getElementById('btn-mistake-filter').classList.remove('mistake-active'); }
-            document.getElementById('btn-fav').classList.toggle('active', onlyFav); 
+            if(onlyFav) { onlyMistake = false; }
             currIdx=0; stop(); refresh(); 
         }
 
         function toggleMistakeFilter() {
             onlyMistake = !onlyMistake;
-            if(onlyMistake) { onlyFav = false; document.getElementById('btn-fav').classList.remove('active'); }
-            document.getElementById('btn-mistake-filter').classList.toggle('mistake-active', onlyMistake);
+            if(onlyMistake) { onlyFav = false; }
             currIdx=0; stop(); refresh(); 
         }
 
-        function togFav(w, btn) {
+        async function togFav(w, btn) {
             if(favs.includes(w)) favs=favs.filter(x=>x!==w); else favs.push(w);
-            localStorage.setItem('my_favs', JSON.stringify(favs));
+            
+            if (currentUser) {
+                // 同步雲端：改為 user_progress 資料表，與 user_id
+                await window.supabaseClient
+                    .from('user_progress')
+                    .update({ my_favs: favs })
+                    .eq('user_id', currentUser.id);
+            } else {
+                localStorage.setItem('my_favs', JSON.stringify(favs));
+            }
+
             if(onlyFav) refresh(); 
             else {
-                // 自動尋找畫面上相同單字的星號按鈕同步狀態
                 const relatedBtns = document.querySelectorAll(`button[onclick*="togFav('${w}'"]`);
-                relatedBtns.forEach(b => b.classList.toggle('active'));
+                relatedBtns.forEach(b => b.classList.toggle('active', favs.includes(w)));
             }
         }
 
-        function togMistake(w, btn) {
+        async function togMistake(w, btn) {
             if(mistakes.includes(w)) mistakes=mistakes.filter(x=>x!==w); else mistakes.push(w);
-            localStorage.setItem('english_mistakes', JSON.stringify(mistakes));
+
+            if (currentUser) {
+                // 同步雲端：改為 user_progress 資料表，與 user_id
+                await window.supabaseClient
+                    .from('user_progress')
+                    .update({ english_mistakes: mistakes })
+                    .eq('user_id', currentUser.id);
+            } else {
+                localStorage.setItem('english_mistakes', JSON.stringify(mistakes));
+            }
+
             if(onlyMistake) refresh(); 
             else {
-                const listEl = [...document.querySelectorAll('.word-list-item')].find(el => el.innerHTML.includes(`'${w}'`));
-                const gridEl = [...document.querySelectorAll('.flash-card-mini')].find(el => el.innerHTML.includes(`'${w}'`));
-                const toggleClass = mistakes.includes(w) ? 'add' : 'remove';
-                if(listEl) listEl.classList[toggleClass]('is-mistake');
-                if(gridEl) gridEl.classList[toggleClass]('is-mistake');
-
                 const relatedBtns = document.querySelectorAll(`button[onclick*="togMistake('${w}'"]`);
-                relatedBtns.forEach(b => b.classList.toggle('active'));
+                relatedBtns.forEach(b => b.classList.toggle('active', mistakes.includes(w)));
+                
+                document.querySelectorAll(`.word-item-base`).forEach(el => {
+                    if (el.innerHTML.includes(`'${w}'`)) {
+                        el.classList.toggle('is-mistake', mistakes.includes(w));
+                    }
+                });
             }
         }
 
-        /* 恢復：自動循環朗讀控制邏輯 */
         function toggleLoopAll() { 
             loopAll=!loopAll; 
             document.getElementById('loop-btn').style.color = loopAll ? 'var(--primary)' : '#666'; 

@@ -10,131 +10,79 @@
         body { background-color: #f8fafc; }
         .list-layout { display: flex; max-width: 1200px; width: 100%; margin: 0 auto; position: relative; gap: 20px; }
         
-        /* --- 修改後的控制列樣式 --- */
-.control-sticky {
-    position: sticky; 
-    /* 這裡的 top 必須配合 header.css 的高度，通常 header + margin 約為 80px */
-    top: calc(var(--header-height, 70px) + 8px);
-    z-index: 1100;
-    width: 100%;
-    background: #f8fafc; /* 使用實色，避免透明度導致的文字重疊感 */
-    padding: 15px 20px;
-    border-bottom: 1px solid #e2e8f0;
-}
+        .control-sticky {
+            position: sticky; 
+            top: calc(var(--header-height, 70px) + 8px);
+            z-index: 1100;
+            width: 100%;
+            background: #f8fafc;
+            padding: 15px 20px;
+            border-bottom: 1px solid #e2e8f0;
+        }
 
-/* 關鍵修正：建立一個向上延伸的遮罩屏障 */
-.control-sticky::before {
-    content: "";
-    position: absolute;
-    top: -120px; /* 向上延伸，封住 header 下方的空隙 */
-    left: 0;
-    right: 0;
-    height: 120px;
-    background: #f8fafc; /* 與背景色一致 */
-    z-index: -1;
-}
+        .control-sticky::before {
+            content: "";
+            position: absolute;
+            top: -120px;
+            left: 0; right: 0; height: 120px;
+            background: #f8fafc;
+            z-index: -1;
+        }
 
-.search-row {
-    display: flex;
-    gap: 12px;
-    max-width: 980px; /* 與 Header 的 max-width 一致 */
-    margin: 0 auto;
-    align-items: center;
-    flex-wrap: wrap;
-}
+        .search-row {
+            display: flex; gap: 12px; max-width: 980px; margin: 0 auto; align-items: center; flex-wrap: wrap;
+        }
 
-.search-input { flex: 1; padding: 12px 20px; border-radius: 50px; border: 2px solid #e2e8f0; outline: none; font-size: 1rem; }
-.search-input:focus { border-color: var(--primary); }
+        .search-input { flex: 1; padding: 12px 20px; border-radius: 50px; border: 2px solid #e2e8f0; outline: none; font-size: 1rem; }
+        .search-input:focus { border-color: var(--primary); }
 
-.mode-toggle { display: flex; background: #e2e8f0; padding: 4px; border-radius: 50px; gap: 4px; }
-.toggle-btn { border: none; padding: 8px 16px; border-radius: 50px; font-size: 0.85rem; font-weight: bold; cursor: pointer; color: #64748b; }
-.toggle-btn.active { background: #fff; color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .mode-toggle { display: flex; background: #e2e8f0; padding: 4px; border-radius: 50px; gap: 4px; }
+        .toggle-btn { border: none; padding: 8px 16px; border-radius: 50px; font-size: 0.85rem; font-weight: bold; cursor: pointer; color: #64748b; transition: 0.2s; }
+        .toggle-btn.active { background: #fff; color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
 
-.vocab-list-container { flex: 1; padding: 20px; }
-.group-section { margin-bottom: 40px; scroll-margin-top: calc(var(--header-height, 70px) + 120px); }
-.group-header { font-size: 1.5rem; font-weight: 900; color: var(--primary); border-bottom: 2px solid var(--primary); margin-bottom: 15px; }
+        .vocab-list-container { flex: 1; padding: 20px; }
 
-.word-item {
-    background: #fff; padding: 15px 20px; border-radius: 12px; margin-bottom: 8px;
-    display: flex; justify-content: space-between; align-items: center;
-    text-decoration: none; color: inherit; border: 1px solid #f1f5f9; transition: 0.2s;
-}
-.word-item:hover { transform: translateX(5px); border-color: var(--primary); }
-.word-text { font-size: 1.2rem; font-weight: 800; color: #1e293b; }
-.word-pos { font-size: 1rem; color: #94a3b8; font-style: italic; margin-left: 8px; }
-.word-ch { color: #64748b; font-size: 0.95rem; }
+        /* --- 核心優化：渲染效能開掛 --- */
+        .group-section { 
+            margin-bottom: 40px; 
+            scroll-margin-top: calc(var(--header-height, 70px) + 120px);
+            /* 現代瀏覽器黑科技：只渲染可見區域，極大提升 7000 筆資料的捲動流暢度 */
+            content-visibility: auto;
+            contain-intrinsic-size: 1px 500px; /* 給予預估高度防止捲動條跳動 */
+        }
+        
+        .group-header { font-size: 1.5rem; font-weight: 900; color: var(--primary); border-bottom: 2px solid var(--primary); margin-bottom: 15px; }
 
-.index-rail {
-    width: 50px; position: sticky; top: 150px; height: calc(100vh - 180px);
-    display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 2px;
-}
-.index-item {
-    font-size: 0.75rem; font-weight: 900; color: #94a3b8; text-decoration: none;
-    width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%;
-}
-.index-item:hover { background: #e0f2fe; color: var(--primary); }
+        .word-item {
+            background: #fff; padding: 15px 20px; border-radius: 12px; margin-bottom: 8px;
+            display: flex; justify-content: space-between; align-items: center;
+            text-decoration: none; color: inherit; border: 1px solid #f1f5f9; transition: 0.1s;
+        }
+        .word-item:hover { transform: translateX(5px); border-color: var(--primary); }
+        
+        .word-item > div:first-child { min-width: 0; flex: 1; display: flex; align-items: center; gap: 8px; }
+        .word-text { font-size: 1.2rem; font-weight: 800; color: #1e293b; line-height: 1.2; word-break: break-word; }
+        .word-text.long-word { font-size: 0.95rem; }
+        .word-pos { font-size: 0.85rem; color: #94a3b8; font-style: italic; white-space: nowrap; }
+        .word-ch { color: #64748b; font-size: 0.9rem; text-align: right; margin-left: 10px; flex-shrink: 0; }
 
-/* 確保搜尋欄在大螢幕下不會貼邊，維持與 Header 一致的對齊 */
-@media (min-width: 980px) {
-    .control-sticky {
-        padding-left: 0;
-        padding-right: 0;
-    }
-}
+        .index-rail {
+            width: 50px; position: sticky; top: 150px; height: calc(100vh - 180px);
+            display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 2px;
+        }
+        .index-item {
+            font-size: 0.72rem; font-weight: 900; color: #94a3b8; text-decoration: none;
+            width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; border-radius: 50%;
+        }
+        .index-item:hover { background: #e0f2fe; color: var(--primary); }
 
-/* 手機版調整：因為手機版 Header 可能較矮，調整 top 值 */
-@media (max-width: 768px) {
-    .list-layout { display: block; gap: 0; padding: 0 12px; }
-    .control-sticky { top: calc(var(--header-height, 70px) + 4px); padding: 14px 14px; }
-    .search-row { flex-direction: column; align-items: stretch; gap: 10px; }
-    .search-input { width: 100%; }
-    .mode-toggle { width: 100%; justify-content: space-between; }
-    .toggle-btn { flex: 1; padding: 10px 12px; min-width: 0; }
-    .vocab-list-container { padding: 16px 0 40px; }
-    .group-section { scroll-margin-top: calc(var(--header-height, 70px) + 140px); }
-    .group-header { font-size: 1.25rem; margin-bottom: 14px; }
-    .word-item { padding: 15px 14px; justify-content: space-between; gap: 12px; }
-    .word-item:hover { transform: none; }
-    .word-item > div:first-child { min-width: 0; flex: 1; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
-    .word-text { font-size: 1.05rem; }
-    .word-pos { margin-left: 0; }
-    .word-ch { font-size: 0.92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 46%; text-align: right; }
-    .index-rail {
-        display: flex;
-        position: fixed;
-        right: 8px;
-        top: calc(var(--header-height, 70px) + 150px);
-        width: 40px;
-        max-height: calc(100vh - (var(--header-height, 70px) + 166px));
-        padding: 8px 0;
-        flex-direction: column;
-        align-items: center;
-        justify-content: flex-start;
-        gap: 6px;
-        background: rgba(255,255,255,0.98);
-        border: 1px solid rgba(15, 23, 42, 0.08);
-        border-radius: 24px;
-        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
-        z-index: 1200;
-    }
-    .index-item {
-        width: 32px;
-        height: 32px;
-        font-size: 0.72rem;
-    }
-    .vocab-list-container { padding-right: 56px; }
-}
-
-/* 更窄手機版進一步優化 */
-@media (max-width: 500px) {
-    .control-sticky { padding: 12px 12px; }
-    .search-input { padding: 12px 16px; }
-    .toggle-btn { padding: 10px 10px; font-size: 0.8rem; }
-    .group-section { margin-bottom: 32px; }
-    .index-rail { right: 6px; width: 36px; }
-    .index-item { width: 30px; height: 30px; font-size: 0.68rem; }
-}
-
+        @media (max-width: 768px) {
+            .list-layout { display: block; padding: 0 12px; }
+            .control-sticky { top: calc(var(--header-height, 70px) + 4px); padding: 14px; }
+            .search-row { flex-direction: column; align-items: stretch; }
+            .vocab-list-container { padding: 16px 40px 40px 0; }
+            .index-rail { position: fixed; right: 6px; top: 180px; width: 30px; background: rgba(255,255,255,0.8); border-radius: 15px; }
+        }
     </style>
 </head>
 <body>
@@ -163,6 +111,7 @@
     </div>
 
     <script>
+        const CACHE_KEY = 'cool_learning_vocab_cache';
         const VOCAB_LEVEL_URLS = [1, 2, 3, 4, 5, 6].map(level =>
             `https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/vocabulary/level${level}.json`
         );
@@ -170,44 +119,65 @@
         let allWords = [];
         let currentMode = 'alpha';
         let currentFilter = '';
+        let renderTimer = null;
+        let searchTimer = null;
 
         async function init() {
             const root = document.getElementById('vocab-root');
-            root.innerHTML = "<div class='error-view'>資料載入中...</div>";
-            try {
-                VOCAB_LEVEL_URLS.forEach(async url => {
-                    try {
-                        const response = await fetch(url);
-                        if (!response.ok) throw new Error('Vocabulary JSON load failed');
-                        const levelData = await response.json();
-                        allWords = allWords.concat(levelData);
-                        render();
-                    } catch (e) {
-                        console.error(e);
-                    }
-                });
-            } catch (e) {
-                document.getElementById('vocab-root').innerHTML = "資料載入失敗，請確認 vocabulary/level1.json~level6.json 路徑。";
+            const cachedData = localStorage.getItem(CACHE_KEY);
+            if (cachedData) {
+                try {
+                    allWords = JSON.parse(cachedData);
+                    render(); // 執行優化後的渲染
+                } catch (e) { console.error(e); }
             }
+            syncWithGitHub();
+        }
+
+        async function syncWithGitHub() {
+            try {
+                const fetchPromises = VOCAB_LEVEL_URLS.map(url => fetch(url).then(r => r.json()));
+                const results = await Promise.all(fetchPromises);
+                const latestWords = results.flat();
+                const latestDataStr = JSON.stringify(latestWords);
+                if (latestDataStr !== localStorage.getItem(CACHE_KEY)) {
+                    allWords = latestWords;
+                    localStorage.setItem(CACHE_KEY, latestDataStr);
+                    render();
+                }
+            } catch (e) { console.warn("Offline mode", e); }
+        }
+
+        function handleSearch() {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(() => {
+                currentFilter = document.getElementById('search-input').value;
+                render(currentFilter);
+            }, 100); 
         }
 
         function switchMode(mode) {
+            if (currentMode === mode) return;
             currentMode = mode;
             document.getElementById('btn-alpha').classList.toggle('active', mode === 'alpha');
             document.getElementById('btn-level').classList.toggle('active', mode === 'level');
-            render();
+            render(); 
         }
 
+        // --- 核心優化：分段非同步渲染 ---
         function render(filter = currentFilter) {
             const root = document.getElementById('vocab-root');
             const rail = document.getElementById('index-rail');
-            root.innerHTML = ''; rail.innerHTML = '';
+            if (!root) return;
 
-            let filtered = allWords.filter(w => 
+            // 停止上一次可能還在進行的渲染
+            if (renderTimer) clearTimeout(renderTimer);
+            
+            const filtered = allWords.filter(w => 
                 w.word.toLowerCase().includes(filter.toLowerCase()) || w.ch.includes(filter)
             );
 
-            let groups = {};
+            const groups = {};
             if (currentMode === 'alpha') {
                 "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").forEach(c => groups[c] = []);
                 filtered.forEach(w => {
@@ -221,40 +191,64 @@
                 });
             }
 
-            Object.keys(groups).forEach(key => {
-                if (groups[key].length === 0) return;
+            const groupKeys = Object.keys(groups).filter(k => groups[k].length > 0);
+            
+            // 渲染側邊索引 (這部分很快，直接做)
+            rail.innerHTML = groupKeys.map(k => 
+                `<a href="#${k}" class="index-item">${k.replace('Level ', 'L')}</a>`
+            ).join('');
 
-                // 渲染側邊索引
-                const a = document.createElement('a');
-                a.className = 'index-item';
-                a.innerText = key.replace('Level ', 'L');
-                a.href = `#${key}`;
-                rail.appendChild(a);
+            // 初始化容器
+            root.innerHTML = ''; 
 
-                // 渲染列表區塊
-                const sec = document.createElement('section');
-                sec.id = key;
-                sec.className = 'group-section';
-                sec.innerHTML = `<h2 class="group-header">${key}</h2>`;
-                
-                groups[key].sort((a, b) => a.word.localeCompare(b.word)).forEach(w => {
-                    const item = document.createElement('a');
-                    item.className = 'word-item';
-                    item.href = `vocabulary-detail.html?word=${encodeURIComponent(w.word)}&mode=${currentMode}`;
-                    item.innerHTML = `
-                        <div><span class="word-text">${w.word}</span><span class="word-pos">${w.pos}</span></div>
-                        <div class="word-ch">${w.ch}</div>
-                    `;
-                    sec.appendChild(item);
-                });
-                root.appendChild(sec);
-            });
+            // 分段渲染函式
+            let currentGroupIdx = 0;
+            const CHUNK_SIZE = 3; // 每次渲染 3 個字母群組
+
+            function renderNextChunk() {
+                let chunkHtml = '';
+                const limit = Math.min(currentGroupIdx + CHUNK_SIZE, groupKeys.length);
+
+                for (let i = currentGroupIdx; i < limit; i++) {
+                    const key = groupKeys[i];
+                    const groupItems = groups[key].sort((a, b) => a.word.localeCompare(b.word));
+                    
+                    let itemsHtml = '';
+                    for (const w of groupItems) {
+                        itemsHtml += `
+                            <a href="vocabulary-detail.html?word=${encodeURIComponent(w.word)}&mode=${currentMode}" class="word-item">
+                                <div>
+                                    <span class="word-text ${w.word.length > 12 ? 'long-word' : ''}">${w.word}</span>
+                                    <span class="word-pos">${w.pos}</span>
+                                </div>
+                                <div class="word-ch">${w.ch}</div>
+                            </a>`;
+                    }
+                    chunkHtml += `<section id="${key}" class="group-section"><h2 class="group-header">${key}</h2>${itemsHtml}</section>`;
+                }
+
+                // 使用 appendChild 配合 DocumentFragment 或直接 innerHTML 累加
+                // 因為有了 content-visibility，直接累加 innerHTML 的負擔已大幅減輕
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = chunkHtml;
+                while (tempDiv.firstChild) {
+                    root.appendChild(tempDiv.firstChild);
+                }
+
+                currentGroupIdx = limit;
+                if (currentGroupIdx < groupKeys.length) {
+                    // 關鍵：將剩餘任務放到下一幀，保持 UI 響應
+                    renderTimer = setTimeout(renderNextChunk, 16); 
+                }
+            }
+
+            if (groupKeys.length > 0) {
+                renderNextChunk();
+            } else {
+                root.innerHTML = "<div style='text-align:center; padding:50px; color:#94a3b8;'>找不到相符單字</div>";
+            }
         }
 
-        function handleSearch() {
-            currentFilter = document.getElementById('search-input').value;
-            render(currentFilter);
-        }
         init();
     </script>
 </body>

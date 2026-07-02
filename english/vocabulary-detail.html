@@ -1,5 +1,3 @@
---- START OF FILE vocabulary-detail.html ---
-
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -45,6 +43,13 @@
             flex-wrap: wrap; 
         }
 
+        /* 關鍵：將選單群組化，內部不換行 */
+        .dropdown-wrapper {
+            display: flex;
+            gap: 10px;
+            flex-wrap: nowrap; 
+        }
+
         .voice-btn { 
             display: inline-flex; align-items: center; justify-content: center; border: 1px solid #e2e8f0; 
             background: #f8fafc; color: var(--primary); width: 42px; height: 42px; border-radius: 12px; 
@@ -53,7 +58,6 @@
         .voice-btn:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
         .voice-btn svg { width: 24px; height: 24px; fill: currentColor; }
         
-        /* 單字選單：固定寬度與省略號 */
         .speak-select {
             width: 140px; 
             padding: 8px 12px; border-radius: 10px; border: 1px solid #cbd5e1; 
@@ -61,7 +65,6 @@
             outline: none; font-size: 0.95rem; transition: 0.2s;
             text-overflow: ellipsis; white-space: nowrap; overflow: hidden;
         }
-        /* 倍速選單：較窄 */
         .speed-select {
             width: 85px;
             padding: 8px 8px; border-radius: 10px; border: 1px solid #cbd5e1;
@@ -135,13 +138,13 @@
 
     <script src="../scripts/utils.js"></script>
     <script>
-        // --- 強化版語音函數 ---
+        // --- 核心狀態 ---
+        let currentSpeed = 0.9; 
+
+        // --- 語音函數 ---
         function speak(input, lang = 'en-US') {
             if (!window.speechSynthesis) return;
             window.speechSynthesis.cancel();
-
-            const speedEl = document.getElementById('speak-speed-select');
-            const rate = speedEl ? parseFloat(speedEl.value) : 0.9;
 
             const items = Array.isArray(input) ? input : [input];
             let totalDelay = 0;
@@ -151,11 +154,15 @@
                     const cleanText = text.replace(/\*\*/g, '');
                     const utterance = new SpeechSynthesisUtterance(cleanText);
                     utterance.lang = lang;
-                    utterance.rate = rate; 
+                    utterance.rate = currentSpeed; 
                     window.speechSynthesis.speak(utterance);
                 }, totalDelay);
-                totalDelay += (1000 / rate); 
+                totalDelay += (1000 / currentSpeed); 
             });
+        }
+
+        function updateGlobalSpeed(val) {
+            currentSpeed = parseFloat(val);
         }
 
         // --- 智慧解析標題邏輯 ---
@@ -345,48 +352,30 @@
             return Array.from(unique.values()).sort((a, b) => b.form.length - a.form.length);
         }
 
-        // --- 修正版：處理 swimming/stopped 重複字尾的偵測 ---
         function generateInflections(key) {
             const forms = new Set();
             const irregular = irregularForms[key];
             if (irregular) irregular.forEach(form => forms.add(form.toLowerCase()));
             
             if (!key.match(/[^a-z]/)) {
-                // 基本變體
                 if (!key.endsWith('s') && !key.endsWith('x') && !key.endsWith('z') && !key.endsWith('ch') && !key.endsWith('sh')) forms.add(`${key}s`); else forms.add(`${key}es`);
-                
-                // y 結尾處理
                 if (key.endsWith('y')) {
                     const stem = key.slice(0, -1);
                     forms.add(`${stem}ies`); forms.add(`${stem}ily`); forms.add(`${stem}ier`); forms.add(`${stem}iest`);
-                } else { 
-                    forms.add(`${key}ly`); forms.add(`${key}er`); forms.add(`${key}est`); 
-                }
-
-                // e 結尾與重複字尾處理
+                } else { forms.add(`${key}ly`); forms.add(`${key}er`); forms.add(`${key}est`); }
                 if (key.endsWith('e')) {
                     const stem = key.slice(0, -1);
-                    forms.add(`${key}d`); 
-                    forms.add(`${stem}ing`);
+                    forms.add(`${key}d`); forms.add(`${stem}ing`);
                 } else {
-                    forms.add(`${key}ed`);
-                    forms.add(`${key}ing`);
-                    
-                    // 重複字尾偵測 (CVC 規則)
-                    // 條件：長度 >= 3, 結尾是 [輔音][單元音][單輔音], 且最後輔音不是 w, x, y
+                    forms.add(`${key}ed`); forms.add(`${key}ing`);
                     const vowels = ['a', 'e', 'i', 'o', 'u'];
                     const last = key.slice(-1);
                     const prev = key.slice(-2, -1);
                     const prev2 = key.slice(-3, -2);
-                    
-                    if (key.length >= 3 && 
-                        !vowels.includes(last) && 
-                        vowels.includes(prev) && 
-                        !vowels.includes(prev2) &&
-                        !['w', 'x', 'y'].includes(last)) {
-                        forms.add(key + last + 'ing'); // swim -> swimming
-                        forms.add(key + last + 'ed');  // stop -> stopped
-                        forms.add(key + last + 'er');  // run -> runner
+                    if (key.length >= 3 && !vowels.includes(last) && vowels.includes(prev) && !vowels.includes(prev2) && !['w', 'x', 'y'].includes(last)) {
+                        forms.add(key + last + 'ing');
+                        forms.add(key + last + 'ed');
+                        forms.add(key + last + 'er');
                     }
                 }
             }
@@ -453,6 +442,10 @@
             if (w.syn && w.syn.length > 0) relationHtml += `<div class="relation-badge syn-badge"><span class="badge-tag">同義</span><span>${w.syn.join(', ')}</span></div>`;
             if (w.ant && w.ant.length > 0) relationHtml += `<div class="relation-badge ant-badge"><span class="badge-tag">反義</span><span>${w.ant.join(', ')}</span></div>`;
 
+            const speedOptions = [0.5, 0.7, 0.9, 1.0, 1.2, 1.5].map(s => 
+                `<option value="${s}" ${s === currentSpeed ? 'selected' : ''}>${s}x</option>`
+            ).join('');
+
             root.innerHTML = `
                 <div class="detail-card">
                     <div class="detail-nav">
@@ -467,18 +460,15 @@
                                 <button class="voice-btn" id="main-voice-btn">
                                     <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
                                 </button>
-                                <select class="speak-select" id="speak-option-select">
-                                    <option value="ALL">預設全部</option>
-                                    ${speakVersions.map(v => `<option value="${v}">${v}</option>`).join('')}
-                                </select>
-                                <select class="speed-select" id="speak-speed-select" title="語速調整">
-                                    <option value="0.5">0.5x</option>
-                                    <option value="0.7">0.7x</option>
-                                    <option value="0.9" selected>0.9x</option>
-                                    <option value="1.0">1.0x</option>
-                                    <option value="1.2">1.2x</option>
-                                    <option value="1.5">1.5x</option>
-                                </select>
+                                <div class="dropdown-wrapper">
+                                    <select class="speak-select" id="speak-option-select">
+                                        <option value="ALL">預設全部</option>
+                                        ${speakVersions.map(v => `<option value="${v}">${v}</option>`).join('')}
+                                    </select>
+                                    <select class="speed-select" id="speak-speed-select" onchange="updateGlobalSpeed(this.value)" title="語速調整">
+                                        ${speedOptions}
+                                    </select>
+                                </div>
                             </div>
                         </div>
                     </div>

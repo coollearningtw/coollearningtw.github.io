@@ -1,3 +1,5 @@
+--- START OF FILE vocabulary-detail.html ---
+
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -12,19 +14,63 @@
         .detail-container { max-width: 850px; margin: 30px auto; padding: 0 20px; }
         .detail-card { background: #fff; border-radius: 24px; padding: 40px; box-shadow: var(--shadow); border: 1px solid #e2e8f0; min-height: 500px; }
         
-        /* --- 修正後的標題樣式：防止長字串溢出 --- */
+        /* --- 標題樣式 --- */
         .header-box { border-bottom: 2px solid #f1f5f9; padding-bottom: 30px; margin-bottom: 30px; }
         .word-title { 
             font-size: 3.5rem; 
             font-weight: 900; 
             color: #1e293b; 
             margin: 0; 
-            word-break: break-all; /* 強制長字串/符號換行 */
+            word-break: break-all; 
             overflow-wrap: break-word;
             line-height: 1.1;
         }
 
-        .pronunciation { display: flex; align-items: center; gap: 15px; color: var(--primary); font-size: 1.2rem; margin-top: 10px; }
+        /* --- 發音與控制區佈局 --- */
+        .pronunciation { 
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+            color: var(--primary); 
+            font-size: 1.2rem; 
+            margin-top: 15px; 
+            flex-wrap: wrap; 
+        }
+        .kk-text { color: #64748b; min-width: fit-content; }
+        
+        .control-group { 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+            flex-wrap: wrap; 
+        }
+
+        .voice-btn { 
+            display: inline-flex; align-items: center; justify-content: center; border: 1px solid #e2e8f0; 
+            background: #f8fafc; color: var(--primary); width: 42px; height: 42px; border-radius: 12px; 
+            cursor: pointer; transition: 0.2s; flex-shrink: 0;
+        }
+        .voice-btn:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
+        .voice-btn svg { width: 24px; height: 24px; fill: currentColor; }
+        
+        /* 單字選單：固定寬度與省略號 */
+        .speak-select {
+            width: 140px; 
+            padding: 8px 12px; border-radius: 10px; border: 1px solid #cbd5e1; 
+            background: #fff; color: #475569; font-weight: 700; cursor: pointer;
+            outline: none; font-size: 0.95rem; transition: 0.2s;
+            text-overflow: ellipsis; white-space: nowrap; overflow: hidden;
+        }
+        /* 倍速選單：較窄 */
+        .speed-select {
+            width: 85px;
+            padding: 8px 8px; border-radius: 10px; border: 1px solid #cbd5e1;
+            background: #fff; color: #475569; font-weight: 700; cursor: pointer;
+            outline: none; font-size: 0.95rem; transition: 0.2s;
+        }
+        .speak-select:hover, .speed-select:hover { border-color: var(--primary); }
+        .speak-select option { white-space: normal; }
+
         .section-label { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 12px; margin-top: 30px; }
         .section-label svg { width: 18px; height: 18px; fill: currentColor; }
 
@@ -39,12 +85,12 @@
         .ant-badge { background-color: #fdeced; color: #931b1b; }
         .ant-badge .badge-tag { color: #d16b6b; }
 
-        .md-bold { font-weight: 800; color: #000000; }
-        .md-context { color: #64748b; font-weight: 800; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 0.85rem; border: 1px solid #e2e8f0; }
-        .md-tag { font-family: 'Courier New', monospace; background: #fffbeb; color: #92400e; border: 1px solid #fde68a; padding: 1px 5px; border-radius: 4px; font-weight: 600; }
-
         .example-item { background: #f8fafc; padding: 22px; border-radius: 18px; margin-bottom: 15px; border-left: 6px solid var(--primary); }
-        .ex-en { font-size: 1.25rem; color: #1e293b; font-weight: 500; margin-bottom: 8px; }
+        .ex-en-wrapper { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+        .ex-en { font-size: 1.25rem; color: #1e293b; font-weight: 500; margin-bottom: 8px; flex: 1; }
+        .ex-speak-btn { background: none; border: none; cursor: pointer; color: #94a3b8; padding: 4px; border-radius: 50%; transition: 0.2s; }
+        .ex-speak-btn:hover { color: var(--primary); background: #e2e8f0; }
+
         .example-word { color: var(--primary); text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 3px; cursor: pointer; }
         .example-word:hover { color: #0f172a; }
         .example-word-self { color: inherit; text-decoration: none; cursor: default; }
@@ -62,7 +108,8 @@
             .detail-container { margin: 20px auto; padding: 0 14px; }
             .detail-card { padding: 25px 15px; border-radius: 20px; }
             .word-title { font-size: 2.2rem; }
-            .pronunciation { font-size: 1rem; }
+            .pronunciation { font-size: 1rem; gap: 10px; }
+            .control-group { width: 100%; }
             .section-label { font-size: 0.82rem; }
             .meaning-wrapper { flex-direction: column; align-items: stretch; gap: 14px; }
             .relation-badge { width: 100%; justify-content: flex-start; white-space: normal; padding: 10px 14px; }
@@ -88,6 +135,64 @@
 
     <script src="../scripts/utils.js"></script>
     <script>
+        // --- 強化版語音函數 ---
+        function speak(input, lang = 'en-US') {
+            if (!window.speechSynthesis) return;
+            window.speechSynthesis.cancel();
+
+            const speedEl = document.getElementById('speak-speed-select');
+            const rate = speedEl ? parseFloat(speedEl.value) : 0.9;
+
+            const items = Array.isArray(input) ? input : [input];
+            let totalDelay = 0;
+
+            items.forEach((text) => {
+                setTimeout(() => {
+                    const cleanText = text.replace(/\*\*/g, '');
+                    const utterance = new SpeechSynthesisUtterance(cleanText);
+                    utterance.lang = lang;
+                    utterance.rate = rate; 
+                    window.speechSynthesis.speak(utterance);
+                }, totalDelay);
+                totalDelay += (1000 / rate); 
+            });
+        }
+
+        // --- 智慧解析標題邏輯 ---
+        function getSpeakableVersions(rawWord) {
+            let word = rawWord.replace(/\s*\(\d+\)/g, '').trim();
+            let results = new Set();
+            const segments = word.split('/');
+
+            segments.forEach(seg => {
+                seg = seg.trim();
+                if (seg.includes('(') && seg.includes(')')) {
+                    const match = seg.match(/^(.*?)\((.*?)\)(.*)$/);
+                    if (match) {
+                        const stem = match[1];
+                        const content = match[2];
+                        const tail = match[3];
+                        if (content.includes('/')) {
+                            results.add(stem); 
+                            content.split('/').forEach(opt => {
+                                const optTrim = opt.trim();
+                                if (optTrim.length <= 4) results.add(stem + optTrim + tail);
+                                else results.add(optTrim);
+                            });
+                        } else {
+                            results.add(stem + tail); 
+                            results.add(stem + content + tail); 
+                        }
+                    } else {
+                        results.add(seg.replace(/[\(\)]/g, ''));
+                    }
+                } else {
+                    results.add(seg);
+                }
+            });
+            return Array.from(results).filter(v => v.length > 1);
+        }
+
         const CACHE_KEY = 'cool_learning_vocab_cache';
         const VOCAB_LEVEL_URLS = [1, 2, 3, 4, 5, 6].map(level =>
             `https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/vocabulary/level${level}.json`
@@ -99,7 +204,6 @@
             info: '<svg viewBox="0 0 24 24"><path d="M11 17h2v-6h-2v6zm1-15C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zM11 9h2V7h-2v2z"/></svg>'
         };
 
-        // 全域核心變數
         let vocabDataInMem = [];
         let vocabMap = new Map();
         let vocabList = [];
@@ -107,8 +211,6 @@
         let irregularForms = {};
         let currentWordKey = '';
         let currentMode = 'level';
-
-        // 滑動手勢變數
         let touchStartX = 0;
         let touchEndX = 0;
 
@@ -116,7 +218,6 @@
         tooltipEl.className = 'example-tooltip';
         document.body.appendChild(tooltipEl);
 
-        // --- 1. 核心載入：快取優先並駐留記憶體 ---
         async function init() {
             const urlParams = new URLSearchParams(window.location.search);
             const target = urlParams.get('word');
@@ -127,12 +228,9 @@
             if (cached) {
                 try {
                     vocabDataInMem = JSON.parse(cached);
-                    // 取得變形表後再渲染，確保連結功能正常
                     const irrRes = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/irregular-forms.json');
                     irregularForms = await irrRes.json();
-                    
                     setupData(vocabDataInMem, target);
-                    console.log("⚡ 進入快取優先模式");
                 } catch(e) {}
             }
             syncUpdate(target);
@@ -156,7 +254,6 @@
             } catch (e) {}
         }
 
-        // --- 2. 核心渲染與導航 ---
         function setupData(data, target) {
             const indexResult = buildVocabIndex(data);
             vocabMap = indexResult.map;
@@ -171,29 +268,23 @@
             const idx = vocabList.indexOf(currentWordKey);
             if (idx === -1) return;
             const nextIdx = idx + dir;
-            
             if (nextIdx >= 0 && nextIdx < vocabList.length) {
                 const nextKey = vocabList[nextIdx];
                 const item = vocabMap.get(nextKey);
                 if (!item) return;
-
-                // 更新網址但不刷新頁面
                 const newUrl = `?word=${encodeURIComponent(item.word)}&mode=${currentMode}`;
                 history.pushState({ word: item.word }, '', newUrl);
-
-                // 直接渲染新內容，且不調用 scrollTo(0,0)，維持垂直位置
                 renderDetail(item);
             }
         }
 
-        // 手勢監聽
         function setupSwipe() {
             document.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, { passive: true });
             document.addEventListener('touchend', e => { 
                 touchEndX = e.changedTouches[0].screenX; 
                 const threshold = 60;
-                if (touchEndX < touchStartX - threshold) navigateToNeighbor(1); // 左滑 -> 次
-                if (touchEndX > touchStartX + threshold) navigateToNeighbor(-1); // 右滑 -> 前
+                if (touchEndX < touchStartX - threshold) navigateToNeighbor(1); 
+                if (touchEndX > touchStartX + threshold) navigateToNeighbor(-1); 
             }, { passive: true });
         }
 
@@ -206,7 +297,6 @@
             }
         };
 
-        // --- 3. 完整原始處理算法 (500行等級邏輯) ---
         function normalizeWordKey(word) {
             if (!word) return '';
             return word.replace(/\s*\(\d+\)(?:\s*\(\d+\))*$/g, '').trim().toLowerCase();
@@ -255,17 +345,50 @@
             return Array.from(unique.values()).sort((a, b) => b.form.length - a.form.length);
         }
 
+        // --- 修正版：處理 swimming/stopped 重複字尾的偵測 ---
         function generateInflections(key) {
             const forms = new Set();
             const irregular = irregularForms[key];
             if (irregular) irregular.forEach(form => forms.add(form.toLowerCase()));
-            if (!key.match(/[^a-z ]/)) {
+            
+            if (!key.match(/[^a-z]/)) {
+                // 基本變體
                 if (!key.endsWith('s') && !key.endsWith('x') && !key.endsWith('z') && !key.endsWith('ch') && !key.endsWith('sh')) forms.add(`${key}s`); else forms.add(`${key}es`);
+                
+                // y 結尾處理
                 if (key.endsWith('y')) {
                     const stem = key.slice(0, -1);
                     forms.add(`${stem}ies`); forms.add(`${stem}ily`); forms.add(`${stem}ier`); forms.add(`${stem}iest`);
-                } else { forms.add(`${key}ly`); forms.add(`${key}er`); forms.add(`${key}est`); }
-                if (key.endsWith('e')) { forms.add(`${key}d`); forms.add(`${key.slice(0, -1)}ing`); } else { forms.add(`${key}ed`); forms.add(`${key}ing`); }
+                } else { 
+                    forms.add(`${key}ly`); forms.add(`${key}er`); forms.add(`${key}est`); 
+                }
+
+                // e 結尾與重複字尾處理
+                if (key.endsWith('e')) {
+                    const stem = key.slice(0, -1);
+                    forms.add(`${key}d`); 
+                    forms.add(`${stem}ing`);
+                } else {
+                    forms.add(`${key}ed`);
+                    forms.add(`${key}ing`);
+                    
+                    // 重複字尾偵測 (CVC 規則)
+                    // 條件：長度 >= 3, 結尾是 [輔音][單元音][單輔音], 且最後輔音不是 w, x, y
+                    const vowels = ['a', 'e', 'i', 'o', 'u'];
+                    const last = key.slice(-1);
+                    const prev = key.slice(-2, -1);
+                    const prev2 = key.slice(-3, -2);
+                    
+                    if (key.length >= 3 && 
+                        !vowels.includes(last) && 
+                        vowels.includes(prev) && 
+                        !vowels.includes(prev2) &&
+                        !['w', 'x', 'y'].includes(last)) {
+                        forms.add(key + last + 'ing'); // swim -> swimming
+                        forms.add(key + last + 'ed');  // stop -> stopped
+                        forms.add(key + last + 'er');  // run -> runner
+                    }
+                }
             }
             return Array.from(forms);
         }
@@ -324,6 +447,8 @@
         function renderDetail(w) {
             currentWordKey = normalizeWordKey(w.word);
             const root = document.getElementById('detail-root');
+            const speakVersions = getSpeakableVersions(w.word);
+
             let relationHtml = '';
             if (w.syn && w.syn.length > 0) relationHtml += `<div class="relation-badge syn-badge"><span class="badge-tag">同義</span><span>${w.syn.join(', ')}</span></div>`;
             if (w.ant && w.ant.length > 0) relationHtml += `<div class="relation-badge ant-badge"><span class="badge-tag">反義</span><span>${w.ant.join(', ')}</span></div>`;
@@ -337,10 +462,24 @@
                     <div class="header-box">
                         <h1 class="word-title">${w.word}</h1>
                         <div class="pronunciation">
-                            <span>${w.kk || ''}</span>
-                            <button onclick="speak('${w.word}', 'en-US')" style="border:none; background:none; cursor:pointer; color:var(--primary)">
-                                <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
-                            </button>
+                            <span class="kk-text">${w.kk || ''}</span>
+                            <div class="control-group">
+                                <button class="voice-btn" id="main-voice-btn">
+                                    <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                                </button>
+                                <select class="speak-select" id="speak-option-select">
+                                    <option value="ALL">預設全部</option>
+                                    ${speakVersions.map(v => `<option value="${v}">${v}</option>`).join('')}
+                                </select>
+                                <select class="speed-select" id="speak-speed-select" title="語速調整">
+                                    <option value="0.5">0.5x</option>
+                                    <option value="0.7">0.7x</option>
+                                    <option value="0.9" selected>0.9x</option>
+                                    <option value="1.0">1.0x</option>
+                                    <option value="1.2">1.2x</option>
+                                    <option value="1.5">1.5x</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                     <div class="section-label">${ICONS.meaning} 譯義與補充</div>
@@ -351,10 +490,27 @@
                     <div class="section-label">${ICONS.info} 詳細說明</div>
                     <div style="line-height:1.8; color:#475569; margin-bottom:35px; font-size:1.1rem;">${parseMarkdown(w.desc || '暫無額外說明。')}</div>
                     <div class="section-label">${ICONS.example} 情境例句</div>
-                    ${w.sentences.map(s => `<div class="example-item"><div class="ex-en">${renderExampleSentence(s.en)}</div><div class="ex-ch">${parseMarkdown(s.ch)}</div></div>`).join('')}
+                    ${w.sentences.map(s => `
+                        <div class="example-item">
+                            <div class="ex-en-wrapper">
+                                <div class="ex-en">${renderExampleSentence(s.en)}</div>
+                                <button class="ex-speak-btn" onclick="speak('${s.en.replace(/'/g, "\\'")}', 'en-US')">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+                                </button>
+                            </div>
+                            <div class="ex-ch">${parseMarkdown(s.ch)}</div>
+                        </div>
+                    `).join('')}
                     <div style="margin-top:40px; text-align:right;"><span class="level-badge">LEVEL ${w.level}</span></div>
                 </div>
             `;
+            
+            document.getElementById('main-voice-btn').onclick = () => {
+                const sel = document.getElementById('speak-option-select');
+                if (sel.value === 'ALL') speak(speakVersions);
+                else speak(sel.value);
+            };
+
             updateNavButtons();
         }
 

@@ -12,19 +12,19 @@
         .detail-container { max-width: 850px; margin: 30px auto; padding: 0 20px; }
         .detail-card { background: #fff; border-radius: 24px; padding: 40px; box-shadow: var(--shadow); border: 1px solid #e2e8f0; min-height: 500px; }
         
-        /* --- 標題樣式 --- */
+        /* --- 修正後的標題樣式：防止長字串溢出 --- */
         .header-box { border-bottom: 2px solid #f1f5f9; padding-bottom: 30px; margin-bottom: 30px; }
         .word-title { 
             font-size: 3.5rem; 
             font-weight: 900; 
             color: #1e293b; 
             margin: 0; 
-            word-break: break-all; 
+            word-break: break-all; /* 強制長字串/符號換行 */
             overflow-wrap: break-word;
             line-height: 1.1;
         }
 
-        /* --- 發音與控制區佈局 --- */
+        /* --- 發音與控制區佈局 (新增換行邏輯) --- */
         .pronunciation { 
             display: flex; 
             align-items: center; 
@@ -32,22 +32,21 @@
             color: var(--primary); 
             font-size: 1.2rem; 
             margin-top: 15px; 
-            flex-wrap: wrap; 
+            flex-wrap: wrap; /* 較小螢幕自動換行 */
         }
         .kk-text { color: #64748b; min-width: fit-content; }
-        
+
         .control-group { 
             display: flex; 
             align-items: center; 
             gap: 10px; 
-            flex-wrap: wrap; 
         }
 
-        /* 關鍵：將選單群組化，內部不換行 */
+        /* 選單群組：一體化換行 */
         .dropdown-wrapper {
             display: flex;
             gap: 10px;
-            flex-wrap: nowrap; 
+            flex-wrap: nowrap;
         }
 
         .voice-btn { 
@@ -87,6 +86,10 @@
         .syn-badge .badge-tag { color: #5bb381; }
         .ant-badge { background-color: #fdeced; color: #931b1b; }
         .ant-badge .badge-tag { color: #d16b6b; }
+
+        .md-bold { font-weight: 800; color: #000000; }
+        .md-context { color: #64748b; font-weight: 800; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 0.85rem; border: 1px solid #e2e8f0; }
+        .md-tag { font-family: 'Courier New', monospace; background: #fffbeb; color: #92400e; border: 1px solid #fde68a; padding: 1px 5px; border-radius: 4px; font-weight: 600; }
 
         .example-item { background: #f8fafc; padding: 22px; border-radius: 18px; margin-bottom: 15px; border-left: 6px solid var(--primary); }
         .ex-en-wrapper { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
@@ -138,10 +141,10 @@
 
     <script src="../scripts/utils.js"></script>
     <script>
-        // --- 核心狀態 ---
-        let currentSpeed = 0.9; 
+        // --- 全域語速狀態 ---
+        let currentSpeed = 0.9;
 
-        // --- 語音函數 ---
+        // --- 強化版語音函數：移除 Markdown 標記後朗讀 ---
         function speak(input, lang = 'en-US') {
             if (!window.speechSynthesis) return;
             window.speechSynthesis.cancel();
@@ -151,7 +154,7 @@
 
             items.forEach((text) => {
                 setTimeout(() => {
-                    const cleanText = text.replace(/\*\*/g, '');
+                    const cleanText = text.replace(/\*\*/g, ''); // 移除例句中的 Markdown 粗體語法
                     const utterance = new SpeechSynthesisUtterance(cleanText);
                     utterance.lang = lang;
                     utterance.rate = currentSpeed; 
@@ -165,7 +168,7 @@
             currentSpeed = parseFloat(val);
         }
 
-        // --- 智慧解析標題邏輯 ---
+        // --- 智慧解析標題邏輯：修正 mam(m)a 邏輯 ---
         function getSpeakableVersions(rawWord) {
             let word = rawWord.replace(/\s*\(\d+\)/g, '').trim();
             let results = new Set();
@@ -179,6 +182,7 @@
                         const stem = match[1];
                         const content = match[2];
                         const tail = match[3];
+
                         if (content.includes('/')) {
                             results.add(stem); 
                             content.split('/').forEach(opt => {
@@ -211,6 +215,7 @@
             info: '<svg viewBox="0 0 24 24"><path d="M11 17h2v-6h-2v6zm1-15C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zM11 9h2V7h-2v2z"/></svg>'
         };
 
+        // 全域核心變數
         let vocabDataInMem = [];
         let vocabMap = new Map();
         let vocabList = [];
@@ -218,6 +223,8 @@
         let irregularForms = {};
         let currentWordKey = '';
         let currentMode = 'level';
+
+        // 滑動手勢變數
         let touchStartX = 0;
         let touchEndX = 0;
 
@@ -225,6 +232,7 @@
         tooltipEl.className = 'example-tooltip';
         document.body.appendChild(tooltipEl);
 
+        // --- 1. 核心載入：快取優先並駐留記憶體 ---
         async function init() {
             const urlParams = new URLSearchParams(window.location.search);
             const target = urlParams.get('word');
@@ -237,7 +245,9 @@
                     vocabDataInMem = JSON.parse(cached);
                     const irrRes = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/irregular-forms.json');
                     irregularForms = await irrRes.json();
+                    
                     setupData(vocabDataInMem, target);
+                    console.log("⚡ 進入快取優先模式");
                 } catch(e) {}
             }
             syncUpdate(target);
@@ -261,6 +271,7 @@
             } catch (e) {}
         }
 
+        // --- 2. 核心渲染與導航 ---
         function setupData(data, target) {
             const indexResult = buildVocabIndex(data);
             vocabMap = indexResult.map;
@@ -275,10 +286,12 @@
             const idx = vocabList.indexOf(currentWordKey);
             if (idx === -1) return;
             const nextIdx = idx + dir;
+            
             if (nextIdx >= 0 && nextIdx < vocabList.length) {
                 const nextKey = vocabList[nextIdx];
                 const item = vocabMap.get(nextKey);
                 if (!item) return;
+
                 const newUrl = `?word=${encodeURIComponent(item.word)}&mode=${currentMode}`;
                 history.pushState({ word: item.word }, '', newUrl);
                 renderDetail(item);
@@ -304,6 +317,7 @@
             }
         };
 
+        // --- 3. 完整原始處理算法 ---
         function normalizeWordKey(word) {
             if (!word) return '';
             return word.replace(/\s*\(\d+\)(?:\s*\(\d+\))*$/g, '').trim().toLowerCase();
@@ -352,6 +366,7 @@
             return Array.from(unique.values()).sort((a, b) => b.form.length - a.form.length);
         }
 
+        // --- 修正版：處理 swimming/stopped 重複字尾偵測 ---
         function generateInflections(key) {
             const forms = new Set();
             const irregular = irregularForms[key];
@@ -368,6 +383,7 @@
                     forms.add(`${key}d`); forms.add(`${stem}ing`);
                 } else {
                     forms.add(`${key}ed`); forms.add(`${key}ing`);
+                    // 重複字尾規則 (CVC)
                     const vowels = ['a', 'e', 'i', 'o', 'u'];
                     const last = key.slice(-1);
                     const prev = key.slice(-2, -1);

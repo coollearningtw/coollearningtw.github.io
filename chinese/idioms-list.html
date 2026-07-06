@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>成語圖鑑 - 酷學習</title>
+    <link rel="stylesheet" href="../styles/style.css">
+    <link rel="stylesheet" href="../styles/header.css">
+    <style>
+        :root { --primary: #e74c3c; --bg-main: #fdfaf5; }
+        body { background-color: var(--bg-main); margin: 0; padding-top: 10px; }
+        
+        /* 1. Header 固定在頂部且內容完全置中 */
+        header { 
+            background: #fff !important; 
+            border: 2px solid var(--primary) !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important;
+            max-width: 980px;
+            margin: 0 auto 10px;
+            padding: 0 20px;
+            border-radius: 12px;
+            box-sizing: border-box;
+            
+            /* 固定定位 */
+            position: sticky;
+            top: 10px; 
+            z-index: 1200;
+
+            display: grid;
+            grid-template-columns: 60px 1fr 60px; 
+            align-items: center;
+            justify-items: center;
+            height: 55px;
+        }
+        
+        header .back-link {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-decoration: none;
+        }
+
+        header .logo {
+            grid-column: 2; /* 強制標題佔據中間欄位 */
+            display: flex; 
+            justify-content: center;
+            align-items: center;
+            justify-self: center;
+        }
+        header .logo span { 
+            color: var(--primary) !important; 
+            font-weight: 900; 
+            font-size: 1.3rem; 
+            letter-spacing: 2px;
+        }
+        header .back-link svg { stroke: var(--primary) !important; width: 24px; height: 24px; }
+
+        /* 2. 搜尋控制列也要固定 */
+        .control-sticky {
+            position: sticky; 
+            top: 75px; /* header 高度 55 + top 10 + 間距 10 */
+            z-index: 1100;
+            width: 100%; 
+            background: var(--bg-main); 
+            padding: 10px 20px;
+            box-sizing: border-box;
+        }
+
+        .search-row { 
+            display: flex; 
+            gap: 12px; 
+            max-width: 1000px; 
+            margin: 0 auto; 
+            align-items: center; 
+        }
+        
+        .search-input { 
+            flex: 1; 
+            padding: 12px 24px; 
+            border-radius: 50px; 
+            border: 1px solid #ddd; 
+            outline: none; 
+            font-size: 1rem; 
+            background: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+        .search-input:focus { border-color: var(--primary); }
+
+        .mode-toggle { 
+            display: flex; 
+            background: #e2e8f0; 
+            padding: 4px; 
+            border-radius: 50px; 
+        }
+        .toggle-btn { 
+            border: none; 
+            padding: 8px 22px; 
+            border-radius: 50px; 
+            font-size: 0.9rem; 
+            font-weight: bold; 
+            cursor: pointer; 
+            color: #64748b; 
+            transition: 0.2s; 
+            background: transparent;
+        }
+        .toggle-btn.active { 
+            background: #fff; 
+            color: var(--primary); 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+        }
+
+        /* 內容區塊 */
+        .list-layout { display: flex; max-width: 1200px; width: 100%; margin: 0 auto; position: relative; }
+        .idiom-list-container { flex: 1; padding: 10px 80px 40px 20px; min-width: 0; }
+
+        .group-section { margin-bottom: 40px; scroll-margin-top: 150px; }
+        .group-header { 
+            font-size: 1.8rem; 
+            font-weight: 900; 
+            color: var(--primary); 
+            border-bottom: 2.5px solid var(--primary); 
+            margin-bottom: 15px; 
+            display: inline-block;
+            width: 100%;
+        }
+
+        .idiom-item {
+            background: #fff; padding: 16px 24px; border-radius: 14px; margin-bottom: 12px;
+            display: flex; justify-content: space-between; align-items: center;
+            text-decoration: none; color: inherit; border: 1px solid #f1f5f9; transition: 0.2s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03); gap: 20px;
+        }
+        .idiom-item:hover { border-color: var(--primary); transform: translateY(-2px); }
+        
+        .idiom-text-wrapper { display: flex; align-items: center; gap: 12px; }
+        .idiom-text { font-size: 1.4rem; font-weight: 800; color: #1e293b; line-height: 1; }
+        
+        .nuance-tag { 
+            font-size: 0.75rem; padding: 3px 10px; border-radius: 6px; font-weight: 800; 
+        }
+        .nuance-褒義 { background: #e6f9ed; color: #27ae60; }
+        .nuance-貶義 { background: #fdedec; color: #e74c3c; }
+        .nuance-中性 { background: #f1f5f9; color: #64748b; }
+
+        /* 釋義單行顯示 ... */
+        .idiom-meaning { 
+            color: #64748b; font-size: 1rem; text-align: right; 
+            flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; 
+        }
+
+        .index-rail {
+            width: 40px; position: sticky; top: 160px; height: calc(100vh - 200px);
+            display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 2px;
+        }
+        .index-item { font-size: 0.8rem; font-weight: 900; color: #94a3b8; text-decoration: none; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+        .index-item:hover { color: var(--primary); background: #fdedec; }
+
+        @media (max-width: 768px) {
+            header { margin: 0 10px 10px 10px; height: 50px; }
+            .control-sticky { top: 70px; padding: 10px 15px; }
+            
+            /* 手機版按鈕與搜尋框佔滿全寬 */
+            .search-row { flex-direction: column; align-items: stretch; gap: 10px; }
+            .mode-toggle { width: 100%; }
+            .toggle-btn { flex: 1; }
+
+            .idiom-list-container { padding: 10px 50px 40px 15px; }
+            .idiom-item { flex-direction: column; align-items: flex-start; gap: 8px; padding: 15px; }
+            .idiom-meaning { text-align: left; width: 100%; font-size: 0.9rem; } 
+            .index-rail { position: fixed; right: 5px; top: 180px; background: rgba(255,255,255,0.9); border-radius: 20px; width: 32px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); height: auto; padding: 10px 0; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="chinese.html" class="back-link">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </a>
+        <div class="logo">
+            <span>成語探索圖鑑</span>
+        </div>
+        <!-- 佔位符以維持 Grid 對齊 -->
+        <div></div>
+    </header>
+
+    <div class="control-sticky">
+        <div class="search-row">
+            <input type="text" id="search-input" class="search-input" placeholder="搜尋成語、注音、釋義..." oninput="handleSearch()">
+            <div class="mode-toggle">
+                <button class="toggle-btn active" id="btn-zhuyin" onclick="switchMode('zhuyin')">注音</button>
+                <button class="toggle-btn" id="btn-pinyin" onclick="switchMode('pinyin')">拼音</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="list-layout">
+        <main class="idiom-list-container" id="idiom-root"></main>
+        <aside class="index-rail" id="index-rail"></aside>
+    </div>
+
+    <script>
+        const CACHE_KEY = 'cool_learning_idioms_cache';
+        let allIdioms = [];
+        let currentMode = 'zhuyin';
+        let renderTimer = null;
+
+        async function init() {
+            const cached = localStorage.getItem(CACHE_KEY);
+            if (cached) { allIdioms = JSON.parse(cached); render(); }
+            fetchData();
+        }
+
+        async function fetchData() {
+            try {
+                const res = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/chinese-idioms.json');
+                const data = await res.json();
+                if (JSON.stringify(data) !== localStorage.getItem(CACHE_KEY)) {
+                    allIdioms = data;
+                    localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+                    render();
+                }
+            } catch (e) { console.warn("Offline"); }
+        }
+
+        function handleSearch() { render(document.getElementById('search-input').value); }
+
+        function switchMode(mode) {
+            currentMode = mode;
+            document.getElementById('btn-zhuyin').classList.toggle('active', mode === 'zhuyin');
+            document.getElementById('btn-pinyin').classList.toggle('active', mode === 'pinyin');
+            render();
+        }
+
+        function render(filter = '') {
+            const root = document.getElementById('idiom-root');
+            const rail = document.getElementById('index-rail');
+            if (renderTimer) clearTimeout(renderTimer);
+
+            const filtered = allIdioms.filter(i => 
+                i.idiom.includes(filter) || 
+                i.zhuyin.includes(filter) || 
+                (i.pinyin && i.pinyin.toLowerCase().includes(filter.toLowerCase())) ||
+                i.meaning.includes(filter)
+            );
+
+            const groups = {};
+            if (currentMode === 'zhuyin') {
+                "ㄅㄆㄇㄈㄉㄊㄋㄌㄍㄎㄏㄐㄑㄒㄓㄔㄕㄖㄗㄘㄙㄚㄛㄜㄝㄞㄟㄠㄡㄢㄣㄤㄥㄦㄧㄨㄩ".split("").forEach(z => groups[z] = []);
+                filtered.forEach(i => { const first = i.zhuyin[0]; if (groups[first]) groups[first].push(i); });
+            } else {
+                "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").forEach(l => groups[l] = []);
+                filtered.forEach(i => { 
+                    if (i.pinyin) {
+                        const firstLetter = i.pinyin[0].toUpperCase();
+                        if (groups[firstLetter]) groups[firstLetter].push(i);
+                    }
+                });
+            }
+
+            const groupKeys = Object.keys(groups).filter(k => groups[k].length > 0);
+            rail.innerHTML = groupKeys.map(k => `<a href="#${k}" class="index-item">${k[0]}</a>`).join('');
+            root.innerHTML = '';
+
+            let currentIdx = 0;
+            function renderChunk() {
+                let html = '';
+                groupKeys.slice(currentIdx, currentIdx + 2).forEach(key => {
+                    let itemsHtml = groups[key].map(i => `
+                        <a href="idiom-detail.html?idiom=${encodeURIComponent(i.idiom)}" class="idiom-item">
+                            <div class="idiom-text-wrapper">
+                                <span class="idiom-text">${i.idiom}</span>
+                                <span class="nuance-tag nuance-${i.nuance}">${i.nuance}</span>
+                            </div>
+                            <div class="idiom-meaning">${i.meaning}</div>
+                        </a>
+                    `).join('');
+                    html += `<section id="${key}" class="group-section"><h2 class="group-header">${key}</h2>${itemsHtml}</section>`;
+                });
+                const div = document.createElement('div'); div.innerHTML = html;
+                while (div.firstChild) root.appendChild(div.firstChild);
+                currentIdx += 2;
+                if (currentIdx < groupKeys.length) renderTimer = setTimeout(renderChunk, 16);
+            }
+            if (groupKeys.length > 0) renderChunk();
+            else root.innerHTML = "<div style='text-align:center; padding:50px; color:#94a3b8;'>找不到相符成語</div>";
+        }
+        init();
+    </script>
+</body>
+</html>

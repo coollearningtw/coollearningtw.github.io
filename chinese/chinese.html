@@ -3,365 +3,160 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>國文科 - 選課</title>
+    <title>國文科 - 酷學習</title>
     <link rel="stylesheet" href="../styles/style.css">
     <link rel="stylesheet" href="../styles/header.css">
+    <link rel="icon" type="image/x-icon" href="../images/logo-gold.png">
     <style>
-        body { padding-bottom: 110px; background-color: #f8fafc; }
-        .shelf-container { margin-bottom: 20px; padding: 12px; background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; }
-        .shelf-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-        .switch-label { font-size: 0.9rem; font-weight: 600; color: #475569; }
-        .switch { position: relative; display: inline-block; width: 42px; height: 22px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 34px; }
-        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
-        input:checked + .slider { background-color: #e74c3c; }
-        input:checked + .slider:before { transform: translateX(20px); }
-        
-        .shelf-tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; }
-        .shelf-tab { padding: 7px 16px; border: 1px solid #e2e8f0; border-radius: 20px; background: #fff; cursor: pointer; white-space: nowrap; font-size: 0.85rem; color: #64748b; font-weight: 500; transition: all 0.2s; }
-        .shelf-tab.active { background: #e74c3c; color: #fff; border-color: #e74c3c; }
+        :root { --primary: #e74c3c; --primary-light: #fdedec; }
+        body { background-color: #f8fafc; }
 
-        .version-group { margin-bottom: 35px; }
-        .version-title { font-size: 1.2rem; font-weight: bold; color: #1e293b; margin-bottom: 15px; padding-left: 12px; border-left: 4px solid #e74c3c; }
-        .lesson-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)); gap: 15px; }
-        
-        .lesson-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 22px 10px 15px; text-align: center; cursor: pointer; position: relative; min-height: 115px; display: flex; flex-direction: column; justify-content: center; overflow: hidden !important; transition: 0.2s; }
-        .lesson-card.selected:not(.manage-mode) { border: 2.5px solid #e74c3c; background-color: #fff5f5; color: #b91c1c; transform: translateY(-2px); }
-        
-        .lesson-title { font-weight: 700; line-height: 1.4; margin-bottom: 8px; word-break: break-all; color: inherit; white-space: pre-line; }
-        .lesson-card.empty:not(.manage-mode) { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
+        /* 頂部紅色標題列 - 匹配 English Hub 樣式 */
+        .chinese-hub-header {
+            background-color: #fee2e2; 
+            border: 2px solid #fecaca;
+            border-radius: 12px;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            max-width: 980px;
+            margin: 10px auto 25px;
+        }
 
-        .card-badges { display: flex; gap: 3px; justify-content: center; flex-wrap: wrap; }
-        .badge { font-size: 0.6rem; padding: 1px 5px; border-radius: 4px; background: #f1f5f9; color: #94a3b8; font-weight: 700; }
-        .badge.has-anno { background: #fee2e2; color: #b91c1c; }
-        .badge.has-content { background: #e0f2fe; color: #0369a1; }
-        .badge.has-extra { background: #fef3c7; color: #92400e; }
+        .header-title {
+            color: #b91c1c;
+            font-weight: bold;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
 
-        .status-ribbon { position: absolute; top: 0; left: 0; right: 0; font-size: 0.65rem; padding: 2px 0; font-weight: 900; text-align: center; color: #fff; z-index: 5; }
-        .status-ribbon.red { background-color: #e57373; }
-        .status-ribbon.yellow { background-color: #ffb74d; }
-        .status-ribbon.green { background-color: #81c784; }
-        .lesson-card.is-disabled { opacity: 0.6; cursor: not-allowed !important; pointer-events: none; }
+        /* 頁面標題區 */
+        .page-title-area {
+            max-width: 980px;
+            margin: 0 auto 30px;
+            padding: 0 10px;
+        }
+        .page-title-area h2 { font-size: 1.6rem; color: #334155; margin-bottom: 5px; }
+        .page-title-area p { color: #94a3b8; margin-top: 0; font-size: 0.95rem; }
 
-        .nav-item-btn:disabled { opacity: 0.25; cursor: not-allowed; filter: grayscale(1); }
-        .manage-btn { position: absolute; top: -10px; right: -10px; width: 28px; height: 28px; border-radius: 50%; border: none; color: #fff; display: none; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.2); z-index: 100; }
-        .lesson-card.manage-mode .manage-btn { display: flex; pointer-events: auto; }
-        .manage-btn.add { background: #2ecc71; }
-        .manage-btn.remove { background: #e74c3c; }
+        /* 入口網格佈局 (2x2) */
+        .hub-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 25px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .hub-card {
+            background: #fff;
+            border-radius: 24px;
+            padding: 45px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.02);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid #f1f5f9;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hub-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 35px rgba(231, 76, 60, 0.15);
+            border-color: #fecaca;
+        }
+
+        .icon-circle {
+            width: 80px; height: 80px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 25px; background-color: var(--primary-light);
+        }
+
+        .icon-circle svg { width: 40px; height: 40px; fill: var(--primary); }
+
+        .module-name { font-size: 1.5rem; font-weight: 800; color: #1e293b; margin-bottom: 10px; }
+        .module-desc { font-size: 0.95rem; color: #64748b; line-height: 1.6; max-width: 240px; }
+
+        .card-tag {
+            position: absolute; top: 15px; right: 15px; font-size: 0.7rem;
+            font-weight: 700; padding: 4px 10px; border-radius: 8px;
+            background: #f1f5f9; color: #94a3b8; text-transform: uppercase;
+        }
+        .tag-hot { background: #fee2e2; color: #ef4444; }
+
+        @media (max-width: 768px) {
+            .hub-grid { grid-template-columns: 1fr; padding: 0 20px; }
+            .hub-card { padding: 35px 20px; }
+        }
     </style>
 </head>
 <body>
-    <header>
-        <div class="logo">
-            <a href="../index.html" class="back-link">
-                <!-- 向量回退圖標 -->
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-            </a>
-            <img src="../images/logo.png" alt="Logo" height="40">
-            <span style="font-weight:bold; color:var(--primary);">國文科選課</span>
+
+    <div class="chinese-hub-header">
+        <a href="../index.html" class="back-link">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        </a>
+        <div class="header-title">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M3 3v17a1 1 0 001 1h17v-2H5V3H3m15.25 6.75c.41-.41.41-1.09 0-1.5l-1.5-1.5c-.41-.41-1.09-.41-1.5 0l-8.25 8.25V18h2.25l8.25-8.25m-8.5 5l-3 3 3 3h10v-6h-10z"/></svg>
+            Chinese 國文學科
         </div>
-    </header>
+    </div>
 
     <div class="page-container">
-        <!-- 雲端書架移轉橫幅 (僅有當本機存有舊資料且已登入時才會動態顯示) -->
-        <div id="migration-banner" class="std-card" style="background:#f0fdf4; border:1.5px solid #bbf7d0; padding:15px; margin-bottom:15px; display:none; align-items:center; justify-content:space-between; gap:10px;">
-            <div style="color:#166534; font-size:0.9rem; text-align:left; font-weight:bold;">
-                偵測到本機有未同步的「國文自訂書架」，是否將其合併備份至您的雲端帳號？
-            </div>
-            <button class="btn" id="btn-migration" style="background:#10b981; padding:8px 16px; font-size:0.85rem; flex-shrink:0;">確認轉移</button>
+        <div class="page-title-area">
+            <h2>古今文學探索</h2>
+            <p>從課文註釋到成語典故，深耕您的文學素養</p>
         </div>
+        
+        <div class="hub-grid">
+            <!-- 模組 1：學習教材 (獨立頁面) -->
+            <a href="chinese-materials.html" class="hub-card">
+                <div class="card-tag">Textbook</div>
+                <div class="icon-circle">
+                    <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+                </div>
+                <div class="module-name">學習教材</div>
+                <div class="module-desc">同步校內課文、註釋背誦、作者介紹與賞析，支援自訂書架。</div>
+            </a>
 
-        <div class="shelf-container">
-            <div class="shelf-controls">
-                <span class="switch-label">管理國文書架</span>
-                <label class="switch"><input type="checkbox" id="manage-toggle"><span class="slider"></span></label>
-            </div>
-            <div id="shelf-tabs" class="shelf-tabs"></div>
+            <!-- 模組 2：成語圖鑑 -->
+            <a href="idioms-list.html" class="hub-card">
+                <div class="card-tag tag-hot">精選</div>
+                <div class="icon-circle">
+                    <svg viewBox="0 0 24 24"><path d="M4 9h16v2H4V9zm0 4h10v2H4v-2zm0-8h16v2H4V5zm0 12h16v2H4v-2z"/></svg>
+                </div>
+                <div class="module-name">成語圖鑑</div>
+                <div class="module-desc">完整收錄常用成語資料庫，提供詳盡典故、注音與近反義詞。</div>
+            </a>
+
+            <!-- 模組 3：國文知識王 (預留) -->
+            <a href="#" class="hub-card" style="opacity: 0.6; pointer-events: none;">
+                <div class="card-tag">Coming Soon</div>
+                <div class="icon-circle">
+                    <span style="font-size: 2rem; font-weight: 900; color: var(--primary);">VS</span>
+                </div>
+                <div class="module-name">國文知識王</div>
+                <div class="module-desc">即將推出：即時連線對戰，挑戰成語接龍與文學常識。</div>
+            </a>
+
+            <!-- 模組 4：作文實驗室 (預留) -->
+            <a href="#" class="hub-card" style="opacity: 0.6; pointer-events: none;">
+                <div class="card-tag">Coming Soon</div>
+                <div class="icon-circle">
+                    <svg viewBox="0 0 24 24"><path d="M21.7,13.35L20.7,14.35L18.65,12.3L19.65,11.3C19.86,11.09 20.21,11.09 20.42,11.3L21.7,12.58C21.91,12.79 21.91,13.14 21.7,13.35M12,18.94L18.06,12.88L20.11,14.93L14.06,21H12V18.94Z"/></svg>
+                </div>
+                <div class="module-name">作文實驗室</div>
+                <div class="module-desc">提供範文分析、修辭技巧與精選佳句，強化寫作實力。</div>
+            </a>
         </div>
-        <div id="lessons-root"></div>
     </div>
-
-    <!-- 底部導航 -->
-    <div class="bottom-nav-fixed">
-        <div class="bottom-nav-content">
-            <button class="nav-item-btn" id="btn-author" onclick="goTo('chinese-author')" disabled>
-                <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-                <span>作者</span>
-            </button>
-            <button class="nav-item-btn" id="btn-anno" onclick="goTo('annotations')" disabled>
-                <svg viewBox="0 0 24 24"><path d="M3 13h12v-2H3v2zm0 4h12v-2H3v2zm0-8h12V7H3v2zm14 4h4v-2h-4v2zm0 4h4v-2h-4v2zM17 7v2h4V7h-4z"/></svg>
-                <span>註釋</span>
-            </button>
-            <button class="nav-item-btn" id="btn-textbook" onclick="goTo('chinese-textbook')" disabled>
-                <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
-                <span>課文</span>
-            </button>
-            <button class="nav-item-btn" id="btn-appreciation" onclick="goTo('chinese-appreciation')" disabled>
-                <svg viewBox="0 0 24 24"><path d="M12 2l-5.5 9h11L12 2zm0 3.84L13.93 9h-3.87L12 5.84zM17.5 13c-2.49 0-4.5 2.01-4.5 4.5s2.01 4.5 4.5 4.5 4.5-2.01 4.5-4.5-2.01-4.5-4.5-4.5zm0 7c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5zM3 21.5h8v-8H3v8zm2-6h4v4H5v-4z"/></svg>
-                <span>賞析</span>
-            </button>
-        </div>
-    </div>
-
-    <!-- 載入 Supabase SDK、連線設定與身分驗證輔助 -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="../scripts/supabase-config.js"></script>
-    <script src="../scripts/auth-helper.js"></script>
-
-    <script>
-        let chineseData = [], shelves = [], activeShelfId = 'all', isManageMode = false;
-        let currentUser = null;
-        let cloudShelves = [];
-
-        // =========================================================================
-        // 雙模同步與自訂國文書架合併邏輯 (整合 user_progress 1對1 表)
-        // =========================================================================
-        if (window.supabaseClient) {
-            window.supabaseClient.auth.onAuthStateChange(async (event, session) => {
-                currentUser = session ? session.user : null;
-                
-                if (currentUser) {
-                    // === 雲端模式 ===
-                    try {
-                        // 1. 取得一對一進度表中的雲端自訂國文書架
-                        const { data, error } = await window.supabaseClient
-                            .from('user_progress')
-                            .select('chinese_shelves')
-                            .eq('user_id', currentUser.id)
-                            .single();
-                        
-                        if (error) throw error;
-                        cloudShelves = data.chinese_shelves || [];
-                        shelves = cloudShelves;
-
-                        // 2. 檢測是否有未同步的本機舊書架
-                        const localData = localStorage.getItem('chinese_shelves');
-                        const localShelves = localData ? JSON.parse(localData) : [];
-
-                        if (localShelves.length > 0) {
-                            const banner = document.getElementById('migration-banner');
-                            if (banner) banner.style.display = 'flex';
-
-                            document.getElementById('btn-migration').onclick = async () => {
-                                document.getElementById('btn-migration').disabled = true;
-                                document.getElementById('btn-migration').innerText = '轉移中...';
-
-                                // 合併本機書架與雲端書架，並對重複書架進行課程合流
-                                let merged = [...cloudShelves];
-                                localShelves.forEach(ls => {
-                                    const match = merged.find(cs => cs.id === ls.id);
-                                    if (!match) {
-                                        merged.push(ls);
-                                    } else {
-                                        ls.courses.forEach(lc => {
-                                            if (!match.courses.some(mc => mc.source === lc.source && mc.lesson === lc.lesson)) {
-                                                match.courses.push(lc);
-                                            }
-                                        });
-                                    }
-                                });
-
-                                // 寫入 user_progress 表
-                                const { error: updateErr } = await window.supabaseClient
-                                    .from('user_progress')
-                                    .update({ chinese_shelves: merged })
-                                    .eq('user_id', currentUser.id);
-
-                                if (updateErr) {
-                                    console.error("雲端資料轉移失敗：", updateErr);
-                                    alert("轉移失敗，請重試！");
-                                    document.getElementById('btn-migration').disabled = false;
-                                    document.getElementById('btn-migration').innerText = '確認轉移';
-                                } else {
-                                    localStorage.removeItem('chinese_shelves');
-                                    banner.style.display = 'none';
-
-                                    shelves = merged;
-                                    alert("您的本地國文書架已成功搬移並合併至雲端！");
-                                    renderTabs();
-                                    renderLessons();
-                                }
-                            };
-                        }
-                    } catch (e) {
-                        console.warn("讀取雲端國文書架失敗，自動退回本地儲存：", e);
-                        loadLocalShelves();
-                    }
-                } else {
-                    // === 訪客本地儲存模式 ===
-                    loadLocalShelves();
-                }
-
-                renderTabs();
-                renderLessons();
-            });
-        } else {
-            loadLocalShelves();
-            renderTabs();
-            renderLessons();
-        }
-
-        function loadLocalShelves() {
-            const data = localStorage.getItem('chinese_shelves');
-            shelves = data ? JSON.parse(data) : [];
-        }
-
-        async function saveShelves() {
-            if (currentUser) {
-                // 雲端儲存
-                await window.supabaseClient
-                    .from('user_progress')
-                    .update({ chinese_shelves: shelves })
-                    .eq('user_id', currentUser.id);
-            } else {
-                // 本地儲存
-                localStorage.setItem('chinese_shelves', JSON.stringify(shelves));
-            }
-        }
-
-        // =========================================================================
-        // 課程資料加載與渲染
-        // =========================================================================
-
-        async function init() {
-            try {
-                const res = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/chinese.json'); 
-                const data = await res.json();
-                chineseData = data.sources; 
-                
-                // 註：Auth 狀態改變時會自動調用 renderTabs / renderLessons，此處不需要重複調用
-            } catch (e) { console.error("資料載入失敗", e); }
-        }
-
-        function renderTabs() {
-            const root = document.getElementById('shelf-tabs');
-            root.innerHTML = `<div class="shelf-tab ${activeShelfId==='all'?'active':''}" onclick="switchShelf('all')">全部課程</div>`;
-            shelves.forEach(s => {
-                const tab = document.createElement('div');
-                tab.className = `shelf-tab ${activeShelfId===s.id?'active':''}`;
-                // 全面去 Emoji：將原本的 ✎ 符號替換為安全文字 "(編輯)"
-                tab.innerHTML = s.name + (isManageMode ? ' <span style="font-size:11px; font-weight:bold; color:#e74c3c;">(編輯)</span>' : '');
-                tab.onclick = () => isManageMode ? editShelf(s) : switchShelf(s.id);
-                root.appendChild(tab);
-            });
-            const add = document.createElement('div');
-            add.className = 'shelf-tab'; add.style.color = '#e74c3c'; add.innerText = '+ 新增書架';
-            add.onclick = () => {
-                const n = prompt('書架名稱:');
-                if(n) { shelves.push({id:'s_'+Date.now(), name:n, courses:[]}); saveShelves(); renderTabs(); }
-            };
-            root.appendChild(add);
-        }
-
-        function renderLessons() {
-            const root = document.getElementById('lessons-root'); root.innerHTML = '';
-            const shelf = shelves.find(s => s.id === activeShelfId);
-            chineseData.forEach(src => {
-                const lessons = activeShelfId === 'all' ? src.lessons : src.lessons.filter(l => shelf.courses.some(c => c.source === src.name && c.lesson === l.lesson));
-                if (lessons.length === 0 && activeShelfId !== 'all') return;
-                const group = document.createElement('div'); group.className = 'version-group';
-                group.innerHTML = `<div class="version-title">${src.name}</div><div class="lesson-grid"></div>`;
-                const grid = group.querySelector('.lesson-grid');
-                
-                lessons.forEach(l => {
-                    const hasAnno = l.annotations && l.annotations.length > 0;
-                    const hasContent = l.content && l.content.length > 0;
-                    const hasAuthor = l.authorName || l.authorIntro;
-                    const hasAppr = l.appreciation && l.appreciation.trim() !== '';
-                    const isEnabled = l.enabled !== false;
-                    
-                    const card = document.createElement('div'); 
-                    card.className = `lesson-card std-card ${isManageMode?'manage-mode':''} ${!isEnabled ? 'is-disabled' : ''}`;
-                    
-                    card.dataset.source = src.name; 
-                    card.dataset.lesson = l.lesson;
-                    card.dataset.hasAnno = hasAnno; 
-                    card.dataset.hasContent = hasContent;
-                    card.dataset.hasAuthor = hasAuthor;
-                    card.dataset.hasAppr = hasAppr;
-
-                    let sHtml = l.status ? `<div class="status-ribbon ${l.statusColor || 'yellow'}">${l.status}</div>` : '';
-
-                    card.innerHTML = `
-                        ${sHtml}
-                        <div class="lesson-title">${l.title}</div>
-                        <div class="card-badges">
-                            <span class="badge ${hasAnno ? 'has-anno' : ''}">註</span>
-                            <span class="badge ${hasContent ? 'has-content' : ''}">文</span>
-                            <span class="badge ${hasAuthor ? 'has-extra' : ''}">作</span>
-                            <span class="badge ${hasAppr ? 'has-extra' : ''}">賞</span>
-                        </div>
-                        <button class="manage-btn ${activeShelfId==='all'?'add':'remove'}" onclick="handleManage('${src.name}', ${l.lesson}, event)">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                        </button>
-                    `;
-                    card.onclick = () => { if(!isManageMode) { card.classList.toggle('selected'); updateUI(); } };
-                    grid.appendChild(card);
-                });
-                root.appendChild(group);
-            });
-            updateUI();
-        }
-
-        function switchShelf(id) { activeShelfId = id; renderTabs(); renderLessons(); }
-
-        function handleManage(src, les, e) {
-            e.stopPropagation();
-            if (activeShelfId === 'all') {
-                if(shelves.length === 0) { alert('請先建立一個書架'); return; }
-                const list = shelves.map((s,i) => `${i+1}. ${s.name}`).join('\n');
-                const idx = prompt(`要加入到哪個書架？\n${list}`) - 1;
-                if(shelves[idx]) {
-                    const exists = shelves[idx].courses.some(c => c.source === src && c.lesson === les);
-                    if(!exists) { 
-                        shelves[idx].courses.push({source:src, lesson:les}); 
-                        saveShelves(); 
-                        alert('已加入 ' + shelves[idx].name); 
-                    }
-                    else alert('已在書架中');
-                }
-            } else {
-                const s = shelves.find(x => x.id === activeShelfId);
-                s.courses = s.courses.filter(c => !(c.source === src && c.lesson === les));
-                saveShelves(); renderLessons();
-            }
-        }
-
-        function updateUI() {
-            const selectedCards = document.querySelectorAll('.lesson-card.selected');
-            let canAnno = false, canContent = false, canAuthor = false, canAppr = false;
-            
-            selectedCards.forEach(c => {
-                if(c.dataset.hasAnno === 'true') canAnno = true;
-                if(c.dataset.hasContent === 'true') canContent = true;
-                if(c.dataset.hasAuthor === 'true') canAuthor = true;
-                if(c.dataset.hasAppr === 'true') canAppr = true;
-            });
-
-            document.getElementById('btn-anno').disabled = !canAnno;
-            document.getElementById('btn-textbook').disabled = !canContent;
-            document.getElementById('btn-author').disabled = !canAuthor;
-            document.getElementById('btn-appreciation').disabled = !canAppr;
-        }
-
-        function editShelf(s) {
-            const n = prompt('修改名稱 (留空則刪除書架):', s.name);
-            if(n === '') { shelves = shelves.filter(x => x.id !== s.id); activeShelfId = 'all'; }
-            else if(n) { s.name = n; }
-            saveShelves(); renderTabs(); renderLessons();
-        }
-
-        document.getElementById('manage-toggle').onchange = (e) => { isManageMode = e.target.checked; renderTabs(); renderLessons(); };
-
-        function goTo(page) {
-            const selectedCards = document.querySelectorAll('.lesson-card.selected');
-            const data = Array.from(selectedCards).map(c => ({ source: c.dataset.source, lesson: parseInt(c.dataset.lesson) }));
-            localStorage.setItem('sel_chinese_lessons', JSON.stringify(data));
-            window.location.href = page + '.html';
-        }
-
-        init();
-    </script>
 </body>
 </html>

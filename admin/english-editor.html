@@ -1,3 +1,5 @@
+--- START OF FILE Paste July 19, 2026 - 12:58PM ---
+
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -31,9 +33,14 @@
         
         /* --- 拖曳排序相關樣式 --- */
         .source-block { background: #fff; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 25px; overflow: hidden; transition: transform 0.1s, border 0.2s; }
-        .source-block[draggable="true"] { cursor: grab; }
+        /* 修改：版本列本身不顯示 grab，由把手負責 */
+        .source-block[draggable="true"] { cursor: default; }
         .source-block.dragging { opacity: 0.4; border: 2px dashed #0b76d1; transform: scale(0.98); }
         .source-block.drag-over { border-top: 5px solid #0b76d1; }
+        
+        /* 新增：拖曳把手樣式 */
+        .drag-handle { cursor: grab; display: flex; align-items: center; justify-content: center; padding: 4px; border-radius: 4px; }
+        .drag-handle:active { cursor: grabbing; }
 
         .accordion-header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: #fff; border-bottom: 1px solid #f1f3f5; }
         .lesson-container { display: none; padding: 10px 15px 20px; background: #f8fafc; }
@@ -205,7 +212,7 @@
 
         const POS_LIST = ["n.", "n. [C]", "n. [U]", "n. [C][U]", "v.", "vi.", "vt.", "adj.", "adv.", "prep.", "conj.", "pron.", "int.", "phr."];
         const ICONS = {
-            folder: '<svg class="svg-icon" style="color:#64748b" viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>',
+            folder: '<svg class="svg-icon" style="color:#64748b" viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.89 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>',
             file: '<svg class="svg-icon" style="color:#94a3b8" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>',
             drag: '<svg class="svg-icon" viewBox="0 0 24 24"><path d="M11 18c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm-2-8c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6 4c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>',
             close: '<svg class="svg-icon" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>',
@@ -249,6 +256,11 @@
 
         // --- 拖曳排序事件處理 ---
         function handleDragStart(e, index) {
+            // 修改：僅允許透過 .drag-handle 觸發拖曳
+            if (!e.target.closest('.drag-handle')) {
+                e.preventDefault();
+                return;
+            }
             draggedSourceIdx = index;
             e.currentTarget.classList.add('dragging');
             e.dataTransfer.effectAllowed = 'move';
@@ -296,7 +308,7 @@
 
                 srcEl.innerHTML = `<div class="accordion-header" onclick="toggleKey('${srcKey}')">
                     <div style="font-weight:600;display:flex;align-items:center;gap:8px;">
-                        <span class="drag-handle" style="color:#cbd5e1; cursor:grab;">${ICONS.drag}</span>
+                        <span class="drag-handle" style="color:#cbd5e1;">${ICONS.drag}</span>
                         ${ICONS.folder} ${src.name}
                     </div>
                     <div style="display:flex;gap:5px;">

@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>下載中心 - 國文科</title>
+    <link rel="stylesheet" href="../styles/style.css">
+    <link rel="stylesheet" href="../styles/header.css">
+    <style>
+        :root { 
+            --primary: #e74c3c; 
+            --primary-dark: #c0392b;
+            --primary-light: #fdedec;
+            --success: #10b981;
+            --slate-50: #f8fafc;
+            --slate-100: #f1f5f9;
+            --slate-200: #e2e8f0;
+            --slate-400: #94a3b8;
+            --slate-600: #475569;
+            --slate-800: #1e293b;
+        }
+        
+        body { background-color: var(--slate-50); padding-bottom: 120px; font-family: "Noto Sans TC", sans-serif; }
+
+        /* 代碼領取區 */
+        .code-box {
+            background: #fff; border-radius: 20px; padding: 25px; margin-bottom: 30px; 
+            border: 1px solid var(--slate-200); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            display: flex; flex-direction: column; gap: 15px; position: relative; overflow: hidden;
+        }
+        .code-box::before { content: ""; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--primary); }
+        .code-header { display: flex; align-items: center; gap: 10px; color: var(--slate-800); }
+        .code-input-row { display: flex; gap: 10px; }
+        .code-input { flex: 1; padding: 12px 18px; border-radius: 12px; border: 2px solid var(--slate-100); background: var(--slate-50); font-size: 1.1rem; font-weight: bold; text-transform: uppercase; outline: none; transition: 0.2s; }
+        .code-input:focus { border-color: var(--primary); background: #fff; }
+        .btn-redeem { background: var(--primary); color: #fff; border: none; padding: 0 25px; border-radius: 12px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-redeem:hover { background: var(--primary-dark); }
+
+        /* 麵包屑 */
+        .breadcrumb { display: flex; align-items: center; gap: 8px; margin-bottom: 15px; font-size: 0.95rem; color: var(--slate-600); font-weight: 600; }
+        .breadcrumb span { cursor: pointer; display: flex; align-items: center; gap: 4px; }
+        .breadcrumb span:hover { color: var(--primary); }
+
+        /* 目錄容器 */
+        .catalog-container { background: #fff; border-radius: 20px; border: 1px solid var(--slate-200); overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05); }
+        .catalog-header { padding: 15px 25px; background: #fff; border-bottom: 1px solid var(--slate-100); display: flex; justify-content: space-between; align-items: center; }
+        .catalog-title { font-weight: 800; color: var(--slate-800); font-size: 1.1rem; display: flex; align-items: center; gap: 12px; }
+
+        /* Checkbox 通用樣式 */
+        .ui-checkbox { 
+            width: 22px; height: 22px; border: 2px solid var(--slate-200); border-radius: 6px; 
+            cursor: pointer; display: flex; align-items: center; justify-content: center; 
+            transition: 0.2s; flex-shrink: 0; background: #fff; color: #fff;
+        }
+        .ui-checkbox.checked { background: var(--primary); border-color: var(--primary); }
+        .ui-checkbox svg { display: none; width: 14px; height: 14px; stroke-width: 4; }
+        .ui-checkbox.checked svg { display: block; }
+
+        /* 列表項目 */
+        .list-item { display: flex; align-items: center; padding: 10px 25px; border-bottom: 1px solid var(--slate-50); transition: 0.2s; gap: 15px; }
+        .list-item:hover { background: var(--primary-light); }
+        .item-info { display: flex; align-items: center; gap: 15px; flex: 1; cursor: pointer; padding: 6px 0; }
+        .item-icon { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 12px; background: var(--slate-100); color: var(--slate-600); }
+        .icon-folder { background: #fdedec; color: #e74c3c; }
+        .item-name { font-weight: 700; color: var(--slate-800); font-size: 1.05rem; }
+        .item-meta { font-size: 0.8rem; color: var(--slate-400); }
+
+        /* 下載按鈕 (單個) */
+        .btn-download-single { background: none; border: none; color: var(--slate-400); cursor: pointer; padding: 10px; transition: 0.2s; }
+        .btn-download-single:hover { color: var(--primary); transform: scale(1.1); }
+
+        /* 底部批次列 */
+        .batch-action-bar {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(100px);
+            background: var(--slate-800); color: #fff; padding: 12px 24px; border-radius: 50px;
+            display: flex; align-items: center; gap: 20px; box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); z-index: 2000;
+        }
+        .batch-action-bar.show { transform: translateX(-50%) translateY(0); }
+        .batch-btn { background: var(--primary); color: #fff; border: none; padding: 8px 20px; border-radius: 25px; font-weight: 800; cursor: pointer; }
+
+        /* 多選書架 Modal */
+        .shelf-modal { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 3000; padding: 20px; }
+        .shelf-card { background: #fff; width: 100%; max-width: 400px; padding: 30px; border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
+        .shelf-list { max-height: 300px; overflow-y: auto; margin: 15px 0; }
+        .shelf-row { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 12px; cursor: pointer; transition: 0.2s; }
+        .shelf-row:hover { background: var(--slate-50); }
+
+        @media (max-width: 600px) {
+            .code-input-row { flex-direction: column; }
+            .btn-redeem { padding: 12px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">
+            <a href="chinese-materials.html" class="back-link">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            </a>
+            <span class="header-title-area">國文下載中心</span>
+        </div>
+        <div class="header-right">
+            <button class="btn-tool-text" onclick="location.href='chinese-materials.html'">返回書架</button>
+        </div>
+    </header>
+
+    <main class="page-container">
+        
+        <!-- 代碼兌換 -->
+        <div class="code-box">
+            <div class="code-header">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3L15.5 7.5z"></path></svg>
+                <strong style="font-size: 1.1rem;">兌換下載代碼</strong>
+            </div>
+            <div class="code-input-row">
+                <input type="text" id="dl-code" class="code-input" placeholder="輸入代碼">
+                <button class="btn-redeem" onclick="redeemCode()">兌換</button>
+            </div>
+            <p style="font-size: 0.85rem; color: var(--slate-600); margin: 0;">下載特定隱藏的註釋、作者介紹或練習內容。</p>
+        </div>
+
+        <nav class="breadcrumb" id="breadcrumb"></nav>
+
+        <div class="catalog-container">
+            <div class="catalog-header">
+                <div class="catalog-title">
+                    <div class="ui-checkbox" id="check-all" onclick="toggleSelectAll()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </div>
+                    <span id="current-folder-name">主目錄</span>
+                </div>
+                <div style="font-size: 0.8rem; color: var(--slate-400);">勾選項目進行批次下載</div>
+            </div>
+            <div id="catalog-list"></div>
+        </div>
+
+    </main>
+
+    <!-- 底部操作列 -->
+    <div id="batch-bar" class="batch-action-bar">
+        <span id="batch-count">已選取 0 項</span>
+        <button class="batch-btn" onclick="openShelfSelector()">下載至書架</button>
+    </div>
+
+    <!-- 書架選擇 Modal -->
+    <div id="shelf-modal" class="shelf-modal">
+        <div class="shelf-card">
+            <h3 style="margin:0; color: var(--slate-800); font-weight: 800;">下載到書架</h3>
+            <p style="font-size:0.85rem; color:var(--slate-600); margin-top:5px;">請選擇您要存放課程的書架：</p>
+            <div id="shelf-list" class="shelf-list"></div>
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button class="btn" style="flex:1; background:var(--slate-100); color:var(--slate-600); border:none; padding:12px; border-radius:12px; cursor:pointer;" onclick="closeShelfModal()">取消</button>
+                <button id="btn-confirm-dl" class="btn" style="flex:2; background:var(--primary); color:#fff; border:none; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">確認下載</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../scripts/supabase-config.js"></script>
+    <script src="../scripts/auth-helper.js"></script>
+    <script src="../scripts/utils.js"></script>
+    <script src="../scripts/download-manager.js"></script>
+
+    <script>
+        let fullCatalog = null;
+        let pathStack = []; 
+        let selectedIndices = new Set(); 
+
+        const CHECK_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+
+        async function init() {
+            try {
+                // 抓取國文目錄資料
+                const res = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/chinese-catalog.json');
+                fullCatalog = await res.json();
+                updateUI();
+            } catch (e) {
+                document.getElementById('catalog-list').innerHTML = `<div style="padding:40px; text-align:center; color:#ef4444;">資料庫連線失敗。</div>`;
+            }
+        }
+
+        function getCurrentLayer() {
+            return pathStack.length === 0 ? fullCatalog.categories : pathStack[pathStack.length - 1].children;
+        }
+
+        function renderCatalog() {
+            const listRoot = document.getElementById('catalog-list');
+            const items = getCurrentLayer();
+            listRoot.innerHTML = '';
+
+            items.forEach((item, index) => {
+                const isFolder = !!item.children;
+                const isSelected = selectedIndices.has(index);
+                const div = document.createElement('div');
+                div.className = 'list-item';
+                div.innerHTML = `
+                    <div class="ui-checkbox ${isSelected ? 'checked' : ''}" onclick="toggleSelectItem(${index}, event)">${CHECK_SVG}</div>
+                    <div class="item-info" onclick="handleItemClick(${index}, ${isFolder})">
+                        <div class="item-icon ${isFolder ? 'icon-folder' : ''}">
+                            ${isFolder ? 
+                                '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>' : 
+                                '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>'}
+                        </div>
+                        <div class="item-text">
+                            <span class="item-name">${item.name}</span>
+                            <span class="item-meta">${isFolder ? `包含多個課程` : `版本: ${item.source}`}</span>
+                        </div>
+                    </div>
+                    ${!isFolder ? `
+                        <button class="btn-download-single" onclick="startSingleDownload('${item.source}', ${item.lesson})">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        </button>
+                    ` : ''}
+                `;
+                listRoot.appendChild(div);
+            });
+        }
+
+        function toggleSelectItem(idx, e) {
+            if (e) e.stopPropagation();
+            if (selectedIndices.has(idx)) selectedIndices.delete(idx);
+            else selectedIndices.add(idx);
+            updateBatchBar();
+            renderCatalog();
+        }
+
+        function toggleSelectAll() {
+            const items = getCurrentLayer();
+            const btn = document.getElementById('check-all');
+            if (selectedIndices.size === items.length) {
+                selectedIndices.clear();
+            } else {
+                items.forEach((_, i) => selectedIndices.add(i));
+            }
+            updateBatchBar();
+            renderCatalog();
+        }
+
+        function updateBatchBar() {
+            const bar = document.getElementById('batch-bar');
+            bar.classList.toggle('show', selectedIndices.size > 0);
+            document.getElementById('batch-count').innerText = `已選取 ${selectedIndices.size} 項`;
+            const isAll = selectedIndices.size > 0 && selectedIndices.size === getCurrentLayer().length;
+            document.getElementById('check-all').classList.toggle('checked', isAll);
+        }
+
+        function handleItemClick(idx, isFolder) {
+            if (!isFolder) { toggleSelectItem(idx); return; }
+            pathStack.push(getCurrentLayer()[idx]);
+            selectedIndices.clear();
+            updateUI();
+        }
+
+        function updateUI() {
+            renderCatalog();
+            updateBatchBar();
+            const bc = document.getElementById('breadcrumb');
+            const homeIcon = `<svg width="16" height="16" style="margin-bottom:2px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>`;
+            let bcHtml = `<span onclick="goHome()">${homeIcon} 全部教材</span>`;
+            pathStack.forEach((f, i) => bcHtml += ` <span style="margin: 0 4px; color:var(--slate-400);">/</span> <span onclick="popTo(${i})">${f.name}</span>`);
+            bc.innerHTML = bcHtml;
+            document.getElementById('current-folder-name').innerText = pathStack.length > 0 ? pathStack[pathStack.length - 1].name : "主目錄";
+        }
+
+        function openShelfSelector() {
+            const lessons = [];
+            const items = getCurrentLayer();
+            function collect(node) {
+                if (node.children) node.children.forEach(collect);
+                else lessons.push({ source: node.source, lesson: node.lesson });
+            }
+            selectedIndices.forEach(idx => collect(items[idx]));
+            window.DownloadManager.askShelfAndDownload('chinese', lessons);
+        }
+
+        function startSingleDownload(source, lesson) {
+            window.DownloadManager.askShelfAndDownload('chinese', [{source, lesson}]);
+        }
+
+        function goHome() { pathStack = []; selectedIndices.clear(); updateUI(); }
+        function popTo(i) { pathStack = pathStack.slice(0, i + 1); selectedIndices.clear(); updateUI(); }
+        function redeemCode() {
+            const c = document.getElementById('dl-code').value;
+            if (c) window.DownloadManager.redeemCode('chinese', c);
+        }
+        function closeShelfModal() { document.getElementById('shelf-modal').style.display='none'; }
+        init();
+    </script>
+</body>
+</html>

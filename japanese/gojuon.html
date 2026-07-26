@@ -3,215 +3,305 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>五十音圖 - 酷學習</title>
+    <title>五十音圖全集 - 酷學習</title>
     <link rel="stylesheet" href="../styles/style.css">
     <link rel="stylesheet" href="../styles/header.css">
-    <!-- 引入日文字體 -->
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Kaisei+Tokumin:wght@400;700&display=swap" rel="stylesheet">
+    <!-- 引入日文字體：標準與手寫質感 -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@500;900&family=Klee+One:wght@600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --jp-primary: #fce7f3;
-            --jp-accent: #db2777;
+            --jp-primary: #db2777;
+            --jp-light: #fce7f3;
+            --jp-bg: #fff5f7;
+            --jp-card: #ffffff;
         }
 
-        body { background-color: #fff5f7; padding-bottom: 50px; margin: 0; }
+        body { background-color: var(--jp-bg); padding-bottom: 50px; }
 
-        .gojuon-wrapper {
-            max-width: 900px;
+        /* 頂部導覽列風格同步 */
+        header {
+            background-color: var(--jp-light) !important;
+            /* 這裡使用 border 而不是 border-bottom，並強制覆蓋全域樣式 */
+            border: 2px solid var(--jp-primary) !important; 
+        }
+        .header-title-area, .back-link { color: var(--jp-primary) !important; }
+
+        /* 類別切換標籤 */
+        .type-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
             margin: 20px auto;
+            max-width: 600px;
+            background: #f1f5f9;
+            padding: 5px;
+            border-radius: 15px;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            color: #64748b;
+            transition: 0.3s;
+            font-size: 0.95rem;
+        }
+        .tab-btn.active {
+            background: var(--jp-primary);
+            color: #fff;
+            box-shadow: 0 4px 10px rgba(219, 39, 119, 0.2);
+        }
+
+        /* 控制項 (假名/字體) */
+        .controls-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+        .control-group {
+            display: flex;
+            background: #fff;
+            padding: 4px;
+            border-radius: 50px;
+            border: 1.5px solid #fbcfe8;
+        }
+        .mode-btn {
+            padding: 6px 18px;
+            border-radius: 50px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: var(--jp-primary);
+            transition: 0.2s;
+        }
+        .mode-btn.active {
+            background: var(--jp-light);
+            box-shadow: inset 0 0 0 1px var(--jp-primary);
+        }
+
+        /* 網格容器 */
+        .gojuon-container {
+            max-width: 900px;
+            margin: 0 auto;
             background: #fff;
             padding: 25px;
-            border-radius: 24px;
-            box-shadow: 0 10px 30px rgba(219, 39, 119, 0.05);
-            border: 1px solid var(--jp-primary);
-            box-sizing: border-box; /* 確保 padding 不會撐開寬度 */
+            border-radius: 30px;
+            box-shadow: 0 15px 35px rgba(219, 39, 119, 0.05);
+            border: 1px solid #fbcfe8;
+            overflow-x: auto;
         }
 
+        /* 動態網格佈局 */
         .gojuon-grid {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            grid-template-rows: repeat(11, 80px);
-            gap: 10px;
+            gap: 12px;
             width: 100%;
+            margin: 0 auto;
+            /* 預設為清音/濁音的 5 欄佈局 */
+            grid-template-columns: repeat(5, 1fr);
+        }
+        .gojuon-grid.yoon-grid {
+            /* 拗音使用 3 欄佈局 */
+            grid-template-columns: repeat(3, 1fr);
+            max-width: 540px;
         }
 
+        /* 假名卡片 */
         .kana-card {
             background: #fff;
             border: 1.5px solid #f1f5f9;
-            border-radius: 12px;
+            border-radius: 18px;
+            padding: 15px 5px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            min-height: 90px;
+            position: relative;
         }
-
         .kana-card:hover {
-            border-color: var(--jp-accent);
-            background-color: var(--jp-primary);
+            border-color: var(--jp-primary);
+            background-color: var(--jp-light);
+            transform: translateY(-3px);
         }
+        .kana-card:active { transform: scale(0.95); }
 
-        .kana-char {
-            font-size: 2rem;
-            font-weight: 700;
+        .char {
+            font-size: 2.2rem;
             color: #1e293b;
-            line-height: 1.2;
+            line-height: 1.1;
+            margin-bottom: 5px;
         }
+        /* 字體類別 */
+        .font-standard { font-family: 'Noto Sans JP', sans-serif; font-weight: 500; }
+        .font-hand { font-family: 'Klee One', cursive; font-weight: 600; }
 
         .romaji {
             font-size: 0.8rem;
             color: #94a3b8;
-            font-weight: 600;
+            font-weight: 700;
             text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
-        .toolbar {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin: 20px 10px;
-            flex-wrap: wrap;
+        /* 播放圖示提示 */
+        .play-hint {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            opacity: 0.2;
+            color: var(--jp-primary);
         }
+        .kana-card:hover .play-hint { opacity: 0.6; }
 
-        .toggle-btn {
-            padding: 10px 20px;
-            border-radius: 50px;
-            border: 2px solid var(--jp-primary);
-            background: #fff;
-            color: var(--jp-accent);
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .toggle-btn.active {
-            background: var(--jp-accent);
-            color: #fff;
-        }
-
-        /* 手機版核心修正：不用拖動 */
-        @media (max-width: 480px) {
-            .gojuon-wrapper {
-                padding: 10px 8px;
-                margin: 10px 5px;
-                border-radius: 12px;
-            }
-            .gojuon-grid {
-                grid-template-rows: repeat(11, 60px); /* 縮短格子高度 */
-                gap: 5px; /* 縮小格子間距 */
-            }
-            .kana-char {
-                font-size: 1.4rem; /* 縮小字體以適應寬度 */
-            }
-            .romaji {
-                font-size: 0.65rem;
-            }
-            .toggle-btn {
-                padding: 8px 12px;
-                font-size: 0.85rem;
-            }
+        @media (max-width: 600px) {
+            .gojuon-container { padding: 15px 10px; border-radius: 20px; }
+            .gojuon-grid { gap: 8px; }
+            .char { font-size: 1.6rem; }
+            .kana-card { min-height: 75px; border-radius: 12px; }
+            .type-tabs { margin: 10px; }
         }
     </style>
 </head>
 <body>
 
-    <header style="border:2px solid #f9a8d4; background:#fce7f3; color:#db2777;">
+    <header>
         <div class="logo">
-            <a href="index.html" class="back-link" style="margin-right:10px;">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#db2777" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            <a href="index.html" class="back-link">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
             </a>
-            <span class="header-title-area" style="font-weight:bold; color:#db2777; font-size:1.1rem; letter-spacing:1px;">五十音圖表</span>
+            <span class="header-title-area">五十音互動圖表</span>
         </div>
     </header>
 
     <div class="page-container">
         
-        <div class="toolbar">
-            <!-- 假名切換 -->
-            <button id="btn-hira" class="toggle-btn active" onclick="switchMode('h')">平假名 あ</button>
-            <button id="btn-kata" class="toggle-btn" onclick="switchMode('k')">片假名 ア</button>
-            <!-- 字體切換 -->
-            <button id="btn-font" class="toggle-btn" onclick="toggleFont()" style="margin-left: 20px; border-color: #e2e8f0; color: #64748b;">手寫體切換</button>
+        <!-- 頂部類別切換 -->
+        <div class="type-tabs">
+            <button class="tab-btn active" onclick="switchType('seion')">清音</button>
+            <button class="tab-btn" onclick="switchType('dakuon')">濁音 / 半濁音</button>
+            <button class="tab-btn" onclick="switchType('yoon')">拗音</button>
         </div>
 
-        <div class="gojuon-wrapper">
-            <div class="gojuon-grid" id="grid-container">
-                <!-- 由 JavaScript 自動填充 -->
+        <!-- 輔助控制項 -->
+        <div class="controls-row">
+            <div class="control-group">
+                <button id="mode-h" class="mode-btn active" onclick="switchMode('h')">平假名 あ</button>
+                <button id="mode-k" class="mode-btn" onclick="switchMode('k')">片假名 ア</button>
+            </div>
+            <div class="control-group">
+                <button id="font-std" class="mode-btn active" onclick="switchFont(false)">標準體</button>
+                <button id="font-hand" class="mode-btn" onclick="switchFont(true)">手寫體</button>
             </div>
         </div>
 
-        <p style="text-align: center; color: #94a3b8; font-size: 0.9rem; margin-top: 20px;">
-            ※ 點擊方塊可聽取發音
+        <!-- 五十音圖主體 -->
+        <div class="gojuon-container">
+            <div id="grid-root" class="gojuon-grid">
+                <!-- 由 JS 動態渲染 -->
+            </div>
+        </div>
+
+        <p style="text-align:center; color:#94a3b8; font-size:0.85rem; margin-top:25px; font-weight:bold;">
+            ※ 點擊方塊聽取發音，使用手寫體可練習辨識書寫形態
         </p>
 
     </div>
 
     <script src="../scripts/utils.js"></script>
     <script>
-        let kanaData = [];
-        let currentMode = 'h'; // 'h' 為平假名, 'k' 為片假名
-        let isTextbookFont = false;
+        let fullData = null;
+        let currentType = 'seion'; // seion, dakuon, yoon
+        let currentMode = 'h';     // h: hiragana, k: katakana
+        let isHandwritten = false;
 
         async function init() {
             try {
-                // 1. 抓取您的 GitHub 資料
                 const res = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/gojuon.json');
-                const data = await res.json();
-                kanaData = data.seion;
+                fullData = await res.json();
                 render();
             } catch (err) {
-                console.error("無法載入五十音資料:", err);
+                console.error("無法載入五十音資料", err);
             }
         }
 
         function render() {
-            const container = document.getElementById('grid-container');
+            if (!fullData) return;
+            const container = document.getElementById('grid-root');
             container.innerHTML = '';
+            
+            // 處理佈局樣式
+            container.className = `gojuon-grid ${currentType === 'yoon' ? 'yoon-grid' : ''}`;
 
-            kanaData.forEach(item => {
+            const items = fullData[currentType];
+            const fontClass = isHandwritten ? 'font-hand' : 'font-standard';
+
+            items.forEach(item => {
                 const card = document.createElement('div');
                 card.className = 'kana-card';
                 
-                // 根據 JSON 中的座標設定 Grid 位置
+                // 設定 Grid 座標
                 card.style.gridRow = item.row;
                 card.style.gridColumn = item.col;
 
                 const displayChar = (currentMode === 'h') ? item.h : item.k;
-                const fontClass = isTextbookFont ? 'font-textbook' : 'font-standard';
 
                 card.innerHTML = `
-                    <div class="kana-char ${fontClass}">${displayChar}</div>
+                    <div class="play-hint">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                    </div>
+                    <div class="char ${fontClass}">${displayChar}</div>
                     <div class="romaji">${item.r}</div>
                 `;
 
-                // 點擊發音 (呼叫 utils.js 中的 speak)
                 card.onclick = () => {
-                    // 發音使用平假名效果最佳
-                    speak(item.h, 'ja-JP', 1.0);
+                    // 呼叫 utils.js 中的 speak 函式
+                    speak(item.h, 'ja-JP', 0.9);
                 };
 
                 container.appendChild(card);
             });
         }
 
-        // 切換平片假名模式
+        // --- 切換邏輯 ---
+
+        function switchType(type) {
+            currentType = type;
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.innerText.includes(type === 'seion' ? '清音' : type === 'yoon' ? '拗音' : '濁音'));
+            });
+            // 修正：針對手動傳入字串判斷
+            document.querySelectorAll('.tab-btn').forEach((btn, idx) => {
+                const types = ['seion', 'dakuon', 'yoon'];
+                btn.classList.toggle('active', types[idx] === type);
+            });
+            render();
+        }
+
         function switchMode(mode) {
             currentMode = mode;
-            document.getElementById('btn-hira').classList.toggle('active', mode === 'h');
-            document.getElementById('btn-kata').classList.toggle('active', mode === 'k');
+            document.getElementById('mode-h').classList.toggle('active', mode === 'h');
+            document.getElementById('mode-k').classList.toggle('active', mode === 'k');
             render();
         }
 
-        // 切換字體
-        function toggleFont() {
-            isTextbookFont = !isTextbookFont;
-            const btn = document.getElementById('btn-font');
-            btn.innerText = isTextbookFont ? "切換至標準體" : "手寫體切換";
-            btn.classList.toggle('active', isTextbookFont);
+        function switchFont(hand) {
+            isHandwritten = hand;
+            document.getElementById('font-std').classList.toggle('active', !hand);
+            document.getElementById('font-hand').classList.toggle('active', hand);
             render();
         }
 
-        // 初始化
         init();
     </script>
 </body>

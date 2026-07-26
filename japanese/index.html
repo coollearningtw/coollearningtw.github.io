@@ -6,204 +6,216 @@
     <title>日語研究室 - 酷學習</title>
     <link rel="stylesheet" href="../styles/style.css">
     <link rel="stylesheet" href="../styles/header.css">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@900&display=swap" rel="stylesheet">
+    <!-- 引入日文字體 -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@700;900&family=Kaisei+Tokumin:wght@700&display=swap" rel="stylesheet">
     <style>
-
         :root {
-            --jp-theme: #db2777;
+            --jp-primary: #db2777; /* 櫻粉色 */
+            --jp-light: #fce7f3;
             --jp-bg: #fff5f7;
-            --jp-border: #f9a8d4;
-            --jp-header-bg: #fce7f3;
-            --jp-header-text: #db2777;
+            --jp-accent: #f472b6;
         }
 
-        body { background-color: var(--jp-bg); }
+        body { background-color: var(--jp-bg); font-family: 'Noto Sans JP', "Noto Sans TC", sans-serif; }
 
+        /* --- Header 修正：無 LOGO, 統一顏色 --- */
         header {
-            border: 2px solid var(--jp-border);
-            background-color: var(--jp-header-bg);
-            color: var(--jp-header-text);
+            background-color: var(--jp-light) !important;
+            border: 2px solid var(--jp-primary) !important;
+            justify-content: center; /* 讓標題置中 */
+            position: relative;
+        }
+        .header-title-area { color: var(--jp-primary) !important; font-weight: 900; letter-spacing: 1px; }
+        .back-link { 
+            position: absolute; 
+            left: 18px; 
+            color: var(--jp-primary) !important; 
         }
 
-        /* 英雄區塊：日式簡約大標題 */
-        .hero-section {
+        /* 英雄區塊 */
+        .jp-hero {
             text-align: center;
-            padding: 60px 20px;
+            padding: 60px 20px 40px;
             position: relative;
             overflow: hidden;
         }
-        .hero-section h1 {
-            font-size: 2.5rem;
-            color: var(--jp-theme);
-            font-weight: 900;
-            margin-bottom: 10px;
+        .jp-hero h1 {
+            font-size: 2.8rem;
+            color: var(--jp-primary);
+            margin: 0 0 10px;
             letter-spacing: 2px;
         }
-        .hero-section p {
-            color: #db2777;
+        .jp-hero p {
+            color: #9d174d;
             font-size: 1.1rem;
-            opacity: 0.85;
+            font-weight: 500;
+            opacity: 0.8;
         }
-
-        /* 背景裝飾大字 */
-        .bg-kanji {
+        .bg-deco {
             position: absolute;
-            top: 20px;
-            right: -20px;
-            font-family: 'Noto Sans JP', sans-serif;
-            font-size: 15rem;
-            color: #db2777;
-            opacity: 0.06;
-            pointer-events: none;
-            user-select: none;
+            font-size: 12rem;
+            font-family: 'Kaisei Tokumin', serif;
+            color: var(--jp-primary);
+            opacity: 0.04;
             z-index: -1;
+            user-select: none;
         }
 
-        /* 入口導航網格 */
-        .nav-grid {
+        /* 模組網格佈局 */
+        .hub-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(2, 1fr);
             gap: 25px;
-            max-width: 1000px;
+            max-width: 900px;
             margin: 0 auto 50px;
             padding: 0 20px;
         }
 
-        /* 入口卡片樣式 */
-        .nav-card {
+        /* 模組卡片樣式 */
+        .module-card {
             background: #fff;
-            border-radius: 24px;
-            padding: 40px 30px;
+            border-radius: 28px;
+            padding: 40px 25px;
             text-decoration: none;
             display: flex;
             flex-direction: column;
             align-items: center;
             text-align: center;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            border: 1.5px solid var(--jp-border);
-            box-shadow: 0 10px 25px rgba(219, 39, 119, 0.05);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 1px solid #fbcfe8;
+            box-shadow: 0 10px 20px rgba(219, 39, 119, 0.03);
+            position: relative;
         }
 
-        .nav-card:hover {
+        .module-card:hover {
             transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(219, 39, 119, 0.12);
-            border-color: var(--jp-theme);
-            background: #fdf2f8;
+            box-shadow: 0 20px 40px rgba(219, 39, 119, 0.1);
+            border-color: var(--jp-primary);
         }
 
-        .icon-circle {
+        /* 圖示設計 */
+        .icon-box {
             width: 80px;
             height: 80px;
-            border-radius: 50%;
-            background: #fdf2f8;
+            background: var(--jp-light);
+            border-radius: 22px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 20px;
-            color: var(--jp-theme);
+            margin-bottom: 25px;
+            color: var(--jp-primary);
             transition: 0.3s;
-            border: 2px solid #fbcfe8;
         }
-
-        .nav-card:hover .icon-circle {
-            background: var(--jp-theme);
+        .module-card:hover .icon-box {
+            background: var(--jp-primary);
             color: #fff;
-            transform: rotate(10deg);
-            border-color: #db2777;
+            transform: rotate(8deg) scale(1.1);
         }
+        .icon-box svg { width: 40px; height: 40px; fill: currentColor; }
 
-        .icon-circle svg { width: 40px; height: 40px; fill: currentColor; }
-
-        .nav-card h2 {
-            font-size: 1.5rem;
-            color: #db2777;
+        .module-card h2 {
+            font-size: 1.4rem;
+            font-weight: 900;
+            color: #1e293b;
             margin-bottom: 12px;
+        }
+        .module-card p {
+            font-size: 0.9rem;
+            color: #64748b;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        /* 狀態標籤 */
+        .status-tag {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 0.65rem;
             font-weight: 800;
-            letter-spacing: 1px;
+            padding: 4px 12px;
+            border-radius: 50px;
+            background: #f1f5f9;
+            color: #94a3b8;
+            text-transform: uppercase;
         }
+        .tag-active { background: #fdf2f8; color: var(--jp-primary); }
 
-        .nav-card p {
-            color: #db2777;
-            font-size: 0.95rem;
-            line-height: 1.5;
-            opacity: 0.8;
-        }
-
-        /* 底部裝飾 */
-        .footer-deco {
-            text-align: center;
-            padding: 40px 0;
-            opacity: 0.5;
-        }
-        .footer-deco img { height: 40px; filter: grayscale(1); }
-
-        @media (max-width: 600px) {
-            .hero-section { padding: 40px 20px; }
-            .hero-section h1 { font-size: 2rem; }
-            .nav-card { padding: 30px 20px; }
+        @media (max-width: 768px) {
+            .hub-grid { grid-template-columns: 1fr; }
+            .jp-hero h1 { font-size: 2.2rem; }
         }
     </style>
 </head>
 <body>
 
-    <header style="border:2px solid #f9a8d4; background:#fce7f3; color:#db2777;">
-        <div class="logo">
-            <a href="../index.html" class="back-link" style="margin-right:10px;">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#db2777" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-            </a>
-            <span class="header-title-area" style="font-weight:bold; color:#db2777; font-size:1.1rem; letter-spacing:1px;">日語研究室</span>
-        </div>
+    <header>
+        <a href="../index.html" class="back-link">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </a>
+        <span class="header-title-area">日本語研究室</span>
     </header>
-
 
     <main class="page-container">
         
-        <section class="hero-section">
+        <section class="jp-hero">
+            <div class="bg-deco" style="top: -20px; left: 10%;">あ</div>
+            <div class="bg-deco" style="bottom: -20px; right: 10%;">日</div>
             <h1>日本語を学ぼう</h1>
-            <p>探索日語的奧秘，從零開始邁向達人之路</p>
-            <div class="bg-kanji">日</div>
+            <p>探索日語世界，從零開始的系統化學習之旅</p>
         </section>
 
-        <div class="nav-grid">
+        <div class="hub-grid">
             
-            <!-- 五十音圖入口 -->
-            <a href="gojuon.html" class="nav-card">
-                <div class="icon-circle">
-                    <!-- 假名符號 SVG -->
+            <!-- 模組 1：五十音圖 -->
+            <a href="gojuon.html" class="module-card">
+                <div class="status-tag tag-active">Foundation</div>
+                <div class="icon-box">
                     <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/><circle cx="12" cy="12" r="5"/></svg>
                 </div>
                 <h2>五十音圖表</h2>
-                <p>日語學習的基石。包含平假名、片假名對照、發音練習與手寫體辨識。</p>
+                <p>完整清音、濁音與拗音。支援平/片假名切換、手寫辨識與真人發音。</p>
             </a>
 
-            <!-- 單字清單入口 -->
-            <a href="words.html" class="nav-card">
-                <div class="icon-circle">
-                    <!-- 書本/清單 SVG -->
+            <!-- 模組 2：單字圖鑑 -->
+            <a href="vocab-list.html" class="module-card">
+                <div class="status-tag tag-active">Vocabulary</div>
+                <div class="icon-box">
+                    <svg viewBox="0 0 24 24"><path d="M4 9h16v2H4V9zm0 4h10v2H4v-2zm0-8h16v2H4V5zm0 12h16v2H4v-2z"/></svg>
+                </div>
+                <h2>單字探索圖鑑</h2>
+                <p>收錄 N5-N1 核心單字。包含詳細用法解析、同反義詞與情境例句。</p>
+            </a>
+
+            <!-- 模組 3：文法百科 -->
+            <a href="grammar-list.html" class="module-card">
+                <div class="status-tag tag-active">Grammar</div>
+                <div class="icon-box">
                     <svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9H9V9h10v2zm-4 4H9v-2h6v2zm4-8H9V5h10v2z"/></svg>
                 </div>
-                <h2>常用單字庫</h2>
-                <p>收錄基礎生活用語、動漫流行語與 N5 核心詞彙，配備漢字與讀音標註。</p>
+                <h2>日本語文法百科</h2>
+                <p>系統化梳理所有必備句型。提供清晰的接續公式與易混淆用法區別。</p>
             </a>
 
-            <!-- 測驗中心入口 -->
-            <a href="jp-quiz.html" class="nav-card">
-                <div class="icon-circle">
-                    <!-- 和風星星獎章 SVG -->
-                    <svg viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="22" stroke="#db2777" stroke-width="3" fill="#fff5f7"/><path d="M24 12l3.09 6.26L34 19.27l-5 4.87L30.18 32 24 28.27 17.82 32 19 24.14l-5-4.87 6.91-1.01L24 12z" fill="#db2777" stroke="#db2777" stroke-width="2"/></svg>
+            <!-- 模組 5：綜合測驗 -->
+            <a href="jp-quiz.html" class="module-card">
+                <div class="status-tag tag-active">PvP & Quiz</div>
+                <div class="icon-box">
+                    <svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
                 </div>
-                <h2>日語挑戰賽</h2>
-                <p>透過多種模式驗收學習成果。包含假名辨識、漢字讀音與譯義挑戰。</p>
+                <h2>日語實力挑戰賽</h2>
+                <p>假名辨識、漢字讀音與譯義測驗，全方位檢測你的學習進度。</p>
             </a>
 
-        </div>
-
-        <div class="footer-deco">
-            <img src="../images/logo.png" alt="Decoration">
-            <div style="margin-top:10px; font-size:0.8rem; color:#94a3b8;">Cool Learning Japanese Lab</div>
         </div>
 
     </main>
+
+    <!-- 頁尾裝飾 -->
+    <div style="text-align:center; padding-bottom:50px; opacity:0.3;">
+        <img src="../images/logo.png" height="30">
+        <div style="font-size:0.7rem; font-weight:bold; margin-top:5px; letter-spacing:1px; color:var(--jp-primary);">COOL LEARNING JAPANESE LAB 2.0</div>
+    </div>
 
 </body>
 </html>

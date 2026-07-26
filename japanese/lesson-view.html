@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日語課程學習 - 酷學習</title>
+    <link rel="stylesheet" href="../styles/style.css">
+    <link rel="stylesheet" href="../styles/header.css">
+    <!-- 引入日文字體 -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --jp-primary: #db2777;
+            --jp-light: #fce7f3;
+            --jp-bg: #fff5f7;
+            --jp-card: #ffffff;
+        }
+
+        body { background-color: var(--jp-bg); padding-bottom: 50px; font-family: 'Noto Sans JP', "Noto Sans TC", sans-serif; }
+
+        /* --- Header 修正：無 LOGO, 統一顏色 --- */
+        header {
+            background-color: var(--jp-light) !important;
+            border: 2px solid var(--jp-primary) !important;
+            justify-content: space-between;
+        }
+        .header-title-area, .back-link { color: var(--jp-primary) !important; font-weight: 900; }
+        .logo { display: flex; align-items: center; gap: 10px; }
+
+        /* --- 隱藏假名功能樣式 --- */
+        body.hide-furigana rt { display: none; }
+        body.hide-furigana ruby { ruby-position: over; }
+
+        /* --- 功能標籤列 --- */
+        .lesson-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin: 20px auto;
+            max-width: 600px;
+            background: #e2e8f0;
+            padding: 4px;
+            border-radius: 12px;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 800;
+            color: #64748b;
+            transition: 0.2s;
+        }
+        .tab-btn.active {
+            background: #fff;
+            color: var(--jp-primary);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+
+        /* --- 單字卡片區 --- */
+        .vocab-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
+        .vocab-card {
+            background: #fff; border-radius: 16px; padding: 18px;
+            display: flex; align-items: center; justify-content: space-between;
+            border: 1.5px solid #f1f3f5; transition: 0.2s;
+        }
+        .vocab-card:hover { border-color: var(--jp-primary); transform: translateY(-2px); }
+        .v-main { display: flex; flex-direction: column; gap: 4px; }
+        .v-jp { font-size: 1.4rem; font-weight: 700; color: #1e293b; }
+        .v-ch { font-size: 0.95rem; color: var(--jp-primary); font-weight: bold; }
+        .v-tag { font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; }
+
+        /* --- 文法解析區 --- */
+        .grammar-item { background: #fff; border-radius: 20px; padding: 25px; margin-bottom: 20px; border: 1.5px solid #f1f3f5; }
+        .g-pattern { font-size: 1.3rem; font-weight: 900; color: var(--jp-primary); margin-bottom: 12px; display: block; border-bottom: 2px dashed var(--jp-light); padding-bottom: 10px; }
+        .g-explain { font-size: 1rem; color: #475569; line-height: 1.7; margin-bottom: 20px; background: var(--jp-bg); padding: 15px; border-radius: 12px; }
+        .g-example-row { margin-bottom: 15px; padding-left: 15px; border-left: 3px solid var(--jp-light); }
+        .ex-jp { font-size: 1.15rem; color: #1e293b; display: block; margin-bottom: 4px; }
+        .ex-tw { font-size: 0.9rem; color: #94a3b8; }
+
+        /* --- 對話練習區 (Chat Style) --- */
+        .dialogue-container { display: flex; flex-direction: column; gap: 20px; padding: 10px; }
+        .bubble { max-width: 85%; padding: 12px 18px; border-radius: 20px; position: relative; cursor: pointer; transition: 0.2s; }
+        .bubble:hover { filter: brightness(0.95); }
+        .bubble.A { align-self: flex-start; background: #fff; border: 1.5px solid #f1f3f5; border-bottom-left-radius: 4px; }
+        .bubble.B { align-self: flex-end; background: var(--jp-light); color: #1e293b; border-bottom-right-radius: 4px; text-align: right; }
+        .b-role { font-size: 0.7rem; font-weight: 900; color: var(--jp-primary); margin-bottom: 5px; display: block; }
+        .b-jp { font-size: 1.1rem; line-height: 1.6; display: block; }
+        .b-tw { font-size: 0.85rem; opacity: 0.6; margin-top: 5px; display: block; }
+
+        .btn-speak {
+            background: var(--jp-bg); color: var(--jp-primary); border: none;
+            width: 38px; height: 38px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
+        }
+
+        @media (max-width: 600px) {
+            .vocab-grid { grid-template-columns: 1fr; }
+            .g-pattern { font-size: 1.1rem; }
+            .bubble { max-width: 90%; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">
+            <a href="index.html" class="back-link">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </a>
+            <span class="header-title-area" id="lesson-title">讀取中...</span>
+        </div>
+        <div class="header-right">
+            <button class="btn-tool-text" id="btn-toggle-ruby" onclick="toggleFurigana()">隱藏假名</button>
+        </div>
+    </header>
+
+    <div class="page-container">
+        <!-- 模式切換 -->
+        <div class="lesson-tabs">
+            <button class="tab-btn active" onclick="switchMode('vocab')">單字</button>
+            <button class="tab-btn" onclick="switchMode('grammar')">文法</button>
+            <button class="tab-btn" onclick="switchMode('dialogue')">會話</button>
+        </div>
+
+        <!-- 內容容器 -->
+        <main id="content-root"></main>
+    </div>
+
+    <script src="../scripts/utils.js"></script>
+    <script>
+        let currentLesson = null;
+        let activeMode = 'vocab';
+
+        async function init() {
+            // 從 URL 獲取課次資訊，例如 ?source=大家說日語&lesson=1
+            const params = new URLSearchParams(window.location.search);
+            const sourceName = params.get('source');
+            const lessonNum = params.get('lesson');
+
+            try {
+                const res = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/japanese.json');
+                const data = await res.json();
+                
+                const source = data.sources.find(s => s.name === sourceName);
+                if (source) {
+                    currentLesson = source.lessons.find(l => l.lesson == lessonNum);
+                }
+
+                if (currentLesson) {
+                    document.getElementById('lesson-title').innerText = `L${currentLesson.lesson} ${currentLesson.title}`;
+                    render();
+                } else {
+                    document.getElementById('content-root').innerHTML = "<p style='text-align:center; padding:50px;'>找不到課程資料，請返回重試。</p>";
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function switchMode(mode) {
+            activeMode = mode;
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.onclick.toString().includes(mode));
+            });
+            render();
+        }
+
+        function toggleFurigana() {
+            const isHidden = document.body.classList.toggle('hide-furigana');
+            document.getElementById('btn-toggle-ruby').innerText = isHidden ? "顯示假名" : "隱藏假名";
+        }
+
+        function render() {
+            const root = document.getElementById('content-root');
+            root.innerHTML = '';
+
+            if (activeMode === 'vocab') {
+                const grid = document.createElement('div');
+                grid.className = 'vocab-grid';
+                currentLesson.vocabulary.forEach(v => {
+                    const card = document.createElement('div');
+                    card.className = 'vocab-card';
+                    card.onclick = () => speak(v.kana, 'ja-JP');
+                    
+                    const rubyHtml = (v.kanji !== v.kana) ? `<ruby>${v.kanji}<rt>${v.kana}</rt></ruby>` : v.kanji;
+
+                    card.innerHTML = `
+                        <div class="v-main">
+                            <div class="v-tag">${v.pos || '名詞'}</div>
+                            <div class="v-jp">${rubyHtml}</div>
+                            <div class="v-ch">${v.chinese}</div>
+                        </div>
+                        <button class="btn-speak">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+                        </button>
+                    `;
+                    grid.appendChild(card);
+                });
+                root.appendChild(grid);
+
+            } else if (activeMode === 'grammar') {
+                const list = document.createElement('div');
+                (currentLesson.grammar || []).forEach(g => {
+                    const item = document.createElement('div');
+                    item.className = 'grammar-item';
+                    let examplesHtml = (g.examples || []).map(ex => `
+                        <div class="g-example-row" onclick="speak('${stripMarkdown(ex.jp)}', 'ja-JP')">
+                            <span class="ex-jp">${parseMarkdown(ex.jp)}</span>
+                            <span class="ex-tw">${ex.tw}</span>
+                        </div>
+                    `).join('');
+
+                    item.innerHTML = `
+                        <span class="g-pattern">${g.pattern}</span>
+                        <div class="g-explain">${g.explanation}</div>
+                        <div class="g-examples">${examplesHtml}</div>
+                    `;
+                    list.appendChild(item);
+                });
+                root.appendChild(list);
+
+            } else if (activeMode === 'dialogue') {
+                const container = document.createElement('div');
+                container.className = 'dialogue-container';
+                (currentLesson.conversation || []).forEach(line => {
+                    const bubble = document.createElement('div');
+                    bubble.className = `bubble ${line.role}`;
+                    bubble.onclick = () => speak(stripMarkdown(line.jp), 'ja-JP');
+                    bubble.innerHTML = `
+                        <span class="b-role">角色 ${line.role}</span>
+                        <span class="b-jp">${parseMarkdown(line.jp)}</span>
+                        <span class="b-tw">${line.tw}</span>
+                    `;
+                    container.appendChild(bubble);
+                });
+                root.appendChild(container);
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 /**
- * 酷學習 - 全域身分驗證輔助指令碼 (scripts/auth-helper.js)
- * 處理全站登入狀態監聽、頁首動態渲染與頁面路由保護
+ * 酷學習 - 全域身分驗證與資料同步輔助 (scripts/auth-helper.js)
+ * 處理：登入監聽、頁首頭像渲染、頁面保護、以及「下載清單」雲端同步。
  */
 
 (function() {
@@ -12,7 +12,7 @@
 
     const supabase = window.supabaseClient;
 
-    // 計算相對於根目錄的定位首碼，防止子資料夾連結失效
+    // 計算相對路徑首碼
     function getRootPrefix() {
         const path = window.location.pathname;
         const subfolders = ['/tools/', '/english/', '/chinese/', '/japanese/', '/chess/', '/science/', '/admin/', '/auth/'];
@@ -22,112 +22,90 @@
         return './';
     }
 
-    // 動態注入頭像與響應式隱藏文字的 CSS 樣式 (僅在首頁有作用)
+    // 動態注入頭像樣式
     function injectStyles() {
         if (document.getElementById('auth-helper-styles')) return;
         const style = document.createElement('style');
         style.id = 'auth-helper-styles';
         style.textContent = `
             .header-user-badge {
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                color: var(--primary, #0b76d1);
-                font-weight: bold;
-                font-size: 0.95rem;
-                padding: 4px 10px;
-                border-radius: 20px;
+                display: flex; align-items: center; gap: 8px;
+                color: var(--primary, #0b76d1); font-weight: bold;
+                font-size: 0.95rem; padding: 4px 10px; border-radius: 20px;
                 transition: background 0.2s, transform 0.1s;
             }
-            .header-user-badge:hover {
-                background: var(--primary-light, #e3f2fd);
-                transform: translateY(-1px);
-            }
+            .header-user-badge:hover { background: var(--primary-light, #e3f2fd); transform: translateY(-1px); }
             .header-avatar {
-                width: 32px;
-                height: 32px;
-                border-radius: 50%;
-                object-fit: cover;
-                border: 2px solid var(--primary-light, #e3f2fd);
-                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                background: #f1f5f9;
+                width: 32px; height: 32px; border-radius: 50%;
+                object-fit: cover; border: 2px solid var(--primary-light, #e3f2fd);
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1); background: #f1f5f9;
             }
-            @media (max-width: 500px) {
-                .header-username {
-                    display: none !important;
-                }
-            }
+            @media (max-width: 500px) { .header-username { display: none !important; } }
         `;
         document.head.appendChild(style);
     }
 
     const AuthHelper = {
-        // 取得根目錄路徑
         rootPrefix: getRootPrefix(),
 
-        // 判斷當前頁面是否需要強制登入身分驗證 (路由保護機制)
+        // 需要登入才能存取的頁面
         isPageProtected: function() {
             const path = window.location.pathname;
-            const protectedPages = ['profile.html', 'notebook.html', 'admin-editor', 'chinese-editor'];
+            const protectedPages = ['profile.html', 'notebook.html', 'download.html'];
             return protectedPages.some(page => path.includes(page));
         },
 
-        // 強制保護頁面 (手動呼叫)
-        protectPage: async function() {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) {
-                window.location.href = this.rootPrefix + 'auth/login.html';
+        /**
+         * 核心功能：同步雲端下載清單到本地
+         * 確保使用者換裝置後，選課頁面依然能看到已下載的課程
+         */
+        syncDownloadedList: async function(user) {
+            if (!user) return;
+            try {
+                const { data, error } = await supabase
+                    .from('user_progress')
+                    .select('english_downloaded_list, chinese_downloaded_list')
+                    .eq('user_id', user.id)
+                    .single();
+
+                if (error) throw error;
+
+                if (data) {
+                    // 同步到 LocalStorage 供各科目 Materials 頁面過濾使用
+                    if (data.english_downloaded_list) {
+                        localStorage.setItem('english_downloads', JSON.stringify(data.english_downloaded_list));
+                    }
+                    if (data.chinese_downloaded_list) {
+                        localStorage.setItem('chinese_downloads', JSON.stringify(data.chinese_downloaded_list));
+                    }
+                    console.log("☁️ 雲端下載清單同步完成");
+                }
+            } catch (e) {
+                console.warn("無法獲取雲端下載資料：", e);
             }
         },
 
-        // 登出帳號並清理 Session
         logout: async function() {
-            const { error } = await supabase.auth.signOut();
-            if (error) {
-                console.error("登出發生錯誤:", error);
-            }
+            await supabase.auth.signOut();
             sessionStorage.removeItem('global_user_logged_in');
             window.location.href = this.rootPrefix + 'auth/login.html';
         },
 
-        // 動態更新全站共用 Header 的右側區塊 (已限制僅限首頁修改)
+        /** 更新 Header (僅在首頁執行) */
         updateHeader: async function(user) {
             const path = window.location.pathname;
-            
-            // 核心安全檢驗：判斷當前是否在首頁 (根目錄 / 或 index.html)
-            const isIndexPage = path.endsWith('/') || 
-                                path.endsWith('/index.html') || 
-                                (!path.includes('.html') && 
-                                 !path.includes('/tools/') && 
-                                 !path.includes('/english/') && 
-                                 !path.includes('/chinese/') && 
-                                 !path.includes('/japanese/') && 
-                                 !path.includes('/chess/') && 
-                                 !path.includes('/science/') && 
-                                 !path.includes('/admin/') && 
-                                 !path.includes('/auth/'));
+            const isIndexPage = path.endsWith('/') || path.endsWith('/index.html') || (!path.includes('.html') && path.split('/').length <= 2);
 
-            // 如果不是首頁，絕對不要修改 .header-right，百分之百保留原頁面設計的所有按鈕！
-            if (!isIndexPage) {
-                return;
-            }
+            if (!isIndexPage) return;
 
             const headerRight = document.querySelector('.header-right');
             if (!headerRight) return;
 
             if (user) {
                 try {
-                    // 已登入首頁：讀取使用者資料並在首頁顯示頭像
-                    const { data: profile, error } = await supabase
-                        .from('profiles')
-                        .select('username, avatar_url')
-                        .eq('id', user.id)
-                        .single();
-
-                    if (error) throw error;
-
-                    const nickname = (profile && profile.username) ? profile.username : (user.email.split('@')[0]);
-                    const avatarUrl = (profile && profile.avatar_url) ? profile.avatar_url : `https://api.dicebear.com/7.x/bottts/svg?seed=${user.id}`;
+                    const { data: profile } = await supabase.from('profiles').select('username, avatar_url').eq('id', user.id).single();
+                    const nickname = profile?.username || user.email.split('@')[0];
+                    const avatarUrl = profile?.avatar_url || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.id}`;
                     
                     headerRight.innerHTML = `
                         <a href="${this.rootPrefix}profile.html" class="header-user-badge" style="text-decoration:none;">
@@ -136,49 +114,42 @@
                         </a>
                     `;
                 } catch (e) {
-                    const fallbackName = user.email.split('@')[0];
-                    const fallbackAvatar = `https://api.api.dicebear.com/7.x/bottts/svg?seed=${user.id}`;
-                    headerRight.innerHTML = `
-                        <a href="${this.rootPrefix}profile.html" class="header-user-badge" style="text-decoration:none;">
-                            <img src="${fallbackAvatar}" class="header-avatar" alt="頭像" />
-                            <span class="header-username">${fallbackName}</span>
-                        </a>
-                    `;
+                    headerRight.innerHTML = `<a href="${this.rootPrefix}profile.html" class="btn-tool-text">個人檔案</a>`;
                 }
             } else {
-                // 未登入首頁：顯示登入/註冊按鈕
-                headerRight.innerHTML = `
-                    <a href="${this.rootPrefix}auth/login.html" class="btn-tool-text" style="text-decoration:none;">登入 / 註冊</a>
-                `;
+                headerRight.innerHTML = `<a href="${this.rootPrefix}auth/login.html" class="btn-tool-text">登入 / 註冊</a>`;
             }
         },
 
-        // 初始化驗證
         init: async function() {
-            // 注入 RWD 樣式
             injectStyles();
-
             const { data: { user } } = await supabase.auth.getUser();
             
-            // 更新 Header UI (如果是首頁會自動渲染)
             this.updateHeader(user);
 
-            // 如果是保護頁面且未登入，立刻重導向至登入頁
+            if (user) {
+                await this.syncDownloadedList(user);
+            }
+
             if (this.isPageProtected() && !user) {
                 window.location.href = this.rootPrefix + 'auth/login.html';
             }
         }
     };
 
-    // 監聽 Supabase 全域身分驗證事件 (自動同步首頁 UI)
-    supabase.auth.onAuthStateChange((event, session) => {
+    // 監聽狀態改變
+    supabase.auth.onAuthStateChange(async (event, session) => {
         const user = session ? session.user : null;
         if (event === 'SIGNED_IN') {
             sessionStorage.setItem('global_user_logged_in', 'true');
             AuthHelper.updateHeader(user);
+            await AuthHelper.syncDownloadedList(user);
         } else if (event === 'SIGNED_OUT') {
             sessionStorage.removeItem('global_user_logged_in');
             AuthHelper.updateHeader(null);
+            // 登出時清空本地下載紀錄 (選擇性，若希望訪客也能看則不刪除)
+            // localStorage.removeItem('english_downloads');
+            // localStorage.removeItem('chinese_downloads');
             if (AuthHelper.isPageProtected()) {
                 window.location.href = AuthHelper.rootPrefix + 'auth/login.html';
             }
@@ -186,9 +157,5 @@
     });
 
     window.AuthHelper = AuthHelper;
-
-    document.addEventListener('DOMContentLoaded', () => {
-        AuthHelper.init();
-    });
-
+    document.addEventListener('DOMContentLoaded', () => AuthHelper.init());
 })();

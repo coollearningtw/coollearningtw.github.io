@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>單字詳情 - 酷學習</title>
+    <link rel="stylesheet" href="../styles/style.css">
+    <link rel="stylesheet" href="../styles/header.css">
+    <!-- 引入日文字體 -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --jp-primary: #db2777;
+            --jp-light: #fce7f3;
+            --jp-bg: #fff5f7;
+            --jp-card: #ffffff;
+        }
+
+        body { background-color: var(--jp-bg); font-family: 'Noto Sans JP', "Noto Sans TC", sans-serif; padding-bottom: 80px; }
+
+        /* --- Header 修正：無 LOGO, 統一顏色 --- */
+        header {
+            background-color: var(--jp-light) !important;
+            border: 2px solid var(--jp-primary) !important;
+            justify-content: space-between;
+        }
+        .header-title-area, .back-link { color: var(--jp-primary) !important; font-weight: 900; }
+
+        /* --- 隱藏假名功能樣式 --- */
+        body.hide-furigana rt { display: none; }
+
+        .detail-container { max-width: 800px; margin: 30px auto; padding: 0 20px; }
+
+        /* 單字主卡片 */
+        .detail-card {
+            background: #fff;
+            border-radius: 30px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(219, 39, 119, 0.05);
+            border: 1px solid #fbcfe8;
+            position: relative;
+        }
+
+        /* 導覽控制 */
+        .nav-toolbar {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 25px;
+        }
+        .nav-btn {
+            background: #fff;
+            border: 1.5px solid #e2e8f0;
+            padding: 8px 16px;
+            border-radius: 12px;
+            color: #64748b;
+            font-weight: 800;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .nav-btn:hover:not(:disabled) { border-color: var(--jp-primary); color: var(--jp-primary); }
+        .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        /* 單字標頭區 */
+        .word-hero { border-bottom: 2px solid var(--jp-bg); padding-bottom: 30px; margin-bottom: 30px; }
+        .w-meta { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
+        .w-level-badge { background: var(--jp-primary); color: #fff; padding: 3px 12px; border-radius: 6px; font-size: 0.8rem; font-weight: 900; }
+        .w-pos-label { color: #94a3b8; font-size: 0.9rem; font-weight: bold; }
+
+        .w-main-row { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 20px; }
+        .w-kanji { font-size: 3.5rem; font-weight: 900; color: #1e293b; margin: 0; line-height: 1; }
+        .w-kana { font-size: 1.2rem; color: #64748b; font-weight: 500; display: block; margin-top: 10px; }
+        
+        .w-action-group { display: flex; align-items: center; gap: 15px; }
+        .btn-main-speak {
+            width: 60px; height: 60px; border-radius: 50%; background: var(--jp-light);
+            color: var(--jp-primary); border: none; cursor: pointer; transition: 0.3s;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .btn-main-speak:hover { background: var(--jp-primary); color: #fff; transform: scale(1.1); }
+        .speed-select { padding: 5px; border-radius: 8px; border: 1.5px solid #fbcfe8; font-weight: bold; color: var(--jp-primary); outline: none; }
+
+        /* 內容區塊 */
+        .section-title { font-size: 1.1rem; font-weight: 900; color: var(--jp-primary); margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+        .section-title::before { content: ""; width: 4px; height: 1.1rem; background: var(--jp-primary); border-radius: 2px; }
+
+        .meaning-box { font-size: 1.8rem; font-weight: 800; color: #1e293b; margin-bottom: 25px; }
+        .desc-content { font-size: 1.05rem; line-height: 1.8; color: #475569; background: var(--jp-bg); padding: 20px; border-radius: 15px; margin-bottom: 30px; }
+
+        /* 同反義詞 */
+        .relation-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px; }
+        .rel-box { background: #fff; border: 1px solid #f1f3f5; padding: 15px; border-radius: 12px; }
+        .rel-label { font-size: 0.75rem; font-weight: 900; color: #94a3b8; display: block; margin-bottom: 8px; text-transform: uppercase; }
+        .rel-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+        .rel-tag { font-size: 0.95rem; font-weight: bold; color: #1e293b; text-decoration: none; padding: 2px 8px; background: #f1f5f9; border-radius: 6px; }
+        .rel-tag:hover { background: var(--jp-light); color: var(--jp-primary); }
+
+        /* 例句列表 */
+        .example-item {
+            background: #fafafa; border-radius: 15px; padding: 20px; margin-bottom: 12px;
+            border-left: 5px solid #e2e8f0; transition: 0.2s; cursor: pointer;
+        }
+        .example-item:hover { border-left-color: var(--jp-primary); background: #fdf2f8; }
+        .ex-jp { font-size: 1.2rem; font-weight: 500; color: #1e293b; display: block; margin-bottom: 8px; }
+        .ex-tw { font-size: 0.95rem; color: #94a3b8; }
+
+        @media (max-width: 600px) {
+            .detail-card { padding: 25px 20px; border-radius: 20px; }
+            .w-kanji { font-size: 2.5rem; }
+            .meaning-box { font-size: 1.4rem; }
+            .relation-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="vocab-list.html" class="back-link">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </a>
+        <span class="header-title-area">單字詳解辭典</span>
+        <div class="header-right">
+            <button class="btn-tool-text" id="btn-toggle-ruby" onclick="toggleGlobalFurigana()">隱藏假名</button>
+        </div>
+    </header>
+
+    <main class="detail-container" id="detail-root">
+        <!-- 由 JS 渲染 -->
+    </main>
+
+    <script src="../scripts/utils.js"></script>
+    <script>
+        let currentWordData = null;
+        let levelList = [];
+        let currentIdx = -1;
+        let currentLevel = 'N5';
+        let currentSpeed = 0.9;
+
+        async function init() {
+            const params = new URLSearchParams(window.location.search);
+            const targetWord = params.get('word');
+            currentLevel = params.get('level') || 'N5';
+
+            try {
+                const res = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/japanese-vocab.json');
+                const json = await res.json();
+                
+                // 1. 取得該等級的所有單字，用於導覽
+                const levelObj = json.vocabulary.find(l => l.level === currentLevel);
+                if (!levelObj) throw new Error("Level not found");
+                
+                levelList = levelObj.data;
+                currentIdx = levelList.findIndex(w => w.word === targetWord);
+                currentWordData = levelList[currentIdx];
+
+                if (currentWordData) {
+                    render();
+                } else {
+                    document.getElementById('detail-root').innerHTML = "單字不存在。";
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function render() {
+            const root = document.getElementById('detail-root');
+            const w = currentWordData;
+
+            // 處理關係詞連結
+            const makeRelHtml = (list) => {
+                if (!list || list.length === 0) return `<span style="color:#cbd5e1; font-size:0.8rem;">(無)</span>`;
+                return list.map(item => `<a href="?word=${encodeURIComponent(item)}&level=${currentLevel}" class="rel-tag">${item}</a>`).join('');
+            };
+
+            root.innerHTML = `
+                <div class="nav-toolbar">
+                    <button class="nav-btn" ${currentIdx <= 0 ? 'disabled' : ''} onclick="navigate(-1)">
+                        ❮ 上一個單字
+                    </button>
+                    <button class="nav-btn" ${currentIdx >= levelList.length - 1 ? 'disabled' : ''} onclick="navigate(1)">
+                        下一個單字 ❯
+                    </button>
+                </div>
+
+                <div class="detail-card">
+                    <div class="word-hero">
+                        <div class="w-meta">
+                            <span class="w-level-badge">${currentLevel}</span>
+                            <span class="w-pos-label">${w.pos}</span>
+                        </div>
+                        <div class="w-main-row">
+                            <div>
+                                <h1 class="w-kanji">${w.word}</h1>
+                                <span class="w-kana">${w.kana}</span>
+                            </div>
+                            <div class="w-action-group">
+                                <select class="speed-select" onchange="currentSpeed = parseFloat(this.value)">
+                                    <option value="0.7">0.7x</option>
+                                    <option value="0.9" selected>0.9x</option>
+                                    <option value="1.0">1.0x</option>
+                                </select>
+                                <button class="btn-main-speak" onclick="speak('${w.kana}', 'ja-JP', currentSpeed)">
+                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section-title">意思與用法</div>
+                    <div class="meaning-box">${w.chinese}</div>
+                    <div class="desc-content">${parseMarkdown(w.desc || '暫無額外用法說明。')}</div>
+
+                    <div class="relation-grid">
+                        <div class="rel-box">
+                            <span class="rel-label">同義詞 Synonyms</span>
+                            <div class="rel-tags">${makeRelHtml(w.syn)}</div>
+                        </div>
+                        <div class="rel-box">
+                            <span class="rel-label">反義詞 Antonyms</span>
+                            <div class="rel-tags">${makeRelHtml(w.ant)}</div>
+                        </div>
+                    </div>
+
+                    <div class="section-title">情境例句</div>
+                    <div class="examples-list">
+                        ${w.sentences.map(ex => `
+                            <div class="example-item" onclick="speak('${stripMarkdown(ex.jp)}', 'ja-JP', currentSpeed)">
+                                <span class="ex-jp">${parseMarkdown(ex.jp)}</span>
+                                <span class="ex-tw">${ex.tw}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function navigate(dir) {
+            const nextWord = levelList[currentIdx + dir];
+            if (nextWord) {
+                // 更新 URL 但不重新整理頁面 (如果想重新整理可以用 location.href)
+                window.location.href = `?word=${encodeURIComponent(nextWord.word)}&level=${currentLevel}`;
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

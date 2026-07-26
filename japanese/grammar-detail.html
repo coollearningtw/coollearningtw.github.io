@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文法詳解 - 酷學習</title>
+    <link rel="stylesheet" href="../styles/style.css">
+    <link rel="stylesheet" href="../styles/header.css">
+    <!-- 引入日文字體 -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --jp-primary: #db2777;
+            --jp-light: #fce7f3;
+            --jp-bg: #fff5f7;
+            --jp-card: #ffffff;
+            --tip-bg: #fffbeb;
+            --tip-text: #92400e;
+            --tip-border: #fde68a;
+        }
+
+        body { background-color: var(--jp-bg); font-family: 'Noto Sans JP', "Noto Sans TC", sans-serif; padding-bottom: 80px; }
+
+        /* --- Header 修正：無 LOGO, 統一顏色 --- */
+        header {
+            background-color: var(--jp-light) !important;
+            border: 2px solid var(--jp-primary) !important;
+            justify-content: space-between;
+        }
+        .header-title-area, .back-link { color: var(--jp-primary) !important; font-weight: 900; }
+
+        /* --- 隱藏假名功能樣式 --- */
+        body.hide-furigana rt { display: none; }
+
+        .detail-container { max-width: 800px; margin: 30px auto; padding: 0 20px; }
+
+        /* 文法詳情主卡片 */
+        .grammar-detail-card {
+            background: #fff;
+            border-radius: 30px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(219, 39, 119, 0.05);
+            border: 1px solid #fbcfe8;
+            position: relative;
+        }
+
+        /* 導覽按鈕 */
+        .nav-toolbar {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 25px;
+        }
+        .nav-btn {
+            background: #fff;
+            border: 1.5px solid #e2e8f0;
+            padding: 8px 18px;
+            border-radius: 12px;
+            color: #64748b;
+            font-weight: 800;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 0.9rem;
+        }
+        .nav-btn:hover:not(:disabled) { border-color: var(--jp-primary); color: var(--jp-primary); }
+        .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        /* 文法標頭區 */
+        .g-hero { border-bottom: 2px solid var(--jp-bg); padding-bottom: 30px; margin-bottom: 30px; }
+        .g-meta { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
+        .g-level-badge { background: var(--jp-primary); color: #fff; padding: 3px 12px; border-radius: 6px; font-size: 0.8rem; font-weight: 900; }
+        
+        .g-pattern-title { font-size: 2.8rem; font-weight: 900; color: #1e293b; margin: 0; line-height: 1.2; }
+        .g-meaning-text { font-size: 1.4rem; color: var(--jp-primary); font-weight: 800; margin-top: 10px; display: block; }
+
+        /* 接續公式卡片 */
+        .formula-section {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            padding: 20px 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        .formula-label { 
+            position: absolute; top: -12px; left: 20px; background: #fff; 
+            padding: 0 10px; font-size: 0.75rem; font-weight: 900; color: #94a3b8; 
+            border: 1.5px solid #e2e8f0; border-radius: 50px;
+        }
+        .formula-content { font-family: "Courier New", Courier, monospace; font-size: 1.15rem; font-weight: 800; color: #334155; word-break: break-all; }
+
+        /* 用法解析 */
+        .section-label { font-size: 1.1rem; font-weight: 900; color: var(--jp-primary); margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+        .section-label::before { content: ""; width: 4px; height: 1.1rem; background: var(--jp-primary); border-radius: 2px; }
+
+        .explanation-text { font-size: 1.1rem; line-height: 1.8; color: #475569; margin-bottom: 30px; text-align: justify; }
+
+        /* 注意點 Tip Box */
+        .tips-box {
+            background: var(--tip-bg);
+            border: 1px solid var(--tip-border);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 35px;
+            color: var(--tip-text);
+        }
+        .tips-title { font-weight: 900; font-size: 0.9rem; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+
+        /* 例句區 */
+        .example-item {
+            background: #fafafa; border-radius: 15px; padding: 20px; margin-bottom: 12px;
+            border-left: 5px solid #e2e8f0; transition: 0.2s; cursor: pointer;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .example-item:hover { border-left-color: var(--jp-primary); background: #fdf2f8; }
+        .ex-text-group { flex: 1; }
+        .ex-jp { font-size: 1.25rem; font-weight: 500; color: #1e293b; display: block; margin-bottom: 8px; }
+        .ex-tw { font-size: 1rem; color: #94a3b8; }
+        .btn-ex-speak { background: none; border: none; color: #cbd5e1; cursor: pointer; }
+        .example-item:hover .btn-ex-speak { color: var(--jp-primary); }
+
+        /* 底部控制列 */
+        .bottom-toolbar {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px);
+            border-top: 1px solid #fbcfe8; padding: 12px 0; z-index: 1000;
+        }
+        .toolbar-content { max-width: 800px; margin: 0 auto; display: flex; justify-content: center; align-items: center; gap: 20px; }
+        .speed-ctrl { display: flex; align-items: center; gap: 8px; font-weight: bold; color: var(--jp-primary); font-size: 0.9rem; }
+
+        @media (max-width: 600px) {
+            .grammar-detail-card { padding: 30px 20px; border-radius: 20px; }
+            .g-pattern-title { font-size: 1.8rem; }
+            .g-meaning-text { font-size: 1.1rem; }
+            .formula-content { font-size: 1rem; }
+            .ex-jp { font-size: 1.1rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="grammar-list.html" class="back-link">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </a>
+        <span class="header-title-area">文法解析大百科</span>
+        <div class="header-right">
+            <button class="btn-tool-text" id="btn-toggle-ruby" onclick="toggleGlobalFurigana()">隱藏假名</button>
+        </div>
+    </header>
+
+    <main class="detail-container" id="detail-root">
+        <!-- 由 JS 渲染 -->
+    </main>
+
+    <div class="bottom-toolbar">
+        <div class="toolbar-content">
+            <div class="speed-ctrl">
+                <span>朗讀語速</span>
+                <select id="global-speed" style="padding:4px 8px; border-radius:8px; border:1px solid #fbcfe8; font-weight:bold; color:var(--jp-primary);">
+                    <option value="0.7">0.7x (慢)</option>
+                    <option value="0.85" selected>0.85x (薦)</option>
+                    <option value="1.0">1.0x (快)</option>
+                </select>
+            </div>
+            <div style="font-size: 0.75rem; color:#94a3b8; font-weight:bold;">※ 點擊例句聽取日本老師發音</div>
+        </div>
+    </div>
+
+    <script src="../scripts/utils.js"></script>
+    <script>
+        let currentLevelList = [];
+        let currentIdx = -1;
+        let currentLevel = 'N5';
+
+        async function init() {
+            const params = new URLSearchParams(window.location.search);
+            const targetTitle = params.get('title');
+            currentLevel = params.get('level') || 'N5';
+
+            try {
+                const res = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/japanese-grammar.json');
+                const json = await res.json();
+                
+                // 1. 取得該等級的所有文法，用於導覽
+                const levelData = json.grammar.find(l => l.level === currentLevel);
+                if (!levelData) throw new Error("Level not found");
+                
+                currentLevelList = levelData.data;
+                currentIdx = currentLevelList.findIndex(g => g.title === targetTitle);
+                
+                if (currentIdx !== -1) {
+                    render();
+                } else {
+                    document.getElementById('detail-root').innerHTML = "<div class='empty-state'>文法點不存在。</div>";
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function render() {
+            const root = document.getElementById('detail-root');
+            const g = currentLevelList[currentIdx];
+
+            root.innerHTML = `
+                <div class="nav-toolbar">
+                    <button class="nav-btn" ${currentIdx <= 0 ? 'disabled' : ''} onclick="navigate(-1)">
+                        ❮ 上一條文法
+                    </button>
+                    <button class="nav-btn" ${currentIdx >= currentLevelList.length - 1 ? 'disabled' : ''} onclick="navigate(1)">
+                        下一條文法 ❯
+                    </button>
+                </div>
+
+                <div class="grammar-detail-card">
+                    <div class="g-hero">
+                        <div class="g-meta">
+                            <span class="g-level-badge">${currentLevel}</span>
+                        </div>
+                        <h1 class="g-pattern-title">${escapeHtml(g.title)}</h1>
+                        <span class="g-meaning-text">${escapeHtml(g.meaning)}</span>
+                    </div>
+
+                    <div class="formula-section">
+                        <span class="formula-label">接續公式 Connection</span>
+                        <div class="formula-content">${escapeHtml(g.formula)}</div>
+                    </div>
+
+                    <div class="section-label">用法解析 Explanation</div>
+                    <div class="explanation-text">${parseMarkdown(g.explanation)}</div>
+
+                    ${g.tips ? `
+                        <div class="tips-box">
+                            <div class="tips-title">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                                學習要點與提示
+                            </div>
+                            <div style="font-size: 0.95rem; line-height:1.6;">${parseMarkdown(g.tips)}</div>
+                        </div>
+                    ` : ''}
+
+                    <div class="section-label">互動例句 Examples</div>
+                    <div class="examples-list">
+                        ${g.examples.map(ex => `
+                            <div class="example-item" onclick="playExample('${stripMarkdown(ex.jp)}')">
+                                <div class="ex-text-group">
+                                    <span class="ex-jp">${parseMarkdown(ex.jp)}</span>
+                                    <span class="ex-tw">${escapeHtml(ex.tw)}</span>
+                                </div>
+                                <button class="btn-ex-speak">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+                                </button>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function playExample(text) {
+            const speed = parseFloat(document.getElementById('global-speed').value);
+            speak(text, 'ja-JP', speed);
+        }
+
+        function navigate(dir) {
+            const nextG = currentLevelList[currentIdx + dir];
+            if (nextG) {
+                window.location.href = `?title=${encodeURIComponent(nextG.title)}&level=${currentLevel}`;
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

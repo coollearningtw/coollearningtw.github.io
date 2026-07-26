@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>單字探索圖鑑 - 酷學習</title>
+    <link rel="stylesheet" href="../styles/style.css">
+    <link rel="stylesheet" href="../styles/header.css">
+    <!-- 引入日文字體 -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --jp-primary: #db2777;
+            --jp-light: #fce7f3;
+            --jp-bg: #fff5f7;
+            --jp-card: #ffffff;
+        }
+
+        body { background-color: var(--jp-bg); font-family: 'Noto Sans JP', "Noto Sans TC", sans-serif; }
+
+        /* --- Header 修正：無 LOGO, 統一顏色 --- */
+        header {
+            background-color: var(--jp-light) !important;
+            border: 2px solid var(--jp-primary) !important;
+            justify-content: space-between;
+        }
+        .header-title-area, .back-link { color: var(--jp-primary) !important; font-weight: 900; }
+
+        /* --- 隱藏假名功能樣式 --- */
+        body.hide-furigana rt { display: none; }
+
+        /* --- 頂部固定控制區 --- */
+        .control-sticky {
+            position: sticky;
+            top: 85px;
+            z-index: 1000;
+            background: var(--jp-bg);
+            padding: 15px 0;
+            border-bottom: 1px solid #fbcfe8;
+        }
+
+        .filter-row {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* 等級切換標籤 */
+        .level-tabs {
+            display: flex;
+            background: #e2e8f0;
+            padding: 4px;
+            border-radius: 14px;
+            gap: 4px;
+        }
+        .level-btn {
+            flex: 1;
+            border: none;
+            padding: 10px 0;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 800;
+            cursor: pointer;
+            color: #64748b;
+            transition: 0.2s;
+            background: transparent;
+        }
+        .level-btn.active {
+            background: #fff;
+            color: var(--jp-primary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        /* 搜尋框 */
+        .search-box {
+            display: flex;
+            background: #fff;
+            border: 2px solid #fbcfe8;
+            border-radius: 12px;
+            padding: 5px 18px;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(219, 39, 119, 0.03);
+        }
+        .search-box input {
+            flex: 1;
+            border: none;
+            padding: 12px;
+            font-size: 1rem;
+            outline: none;
+        }
+        .search-box svg { color: var(--jp-primary); }
+
+        /* --- 單字列表佈局 --- */
+        .vocab-container {
+            max-width: 900px;
+            margin: 20px auto 60px;
+            padding: 0 20px;
+        }
+
+        .word-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .word-card {
+            background: #fff;
+            padding: 20px 25px;
+            border-radius: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            text-decoration: none;
+            color: inherit;
+            border: 1.5px solid #f1f3f5;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+        }
+        .word-card:hover {
+            border-color: var(--jp-primary);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(219, 39, 119, 0.08);
+        }
+
+        .w-left { display: flex; align-items: center; gap: 15px; }
+        .w-badge {
+            font-size: 0.7rem;
+            font-weight: 900;
+            background: var(--jp-light);
+            color: var(--jp-primary);
+            padding: 4px 10px;
+            border-radius: 6px;
+            text-transform: uppercase;
+        }
+        .w-text { font-size: 1.5rem; font-weight: 800; color: #1e293b; line-height: 1.2; }
+        .w-pos { font-size: 0.8rem; color: #94a3b8; font-weight: bold; }
+        
+        .w-right { text-align: right; }
+        .w-ch { color: #475569; font-size: 1.1rem; font-weight: 600; margin-bottom: 2px; }
+        .w-romaji { font-size: 0.75rem; color: #cbd5e1; font-weight: bold; font-family: monospace; }
+
+        /* 空狀態 */
+        .empty-state {
+            text-align: center;
+            padding: 100px 20px;
+            color: #94a3b8;
+            font-weight: bold;
+        }
+
+        @media (max-width: 600px) {
+            .vocab-container { padding: 0 15px; }
+            .word-card { padding: 18px; flex-direction: column; align-items: flex-start; gap: 10px; }
+            .w-right { text-align: left; }
+            .w-text { font-size: 1.3rem; }
+            .control-sticky { top: 75px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="index.html" class="back-link">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </a>
+        <span class="header-title-area">單字探索圖鑑</span>
+        <div class="header-right">
+            <button class="btn-tool-text" id="btn-toggle-ruby" onclick="toggleGlobalFurigana()">隱藏假名</button>
+        </div>
+    </header>
+
+    <div class="control-sticky">
+        <div class="filter-row">
+            <!-- 等級切換 -->
+            <div class="level-tabs">
+                <button class="level-btn active" onclick="switchLevel('N5')">N5</button>
+                <button class="level-btn" onclick="switchLevel('N4')">N4</button>
+                <button class="level-btn" onclick="switchLevel('N3')">N3</button>
+                <button class="level-btn" onclick="switchLevel('N2')">N2</button>
+                <button class="level-btn" onclick="switchLevel('N1')">N1</button>
+            </div>
+            <!-- 搜尋框 -->
+            <div class="search-box">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" id="vocab-search" placeholder="搜尋漢字、假名、羅馬字或中文..." oninput="handleSearch()">
+            </div>
+        </div>
+    </div>
+
+    <main class="vocab-container">
+        <div id="word-list-root" class="word-list">
+            <!-- 由 JS 渲染 -->
+        </div>
+    </main>
+
+    <script src="../scripts/utils.js"></script>
+    <script>
+        let allLevelsData = [];
+        let currentLevel = 'N5';
+        let currentSearch = '';
+
+        async function init() {
+            try {
+                // 載入我們那份 500 個單字的 JSON
+                const res = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/japanese-vocab.json');
+                const json = await res.json();
+                allLevelsData = json.vocabulary;
+                render();
+            } catch (e) {
+                console.error("載入失敗:", e);
+                document.getElementById('word-list-root').innerHTML = "<div class='empty-state'>資料載入失敗，請確認網路連線。</div>";
+            }
+        }
+
+        function switchLevel(lv) {
+            currentLevel = lv;
+            document.querySelectorAll('.level-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.innerText === lv);
+            });
+            render();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function handleSearch() {
+            currentSearch = document.getElementById('vocab-search').value.toLowerCase().trim();
+            render();
+        }
+
+        function render() {
+            const root = document.getElementById('word-list-root');
+            const levelObj = allLevelsData.find(l => l.level === currentLevel);
+            
+            if (!levelObj) return;
+
+            // 過濾資料
+            const filtered = levelObj.data.filter(w => 
+                w.word.toLowerCase().includes(currentSearch) ||
+                w.kana.toLowerCase().includes(currentSearch) ||
+                w.romaji.toLowerCase().includes(currentSearch) ||
+                w.chinese.includes(currentSearch)
+            );
+
+            if (filtered.length === 0) {
+                root.innerHTML = "<div class='empty-state'>找不到相符的單字。</div>";
+                return;
+            }
+
+            // 渲染列表 (不分組)
+            root.innerHTML = filtered.map(w => {
+                // 處理漢字與假名顯示
+                const rubyHtml = (w.word !== w.kana) ? `<ruby>${w.word}<rt>${w.kana}</rt></ruby>` : w.word;
+                
+                return `
+                    <a href="vocab-detail.html?word=${encodeURIComponent(w.word)}&level=${currentLevel}" class="word-card">
+                        <div class="w-left">
+                            <span class="w-badge">${currentLevel}</span>
+                            <div style="display:flex; flex-direction:column; gap:2px;">
+                                <span class="w-pos">${w.pos}</span>
+                                <span class="w-text">${rubyHtml}</span>
+                            </div>
+                        </div>
+                        <div class="w-right">
+                            <div class="w-ch">${w.chinese}</div>
+                            <div class="w-romaji">${w.romaji}</div>
+                        </div>
+                    </a>
+                `;
+            }).join('');
+        }
+
+        init();
+    </script>
+</body>
+</html>

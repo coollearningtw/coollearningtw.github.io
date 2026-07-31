@@ -77,7 +77,7 @@
             const sel = JSON.parse(localStorage.getItem('sel_lessons')||'[]');
             if(!sel.length) { alert('未選課'); location.href='english.html'; return; }
             try {
-                const r = await fetch('test.json'); const d=await r.json();
+                const r = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/english-textbook.json'); const d=await r.json();
                 d.sources.forEach(s=>{ s.lessons.forEach(l=>{
                     if(sel.some(x=>x.source===s.name && x.lesson===l.lesson)) {
                         // store a header item containing both a name and the lesson title

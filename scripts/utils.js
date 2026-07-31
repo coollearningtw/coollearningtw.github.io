@@ -126,7 +126,10 @@ function parseMarkdown(text) {
     // 9. 底線 __text__
     html = html.replace(/__(.*?)__/g, '<span class="md-underline">$1</span>');
 
-    // 10. 換行處理
+    // 10. 程式碼片段 `text`
+    html = html.replace(/`([^`]+?)`/g, '<code class="md-code">$1</code>');
+
+    // 11. 換行處理
     html = html.replace(/\n/g, '<br>');
 
     html = restoreEscapedMarkdown(html, escaped.raw);
@@ -148,7 +151,8 @@ function stripMarkdown(text) {
         .replace(/\*(.*?)\*/g, '$1')
         .replace(/==(.*?)==/g, '$1')
         .replace(/~~(.*?)~~/g, '$1')
-        .replace(/__(.*?)__/g, '$1');
+        .replace(/__(.*?)__/g, '$1')
+        .replace(/`([^`]+?)`/g, '$1');
     return restoreEscapedMarkdown(stripped, escaped.raw);
 }
 

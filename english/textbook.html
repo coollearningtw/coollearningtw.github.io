@@ -19,6 +19,17 @@
         .focus-card { background: #fff; padding: 40px; border-radius: var(--radius); box-shadow: var(--shadow); width: 100%; max-width: 600px; }
         .f-en { font-size: 1.6rem; color: var(--primary); margin-bottom: 20px; font-weight: 700; line-height: 1.4; }
         .f-ch { font-size: 1.2rem; color: #444; line-height: 1.4; }
+        .word-chip { color: var(--primary); font-weight: 700; border-bottom: 1px dashed var(--primary); cursor: pointer; padding: 0 2px; }
+        .word-chip:hover { background: rgba(37, 99, 235, 0.08); }
+        .word-info-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.25); display: none; align-items: center; justify-content: center; padding: 20px; z-index: 2000; }
+        .word-info-overlay.show { display: flex; }
+        .word-info-card { background: #fff; width: min(92vw, 480px); border-radius: var(--radius); box-shadow: var(--shadow); padding: 24px; }
+        .word-info-title { font-size: 1.2rem; font-weight: 700; color: var(--primary); margin-bottom: 10px; }
+        .word-info-body { color: #475569; line-height: 1.7; }
+        .anno-link { color: var(--primary); border-bottom: 1px dashed var(--primary); cursor: pointer; }
+        .lesson-header-box { text-align:center; padding: 8px 0 14px; }
+        .lesson-name { display:block; font-weight:800; font-size:1.2rem; color:#334155; }
+        .lesson-title { display:block; font-weight:700; font-size:1rem; color:#334155; margin-top:6px; }
     </style>
 </head>
 <body>
@@ -40,6 +51,12 @@
 
     <div id="text-container" class="text-list page-container"></div>
     <div id="focus-view" class="focus-overlay"><div class="focus-card"><div class="f-en" id="focus-en"></div><div class="f-ch" id="focus-ch"></div></div></div>
+    <div id="word-info-overlay" class="word-info-overlay" onclick="hideWordInfo()">
+        <div class="word-info-card" onclick="event.stopPropagation()">
+            <div class="word-info-title" id="word-info-title"></div>
+            <div class="word-info-body" id="word-info-body"></div>
+        </div>
+    </div>
 
     <div class="bottom-nav-fixed">
         <div class="bottom-nav-content">
@@ -54,17 +71,34 @@
     <script src="../scripts/utils.js"></script>
     <script>
         let sents=[], idx=0, play=false, slow=false, focus=false;
+        let lessonVocabulary=[];
+        let vocabById = new Map();
         (async()=>{
             const sel = JSON.parse(localStorage.getItem('sel_lessons')||'[]');
             if(!sel.length) { alert('未選課'); location.href='english.html'; return; }
             try {
-                const r = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/english-textbook.json'); const d=await r.json();
+                const r = await fetch('test.json'); const d=await r.json();
                 d.sources.forEach(s=>{ s.lessons.forEach(l=>{
                     if(sel.some(x=>x.source===s.name && x.lesson===l.lesson)) {
-                        sents.push({en:l.title, ch:'標題', isT:true}); sents.push(...l.sentences);
+                        // store a header item containing both a name and the lesson title
+                        sents.push({ isT:true, name: (l.name || ''), title: (l.title || '') });
+                        sents.push(...l.sentences);
+                                if(Array.isArray(l.vocabulary)) {
+                                    lessonVocabulary.push(...l.vocabulary.filter(v=>v && (v.term || v.word || v.id)));
+                                }
                     }
                 })});
+                // build id map for annotated links
+                vocabById.clear();
+                lessonVocabulary.forEach(v=>{ if(v && v.id) vocabById.set(String(v.id), v); });
+                console.log('lessonVocabulary loaded', lessonVocabulary.length, lessonVocabulary.slice(0,5));
+                console.log('vocabById keys', Array.from(vocabById.keys()));
                 render();
+                // debug: show rendered first sentence HTML in console
+                setTimeout(()=>{
+                    const first = document.getElementById('sent-0');
+                    if(first) console.log('sent-0 innerHTML:', first.querySelector('.s-en')?.innerHTML);
+                }, 200);
             } catch(e){console.error(e);}
         })();
         function render() {
@@ -72,10 +106,97 @@
             sents.forEach((s,i)=>{
                 const d=document.createElement('div'); d.className='sent-row'; d.id='sent-'+i;
                 if(s.isT) d.style.textAlign='center';
-                d.onclick=()=>{ stopAll(); idx=i; hl(i); speak(stripMarkdown(s.en)); };
-                d.innerHTML=`<div class="s-en">${parseMarkdown(s.en)}</div><div class="s-ch">${parseMarkdown(s.ch)}</div>`;
+                d.onclick=(e)=>{
+                    const chip = e.target.closest('.word-chip');
+                    if(chip){
+                        e.stopPropagation();
+                        showWordInfo(chip.getAttribute('data-term'), chip.getAttribute('data-meaning'));
+                        return;
+                    }
+                    stopAll(); idx=i; hl(i); speak(getSpeakText(s));
+                };
+                if(s.isT) {
+                    d.classList.add('sent-title');
+                    // title should be displayed in the original style (parsed Markdown inside .s-en)
+                    const titleHtml = parseMarkdown(s.title || '');
+                    const nameHtml = (s.name || '').toString().trim() ? `<span class="lesson-name">${escapeHtml(s.name)}</span>` : '';
+                    d.innerHTML = `<div class="s-en lesson-header-box">${titleHtml}${nameHtml}</div>`;
+                } else {
+                    d.innerHTML=`<div class="s-en">${renderSentenceText(s.en)}</div><div class="s-ch">${parseMarkdown(s.ch)}</div>`;
+                }
                 c.appendChild(d);
             });
+            // (removed) per-render click handler to avoid duplicates — global listener added below
+        }
+        function renderSentenceText(text) {
+            if(!text) return '';
+            const terms = lessonVocabulary
+                .map(v => ({
+                    term: (v.term || v.word || '').trim(),
+                    meaning: v.meaning || ''
+                }))
+                .filter(v => v.term);
+            if(!terms.length) return parseMarkdown(text);
+
+            const termMap = new Map();
+            terms.forEach(v => termMap.set(v.term.toLowerCase(), v));
+
+            // Use DOM parsing so existing markdown HTML is preserved
+            const container = document.createElement('div');
+            container.innerHTML = parseMarkdown(text);
+
+            const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null, false);
+            const textNodes = [];
+            while(walker.nextNode()) textNodes.push(walker.currentNode);
+
+            textNodes.forEach(tnode => {
+                const parent = tnode.parentNode;
+                const parts = tnode.nodeValue.split(/(\s+|[.,;:!?()'"-]+)/);
+                if(parts.length === 1) return; // no separable chunks
+                const frag = document.createDocumentFragment();
+                parts.forEach(chunk => {
+                    if(!chunk) return;
+                    if(/^\s+$/.test(chunk) || /^[.,;:!?()'"-]+$/.test(chunk)) {
+                        frag.appendChild(document.createTextNode(chunk));
+                        return;
+                    }
+                    const entry = termMap.get(chunk.toLowerCase());
+                    if(!entry) {
+                        frag.appendChild(document.createTextNode(chunk));
+                        return;
+                    }
+                    const span = document.createElement('span');
+                    span.className = 'word-chip';
+                    span.setAttribute('data-term', entry.term);
+                    span.setAttribute('data-meaning', entry.meaning);
+                    span.textContent = chunk;
+                    frag.appendChild(span);
+                });
+                parent.replaceChild(frag, tnode);
+            });
+
+            return container.innerHTML;
+        }
+        function getSpeakText(item){
+            if(!item) return '';
+            if(item.isT){
+                const title = stripMarkdown(item.title || '');
+                const name = (item.name || '').toString().trim();
+                if(title && name) return title + '。' + name;
+                return title || name || '';
+            }
+            return stripMarkdown(item.en || item.title || '');
+        }
+        function showWordInfo(term, meaning) {
+            const overlay=document.getElementById('word-info-overlay');
+            const title=document.getElementById('word-info-title');
+            const body=document.getElementById('word-info-body');
+            title.innerText = term || '單字說明';
+            body.innerHTML = meaning ? parseMarkdown(meaning) : '目前沒有可用的說明。';
+            overlay.classList.add('show');
+        }
+        function hideWordInfo() {
+            document.getElementById('word-info-overlay').classList.remove('show');
         }
         function hl(i) {
             document.querySelectorAll('.active').forEach(e=>e.classList.remove('active'));
@@ -88,15 +209,49 @@
             if(focus) { upF(idx); document.getElementById('text-container').style.display='none'; }
             else { document.getElementById('text-container').style.display='block'; hl(idx); }
         }
-        function upF(i) { if(sents[i]) { document.getElementById('focus-en').innerHTML=parseMarkdown(sents[i].en); document.getElementById('focus-ch').innerHTML=parseMarkdown(sents[i].ch); } }
+        function upF(i) {
+            if(!sents[i]) return;
+            const fEn = document.getElementById('focus-en');
+            const fCh = document.getElementById('focus-ch');
+            const item = sents[i];
+            if(item.isT) {
+                const titleHtml = parseMarkdown(item.title || '');
+                const nameHtml = (item.name || '').toString().trim() ? `<span class="lesson-name">${escapeHtml(item.name)}</span>` : '';
+                fEn.innerHTML = `<div class="lesson-header-box">${titleHtml}${nameHtml}</div>`;
+                fCh.innerHTML = '';
+            } else {
+                fEn.innerHTML = renderSentenceText(item.en);
+                fCh.innerHTML = parseMarkdown(item.ch);
+            }
+        }
         function togglePlay() { if(play) { play=false; window.speechSynthesis.cancel(); upI(false); } else { play=true; upI(true); loop(idx); } }
-        function loop(i) { if(!play || i>=sents.length) { stopAll(); return; } idx=i; hl(i); speak(stripMarkdown(sents[i].en), ()=>loop(i+1)); }
+        function loop(i) { if(!play || i>=sents.length) { stopAll(); return; } idx=i; hl(i); speak(getSpeakText(sents[i]), ()=>loop(i+1)); }
         function stopAll() { play=false; window.speechSynthesis.cancel(); upI(false); idx=0; hl(0); }
-        function playPrev() { if(idx>0) { idx--; hl(idx); window.speechSynthesis.cancel(); if(play) loop(idx); else speak(stripMarkdown(sents[idx].en)); } }
-        function playNext() { if(idx<sents.length-1) { idx++; hl(idx); window.speechSynthesis.cancel(); if(play) loop(idx); else speak(stripMarkdown(sents[idx].en)); } }
+        function playPrev() { if(idx>0) { idx--; hl(idx); window.speechSynthesis.cancel(); if(play) loop(idx); else speak(getSpeakText(sents[idx])); } }
+        function playNext() { if(idx<sents.length-1) { idx++; hl(idx); window.speechSynthesis.cancel(); if(play) loop(idx); else speak(getSpeakText(sents[idx])); } }
         function toggleSpeed() { slow=!slow; document.getElementById('spd-txt').innerText=slow?'慢速':'正常速度'; }
         function upI(on) { const ico=document.getElementById('icon-play'); const txt=document.getElementById('txt-play'); ico.innerHTML=on?'<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>':'<path d="M8 5v14l11-7z"/>'; txt.innerText=on?'暫停':'連續播放'; }
         function speak(t,cb) { window.speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(t); u.lang='en-US'; u.rate=slow?0.7:1; if(cb) u.onend=cb; window.speechSynthesis.speak(u); }
+    </script>
+    <script>
+        // Global click handler for word chips and annotated links
+        document.addEventListener('click', (e)=>{
+            const chip = e.target.closest('.word-chip');
+            if(chip){
+                e.stopPropagation();
+                showWordInfo(chip.getAttribute('data-term'), chip.getAttribute('data-meaning'));
+                return;
+            }
+            const anno = e.target.closest('.anno-link');
+            if(anno){
+                e.stopPropagation();
+                const id = anno.getAttribute('data-id');
+                const v = vocabById.get(String(id));
+                const term = v ? (v.term || v.word || anno.innerText.replace(/\d+/g,'')) : anno.innerText.replace(/\d+/g,'');
+                const meaning = v ? (v.meaning || '') : '';
+                showWordInfo(term, meaning);
+            }
+        });
     </script>
 </body>
 </html>

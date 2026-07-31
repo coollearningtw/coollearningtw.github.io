@@ -24,26 +24,92 @@ function escapeHtml(text) {
  * 3. 情境標註：[!口語] -> 顯示為語境提示標籤
  * 4. 基礎 Markdown：粗體 (**)、斜體 (*)、螢光筆 (==)、刪除線 (~~)、底線 (__ / ✨新增)
  */
+function preserveEscapedMarkdown(text) {
+    const raw = [];
+    let output = text
+        // 先處理整個被跳脫的方括號內容，避免後續解析成註記或 Ruby
+        .replace(/\\(\[.*?\])/g, (match, p1) => {
+            const key = `@@RAW${raw.length}@@`;
+            raw.push(p1);
+            return key;
+        })
+        // 再處理單一被跳脫的 Markdown 字元
+        .replace(/\\([*_~={}|\[\]`])/g, (match, p1) => {
+            const key = `@@RAW${raw.length}@@`;
+            raw.push(p1);
+            return key;
+        });
+    return { output, raw };
+}
+
+function restoreEscapedMarkdown(text, raw) {
+    return text.replace(/@@RAW(\d+)@@/g, (match, index) => raw[Number(index)] || '');
+}
+
+function parseBracketContent(content) {
+    const pipeIndexes = [];
+    for (let i = 0; i < content.length; i++) {
+        if (content[i] === '|') pipeIndexes.push(i);
+    }
+    if (pipeIndexes.length >= 2) {
+        const first = pipeIndexes[0];
+        const last = pipeIndexes[pipeIndexes.length - 1];
+        const text = content.slice(0, first);
+        const sup = content.slice(first + 1, last);
+        const id = content.slice(last + 1);
+        if (!id) {
+            return `[${content}]`;
+        }
+        if (sup.startsWith('^')) {
+            const renderedSup = sup.slice(1);
+            return `<span class="anno-link" data-id="${id}">${text}<sup class="anno-no">${renderedSup}</sup></span>`;
+        }
+        return `<span class="anno-link" data-id="${id}">${text}${sup}</span>`;
+    }
+    if (pipeIndexes.length === 1) {
+        const first = pipeIndexes[0];
+        const text = content.slice(0, first);
+        const second = content.slice(first + 1);
+        if (/^\d+$/.test(second)) {
+            return `<span class="anno-link" data-id="${second}">${text}<sup class="anno-no">${second}</sup></span>`;
+        }
+        return `<ruby>${text}<rt>${second}</rt></ruby>`;
+    }
+    return `[${content}]`;
+}
+
+function stripBracketContent(content) {
+    const pipeIndexes = [];
+    for (let i = 0; i < content.length; i++) {
+        if (content[i] === '|') pipeIndexes.push(i);
+    }
+    if (pipeIndexes.length >= 2) {
+        const first = pipeIndexes[0];
+        return content.slice(0, first);
+    }
+    if (pipeIndexes.length === 1) {
+        const first = pipeIndexes[0];
+        return content.slice(0, first);
+    }
+    return `[${content}]`;
+}
+
 function parseMarkdown(text) {
     if (!text) return '';
-    let html = escapeHtml(text);
+    const escaped = preserveEscapedMarkdown(text);
+    let html = escapeHtml(escaped.output);
 
-    // 1. [A|B] 語法：優先判斷是否為國文註釋 (B為純數字)，否則視為日語 Ruby
-    html = html.replace(/\[(.*?)\|(.*?)\]/g, (match, p1, p2) => {
-        if (/^\d+$/.test(p2)) {
-            return `<span class="anno-link" data-id="${p2}">${p1}<sup class="anno-no">${p2}</sup></span>`;
-        }
-        return `<ruby>${p1}<rt>${p2}</rt></ruby>`;
-    });
+    // 1. 超連結 [文字](連結)
+    html = html.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" class="md-link">$1</a>');
 
     // 2. [!情境標註] (例如：[!正式]、[!動漫用語])
     html = html.replace(/\[\!(.*?)\]/g, '<span class="md-context">$1</span>');
 
-    // 3. {語法/搭配詞} (例如：{～て形}、{V-dict})
-    html = html.replace(/\{(.*?)\}/g, '<span class="md-tag">$1</span>');
+    // 3. [] 內如果有 2 個 | 就視為單字格式；1 個 | 則判斷是否為日文 Ruby 或註記
+    html = html.replace(/\[([^\]]*?)\]/g, (match, content) => parseBracketContent(content));
 
-    // 4. 超連結 [文字](連結)
-    html = html.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" class="md-link">$1</a>');
+    // 4. {語法/搭配詞} (例如：{～て形}、{V-dict})
+    html = html.replace(/\{(.*?)\}/g, '<span class="md-tag">$1</span>');
 
     // 5. 粗體 **text**
     html = html.replace(/\*\*(.*?)\*\*/gs, '<span class="md-bold">$1</span>');
@@ -63,6 +129,7 @@ function parseMarkdown(text) {
     // 10. 換行處理
     html = html.replace(/\n/g, '<br>');
 
+    html = restoreEscapedMarkdown(html, escaped.raw);
     return html;
 }
 
@@ -72,9 +139,9 @@ function parseMarkdown(text) {
  */
 function stripMarkdown(text) {
     if (!text) return '';
-    return text
-        // [漢字|假名] 在朗讀時只保留漢字部分，讓 TTS 根據上下文判斷讀音
-        .replace(/\[(.*?)\|(.*?)\]/g, '$1')
+    const escaped = preserveEscapedMarkdown(text);
+    let stripped = escaped.output
+        .replace(/\[([^\]]*?)\]/g, (match, content) => stripBracketContent(content))
         .replace(/\[\!(.*?)\]/g, '')
         .replace(/\{(.*?)\}/g, '$1')
         .replace(/\*\*(.*?)\*\*/g, '$1')
@@ -82,6 +149,7 @@ function stripMarkdown(text) {
         .replace(/==(.*?)==/g, '$1')
         .replace(/~~(.*?)~~/g, '$1')
         .replace(/__(.*?)__/g, '$1');
+    return restoreEscapedMarkdown(stripped, escaped.raw);
 }
 
 /**

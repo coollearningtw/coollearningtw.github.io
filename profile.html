@@ -106,8 +106,7 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
             overflow: hidden;
             background-color: #f1f5f9;
-            display: flex;
-            align-items: center;
+            display: flex; align-items: center;
             justify-content: center;
             position: relative;
             cursor: pointer;
@@ -412,6 +411,10 @@
         async function loadMList(oid, myRole, myMembership) {
             const { data: org } = await window.supabaseClient.from('organizations').select('owner_id').eq('id', oid).single();
             const { data: ms } = await window.supabaseClient.from('organization_members').select('*, profile:profiles(*)').eq('organization_id', oid);
+            
+            // 安全防呆：檢查 ms 是否存在，防止 sort 報錯
+            if (!ms) return;
+
             const sorted = ms.sort((a,b) => (a.user_id === currentUser.id ? -1 : (a.user_id === org.owner_id ? 3 : RANK[a.role]) - (b.user_id === org.owner_id ? 3 : RANK[b.role])));
             const myRank = (org.owner_id === currentUser.id) ? 3 : RANK[myRole];
             let h = `<table class="member-table"><tbody>`;
@@ -502,7 +505,6 @@
             } catch (e) { alert("儲存失敗"); }
         }
 
-        // --- 其餘恢復原版邏輯 ---
         function renderLearningStatsBox(p) {
             const checkinDays = p?.checkin_count || 0;
             let n = 0, f = 0; try { n = JSON.parse(localStorage.getItem('cool_learning_notebooks') || '[]').length; f = JSON.parse(localStorage.getItem('my_favs') || '[]').length; } catch (e) {}

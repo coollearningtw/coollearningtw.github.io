@@ -1,5 +1,3 @@
---- START OF FILE Paste July 19, 2026 - 12:58PM ---
-
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -89,6 +87,13 @@
             min-width: 100px;
             max-width: 400px; 
         }
+        .lesson-name-cell {
+            font-size: 0.95rem;
+            color: #475569;
+            min-width: 100px;
+            max-width: 400px;
+            white-space: pre-wrap;
+        }
 
         /* 狀態控制項樣式 */
         .status-group { display: flex; align-items: center; gap: 6px; background: #f8fafc; padding: 3px 8px; border-radius: 6px; border: 1px solid #e2e8f0; margin-left: 10px; }
@@ -135,6 +140,18 @@
         #json-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.8); display: none; align-items: center; justify-content: center; z-index: 3000; backdrop-filter: blur(4px); }
         .json-box { background: #fff; padding: 30px; border-radius: 16px; width: 90%; max-width: 800px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
         textarea#json-output { width: 100%; height: 400px; font-family: monospace; font-size: 0.85rem; padding: 15px; background: #0f172a; color: #38bdf8; border: none; border-radius: 8px; resize: none; }
+        .lesson-vocab-modal { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(15,23,42,0.45); z-index: 3100; padding: 20px; }
+        .lesson-vocab-modal.show { display: flex; }
+        .lesson-vocab-box { width: min(98vw, 760px); max-height: calc(100vh - 80px); overflow-y: auto; background: #fff; border-radius: 16px; padding: 22px; box-shadow: 0 24px 60px rgba(15,23,42,0.18); }
+        .lesson-vocab-head { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:18px; }
+        .lesson-vocab-list { display:flex; flex-direction:column; gap:12px; }
+        .lesson-vocab-item { display:grid; grid-template-columns: 2fr 1fr auto; gap:10px; align-items:flex-start; padding:12px; border:1px solid #e2e8f0; border-radius:12px; background:#f8fafc; }
+        .lesson-vocab-item input, .lesson-vocab-item textarea { width:100%; border:1px solid #cbd5e1; border-radius:8px; padding:10px; font-size:0.95rem; outline:none; resize: vertical; }
+        .lesson-vocab-item textarea { min-height: 80px; }
+        .lesson-vocab-item button { min-width: 56px; border:none; background:#ef4444; color:#fff; border-radius:8px; padding:10px 12px; cursor:pointer; }
+        .lesson-vocab-item button:hover { opacity:0.92; }
+        .lesson-vocab-item .vocab-label { font-size:0.8rem; color:#64748b; margin-bottom:4px; display:block; }
+        .lesson-vocab-item .vocab-actions { display:flex; flex-direction:column; gap:6px; justify-content:center; }
         
         .floating-helper { position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); background: #fff; border: 1px solid #cbd5e1; padding: 10px 15px; border-radius: 12px; z-index: 100; display: flex; align-items: center; gap: 10px; }
         .helper-label { font-size: 0.75rem; font-weight: bold; color: #64748b; margin-right: 5px; }
@@ -203,12 +220,29 @@
             </div>
         </div>
     </div>
+    <div id="lesson-vocab-modal" class="lesson-vocab-modal">
+        <div class="lesson-vocab-box">
+            <div class="lesson-vocab-head">
+                <div>
+                    <div id="lesson-vocab-label" style="font-weight:700; font-size:1.1rem; color:#0f172a;"></div>
+                    <div id="lesson-vocab-subtitle" style="font-size:0.9rem; color:#64748b; margin-top:2px;">編輯此課程單元的課文單字</div>
+                </div>
+                <button class="btn-action" style="padding:4px 8px;" onclick="closeLessonVocabModal()">關閉</button>
+            </div>
+            <div id="lesson-vocab-list" class="lesson-vocab-list"></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:14px;">
+                <button class="btn-action btn-primary" onclick="addLessonVocabItem()">新增單字</button>
+                <span style="color:#94a3b8; font-size:0.85rem;">變更會立即存檔。</span>
+            </div>
+        </div>
+    </div>
 
     <script src="../scripts/utils.js"></script>
     <script src="../scripts/admin-lock.js"></script>
     <script>
         let currentMode = 'words', dataStore = { words: { sources: [] }, textbook: { sources:[] } }, expandedKeys = new Set();
         let draggedSourceIdx = null; // 記錄拖拽中的版本索引
+        let currentVocabLesson = null;
 
         const POS_LIST = ["n.", "n. [C]", "n. [U]", "n. [C][U]", "v.", "vi.", "vt.", "adj.", "adv.", "prep.", "conj.", "pron.", "int.", "phr."];
         const ICONS = {
@@ -219,10 +253,21 @@
             plus: '<svg class="svg-icon" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>'
         };
 
+        function normalizeTextbookLessons(book) {
+            if (!book || !Array.isArray(book.sources)) return book;
+            book.sources.forEach(src => {
+                if (Array.isArray(src.lessons)) {
+                    src.lessons = src.lessons.map(l => ({ name: '', ...l }));
+                }
+            });
+            return book;
+        }
+
         async function init() {
             const draftW = localStorage.getItem('english_words_draft'), draftT = localStorage.getItem('english_textbook_draft');
             dataStore.words = draftW ? JSON.parse(draftW) : await (await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/english.json')).json();
             dataStore.textbook = draftT ? JSON.parse(draftT) : await (await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/english-textbook.json')).json();
+            normalizeTextbookLessons(dataStore.textbook);
             render();
         }
 
@@ -290,6 +335,8 @@
             draggedSourceIdx = null;
         }
 
+        function escapeHtml(value) { return String(value||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
         function render() {
             const root = document.getElementById('editor-content'); root.innerHTML = '';
             const db = currentMode === 'words' ? dataStore.words : dataStore.textbook;
@@ -326,7 +373,10 @@
                                 <div class="lesson-header-left">
                                     ${ICONS.file}
                                     <div class="editable-cell cell-lesson-num" onclick="event.stopPropagation();startEdit(this,${sIdx},${lIdx},-1,'lesson')">${l.lesson}</div>
-                                    <div class="editable-cell lesson-title-cell" onclick="event.stopPropagation();startEdit(this,${sIdx},${lIdx},-1,'title')">${parseMarkdown(l.title)}</div>
+                                    <div style="display:flex;flex-direction:column;gap:4px;">
+                                        <div class="editable-cell lesson-title-cell" onclick="event.stopPropagation();startEdit(this,${sIdx},${lIdx},-1,'title')">${parseMarkdown(l.title)}</div>
+                                        <div class="editable-cell lesson-name-cell" onclick="event.stopPropagation();startEdit(this,${sIdx},${lIdx},-1,'name')">${parseMarkdown(l.name || '')}</div>
+                                    </div>
                                     <div class="status-group" onclick="event.stopPropagation()">
                                         <input type="text" class="status-input" placeholder="橫幅文字" value="${l.status || ''}" oninput="updateStatus(${sIdx}, ${lIdx}, 'status', this.value, false)">
                                         <div class="color-dot c-red ${l.statusColor==='red'?'active':''}" onclick="updateStatus(${sIdx}, ${lIdx}, 'statusColor', 'red', true)"></div>
@@ -335,6 +385,7 @@
                                         <button class="status-toggle ${l.enabled!==false?'st-on':'st-off'}" onclick="updateStatus(${sIdx}, ${lIdx}, 'enabled', ${l.enabled!==false?false:true}, true)">${l.enabled!==false ? '已上架' : '未開放'}</button>
                                     </div>
                                 </div>
+                                ${currentMode==='textbook' ? `<button class="btn-action" style="padding:4px 8px;margin-right:6px;" onclick="event.stopPropagation();openLessonVocab(${sIdx},${lIdx})">編輯單字</button>` : ''}
                                 <button class="btn-action" style="padding:2px 6px;color:#ef4444;border:none;flex-shrink:0;" onclick="event.stopPropagation();delLes(${sIdx},${lIdx})">${ICONS.close}</button>
                             </div>
                         <div style="display:${expandedKeys.has(lKey)?'block':'none'};padding:10px;">
@@ -390,7 +441,7 @@ ${item.pos === 'phr.' ? `
                     else if (idx.f === 'en') cell.innerHTML = parseMarkdown(val);
                     else if (idx.f === 'ch') cell.innerHTML = parseMarkdown(val);
                     else if (idx.f === 'lesson') cell.innerHTML = val;
-                    else if (idx.f === 'title') cell.innerHTML = parseMarkdown(val);
+                    else if (idx.f === 'title' || idx.f === 'name') cell.innerHTML = parseMarkdown(val);
                 }
                 cell.classList.remove('editing-cell');
             });
@@ -401,10 +452,10 @@ ${item.pos === 'phr.' ? `
             const db = currentMode === 'words' ? dataStore.words : dataStore.textbook;
             const rawVal = i === -1 ? db.sources[s].lessons[l][f] : (currentMode === 'words' ? db.sources[s].lessons[l].vocabulary[i][f] : db.sources[s].lessons[l].sentences[i][f]);
 
-            const useInput = (currentMode === 'words' && (f === 'word' || f === 'pos' || f === 'chinese')) || f === 'lesson' || f === 'title';
+            const useInput = (currentMode === 'words' && (f === 'word' || f === 'pos' || f === 'chinese')) || f === 'lesson' || f === 'title' || f === 'name';
 
             if (useInput) {
-                const inputClass = (f === 'title') ? 'inline-input inline-input-title' : 'inline-input';
+                const inputClass = (f === 'title' || f === 'name') ? 'inline-input inline-input-title' : 'inline-input';
                 el.innerHTML = `<input type=\"text\" class=\"${inputClass}\" value=\"${rawVal||''}\">`;
                 if (f === 'pos') {
                     const input = el.querySelector('input');
@@ -441,7 +492,7 @@ ${item.pos === 'phr.' ? `
                 else if (f === 'en') el.innerHTML = parseMarkdown(val2);
                 else if (f === 'ch') el.innerHTML = parseMarkdown(val2);
                 else if (f === 'lesson') el.innerHTML = val2;
-                else if (f === 'title') el.innerHTML = parseMarkdown(val2);
+                else if (f === 'title' || f === 'name') el.innerHTML = parseMarkdown(val2);
                 save(val2);
             });
         }
@@ -487,7 +538,7 @@ ${item.pos === 'phr.' ? `
 
         function editSrc(s) { const db=currentMode==='words'?dataStore.words:dataStore.textbook; const n=prompt('名稱:', db.sources[s].name); if(n){ db.sources[s].name=n; sync(); render(); }}
         function delSrc(s) { const db=currentMode==='words'?dataStore.words:dataStore.textbook; if(confirm('刪除版本？')){ db.sources.splice(s,1); sync(); render(); }}
-        function addLes(s) { const db=currentMode==='words'?dataStore.words:dataStore.textbook; db.sources[s].lessons.push({lesson: db.sources[s].lessons.length+1, title:'New Lesson', vocabulary:[], sentences:[]}); sync(); render(); }
+        function addLes(s) { const db=currentMode==='words'?dataStore.words:dataStore.textbook; db.sources[s].lessons.push({lesson: db.sources[s].lessons.length+1, title:'New Lesson', name:'', vocabulary:[], sentences:[]}); sync(); render(); }
         function delLes(s, l) { const db=currentMode==='words'?dataStore.words:dataStore.textbook; if(confirm('刪除單元？')) { db.sources[s].lessons.splice(l, 1); sync(); render(); } }
         function addItem(s, l, atIndex) {
             const db=currentMode==='words'?dataStore.words:dataStore.textbook; 
@@ -506,7 +557,70 @@ ${item.pos === 'phr.' ? `
             document.getElementById('json-output').value = JSON.stringify(targetData, null, 2);
             document.getElementById('json-modal').style.display = 'flex';
         }
-        
+
+        function openLessonVocab(sIdx, lIdx) {
+            const lesson = dataStore.textbook.sources[sIdx].lessons[lIdx];
+            if (!lesson.vocabulary) lesson.vocabulary = [];
+            currentVocabLesson = { sIdx, lIdx };
+            document.getElementById('lesson-vocab-label').innerText = `課程 ${lesson.lesson}：${lesson.title || '未命名'} ${lesson.name ? '／' + lesson.name : ''}`;
+            document.getElementById('lesson-vocab-modal').classList.add('show');
+            renderLessonVocabModal();
+        }
+
+        function closeLessonVocabModal() {
+            document.getElementById('lesson-vocab-modal').classList.remove('show');
+            currentVocabLesson = null;
+        }
+
+        function renderLessonVocabModal() {
+            if (!currentVocabLesson) return;
+            const lesson = dataStore.textbook.sources[currentVocabLesson.sIdx].lessons[currentVocabLesson.lIdx];
+            const list = document.getElementById('lesson-vocab-list');
+            list.innerHTML = lesson.vocabulary.map((item, i) => `
+                <div class="lesson-vocab-item">
+                    <div>
+                        <label class="vocab-label">ID</label>
+                        <input type="text" value="${escapeHtml(item.id || '')}" onchange="updateLessonVocabField(${currentVocabLesson.sIdx}, ${currentVocabLesson.lIdx}, ${i}, 'id', this.value)">
+                    </div>
+                    <div>
+                        <label class="vocab-label">單字</label>
+                        <input type="text" value="${escapeHtml(item.term || '')}" onchange="updateLessonVocabField(${currentVocabLesson.sIdx}, ${currentVocabLesson.lIdx}, ${i}, 'term', this.value)">
+                    </div>
+                    <div style="grid-column: span 3;">
+                        <label class="vocab-label">說明</label>
+                        <textarea onchange="updateLessonVocabField(${currentVocabLesson.sIdx}, ${currentVocabLesson.lIdx}, ${i}, 'meaning', this.value)">${escapeHtml(item.meaning || '')}</textarea>
+                    </div>
+                    <div class="vocab-actions">
+                        <button onclick="delLessonVocabItem(${currentVocabLesson.sIdx}, ${currentVocabLesson.lIdx}, ${i})">刪除</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function addLessonVocabItem() {
+            if (!currentVocabLesson) return;
+            const lesson = dataStore.textbook.sources[currentVocabLesson.sIdx].lessons[currentVocabLesson.lIdx];
+            lesson.vocabulary = lesson.vocabulary || [];
+            lesson.vocabulary.push({ id: '', term: '', meaning: '' });
+            sync();
+            renderLessonVocabModal();
+        }
+
+        function updateLessonVocabField(sIdx, lIdx, i, field, value) {
+            const lesson = dataStore.textbook.sources[sIdx].lessons[lIdx];
+            if (!lesson.vocabulary) return;
+            lesson.vocabulary[i] = { ...lesson.vocabulary[i], [field]: value };
+            sync();
+        }
+
+        function delLessonVocabItem(sIdx, lIdx, i) {
+            const lesson = dataStore.textbook.sources[sIdx].lessons[lIdx];
+            if (!lesson.vocabulary) return;
+            lesson.vocabulary.splice(i, 1);
+            sync();
+            renderLessonVocabModal();
+        }
+
         function downloadJSON() { const db=currentMode==='words'?dataStore.words:dataStore.textbook; const filename=currentMode==='words'?'english.json':'english-textbook.json'; const b = new Blob([JSON.stringify(db,null,2)],{type:'application/json'}); const a = document.createElement('a'); a.href=URL.createObjectURL(b); a.download=filename; a.click(); }
         function copyMarker(text) { navigator.clipboard.writeText(text).then(() => { const toast = document.getElementById('toast'); toast.style.opacity = '1'; setTimeout(() => toast.style.opacity = '0', 2000); }); }
         

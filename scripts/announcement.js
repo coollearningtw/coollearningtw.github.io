@@ -1,27 +1,52 @@
 // --- scripts/announcement.js ---
 
 document.addEventListener("DOMContentLoaded", () => {
+    // 1. 定義資料路徑
     const JSON_PATH = 'https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/announcements.json';
-    const STORAGE_KEY = 'anno_hide_date'; 
+    const STORAGE_KEY = 'anno_last_seen_interval'; // 儲存最後一次看到的時段起點
 
-    // 1. 檢查是否為返回操作
+    // 2. 獲取當前時段的起點 (0:00 或 12:00)
+    const getIntervalStart = () => {
+        const now = new Date();
+        const interval = new Date(now);
+        interval.setMinutes(0, 0, 0);
+        if (now.getHours() < 12) {
+            interval.setHours(0);
+        } else {
+            interval.setHours(12);
+        }
+        return interval.getTime().toString();
+    };
+
+    // 3. 核心載入與判斷函式
+    window.loadAndShowAnnouncements = (isManual = false) => {
+        fetch(JSON_PATH + '?t=' + Date.now())
+            .then(r => r.json())
+            .then(data => {
+                const validAnnos = filterValidAnnouncements(data.announcements);
+                if (validAnnos.length > 0) {
+                    const currentInterval = getIntervalStart();
+                    const lastSeenInterval = localStorage.getItem(STORAGE_KEY);
+
+                    // 如果是手動點擊，或者 當前時段大於上次看到的時段
+                    if (isManual || currentInterval !== lastSeenInterval) {
+                        new AnnouncementModal(validAnnos);
+                        // 只有在自動彈出時才更新 localStorage，確保手動查看不影響下次自動彈出
+                        if (!isManual) {
+                            localStorage.setItem(STORAGE_KEY, currentInterval);
+                        }
+                    }
+                }
+            })
+            .catch(err => console.error("公告載入失敗", err));
+    };
+
+    // 4. 網頁載入時執行自動檢查
+    // 檢查是否為返回操作，避開重複觸發
     const navEntry = performance.getEntriesByType("navigation")[0];
-    if (navEntry && navEntry.type === 'back_forward') return; 
-
-    // 2. 檢查今日不再顯示
-    const todayStr = new Date().toISOString().split('T')[0];
-    if (localStorage.getItem(STORAGE_KEY) === todayStr) return;
-
-    // 3. 載入資料
-    fetch(JSON_PATH + '?t=' + Date.now())
-        .then(r => r.json())
-        .then(data => {
-            const validAnnos = filterValidAnnouncements(data.announcements);
-            if (validAnnos.length > 0) {
-                new AnnouncementModal(validAnnos);
-            }
-        })
-        .catch(err => console.error("公告載入失敗", err));
+    if (!(navEntry && navEntry.type === 'back_forward')) {
+        window.loadAndShowAnnouncements(false);
+    }
 });
 
 function filterValidAnnouncements(list) {
@@ -30,13 +55,17 @@ function filterValidAnnouncements(list) {
     return list.filter(item => {
         const startDate = new Date(item.date);
         const endDate = new Date(startDate);
-        endDate.setDate(startDate.getDate() + 7); // 顯示 7 天
+        endDate.setDate(startDate.getDate() + 7); // 預設顯示 7 天
         return now <= endDate;
     });
 }
 
 class AnnouncementModal {
     constructor(annos) {
+        // 如果畫面上已經有公告，先移除
+        const existing = document.querySelector('.anno-overlay');
+        if (existing) existing.remove();
+
         this.annos = annos;
         this.currentIndex = 0;
         this.timer = null;
@@ -64,11 +93,8 @@ class AnnouncementModal {
                 
                 <div id="anno-content-wrapper" title="點擊展開閱讀更多"></div>
 
-                <div class="anno-footer">
-                    <label class="dont-show-row">
-                        <input type="checkbox" id="anno-no-show"> 今日不再顯示
-                    </label>
-                    <button class="btn-close">關閉</button>
+                <div class="anno-footer" style="justify-content: center;">
+                    <button class="btn-close">關閉視窗</button>
                 </div>
             </div>
         `;
@@ -116,7 +142,6 @@ class AnnouncementModal {
             });
         }
 
-        // 標籤處理
         const tagHtml = data.tag ? `<span class="anno-tag" style="background-color: ${data.tagColor || '#0b76d1'}">${data.tag}</span>` : '';
 
         const contentHTML = `
@@ -129,8 +154,6 @@ class AnnouncementModal {
         `;
 
         this.wrapper.innerHTML = contentHTML;
-        
-        // 觸發動畫
         this.wrapper.classList.remove('slide-in-right', 'slide-in-left');
         void this.wrapper.offsetWidth;
 
@@ -188,11 +211,6 @@ class AnnouncementModal {
     }
 
     close() {
-        const checkbox = this.overlay.querySelector('#anno-no-show');
-        if (checkbox && checkbox.checked) {
-            const todayStr = new Date().toISOString().split('T')[0];
-            localStorage.setItem('anno_hide_date', todayStr);
-        }
         this.stopAutoPlay();
         this.overlay.classList.remove('show');
         setTimeout(() => this.overlay.remove(), 300);

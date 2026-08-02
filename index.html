@@ -212,8 +212,18 @@
             <!-- 將指南移至左側，避免被 auth-helper.js 覆蓋 -->
             <a href="guide/index.html" class="guide-link" style="font-weight:bold; color:var(--primary,#0b76d1); margin-left:15px; font-size: 0.95rem; text-decoration: none;">使用指南</a>
         </div>
-        <!-- 右側由 auth-helper.js 自動渲染登入資訊 -->
-        <div class="header-right" id="auth-header-right"></div>
+        
+        <div style="display: flex; align-items: center; margin-left: auto;">
+            <!-- 右側由 auth-helper.js 自動渲染登入資訊 -->
+            <div class="header-right" id="auth-header-right"></div>
+
+            <!-- 公告手動觸發按鈕：置於頭像右側 -->
+            <button class="btn-tool-icon" onclick="window.loadAndShowAnnouncements(true)" title="查看最新公告" style="margin-left: 8px;">
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                    <path d="M20 3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 14H5v-2h6v2zm8-4H5V7h14v6z"/>
+                </svg>
+            </button>
+        </div>
     </header>
 
     <div class="main-layout">

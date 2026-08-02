@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>下載中心 - 國文科</title>
     <link rel="stylesheet" href="../styles/style.css">
     <link rel="stylesheet" href="../styles/header.css">
@@ -20,7 +20,7 @@
             --slate-800: #1e293b;
         }
         
-        body { background-color: var(--slate-50); padding-bottom: 120px; font-family: "Noto Sans TC", sans-serif; }
+        body { background-color: var(--slate-50); padding-bottom: 140px; font-family: "Noto Sans TC", sans-serif; }
 
         /* 代碼領取區 */
         .code-box {
@@ -65,22 +65,44 @@
         .item-name { font-weight: 700; color: var(--slate-800); font-size: 1.05rem; }
         .item-meta { font-size: 0.8rem; color: var(--slate-400); }
 
-        /* 下載按鈕 (單個) */
         .btn-download-single { background: none; border: none; color: var(--slate-400); cursor: pointer; padding: 10px; transition: 0.2s; }
         .btn-download-single:hover { color: var(--primary); transform: scale(1.1); }
 
-        /* 底部批次列 */
+        /* === 核心修正：底部批次操作列 === */
         .batch-action-bar {
-            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(100px);
-            background: var(--slate-800); color: #fff; padding: 12px 24px; border-radius: 50px;
-            display: flex; align-items: center; gap: 20px; box-shadow: 0 15px 30px rgba(0,0,0,0.3);
-            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); z-index: 2000;
+            position: fixed;
+            /* 考慮手機安全區域底部的安全邊距 */
+            bottom: calc(25px + env(safe-area-inset-bottom)); 
+            left: 50%;
+            /* 隱藏時增加至 200px 確保完全隱藏不露邊，並維持 X 軸居中 */
+            transform: translateX(-50%) translateY(200px); 
+            background: var(--slate-800);
+            color: #fff;
+            padding: 14px 28px;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            /* 增加陰影深度，讓黑色塊體在白色背景上更明顯 */
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5); 
+            transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 3000;
+            width: max-content;
+            max-width: 90vw;
         }
-        .batch-action-bar.show { transform: translateX(-50%) translateY(0); }
-        .batch-btn { background: var(--primary); color: #fff; border: none; padding: 8px 20px; border-radius: 25px; font-weight: 800; cursor: pointer; }
 
-        /* 多選書架 Modal */
-        .shelf-modal { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 3000; padding: 20px; }
+        .batch-action-bar.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .batch-btn { 
+            background: var(--primary); color: #fff; border: none; padding: 10px 24px; 
+            border-radius: 25px; font-weight: 800; cursor: pointer; transition: 0.2s; 
+        }
+        .batch-btn:active { transform: scale(0.95); }
+
+        /* 書架選擇 Modal */
+        .shelf-modal { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 4000; padding: 20px; }
         .shelf-card { background: #fff; width: 100%; max-width: 400px; padding: 30px; border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
         .shelf-list { max-height: 300px; overflow-y: auto; margin: 15px 0; }
         .shelf-row { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 12px; cursor: pointer; transition: 0.2s; }
@@ -89,6 +111,7 @@
         @media (max-width: 600px) {
             .code-input-row { flex-direction: column; }
             .btn-redeem { padding: 12px; }
+            .batch-action-bar { padding: 12px 20px; gap: 15px; font-size: 0.9rem; }
         }
     </style>
 </head>
@@ -108,7 +131,6 @@
 
     <main class="page-container">
         
-        <!-- 代碼兌換 -->
         <div class="code-box">
             <div class="code-header">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3L15.5 7.5z"></path></svg>
@@ -131,7 +153,6 @@
                     </div>
                     <span id="current-folder-name">主目錄</span>
                 </div>
-                <div style="font-size: 0.8rem; color: var(--slate-400);">勾選項目進行批次下載</div>
             </div>
             <div id="catalog-list"></div>
         </div>
@@ -141,7 +162,7 @@
     <!-- 底部操作列 -->
     <div id="batch-bar" class="batch-action-bar">
         <span id="batch-count">已選取 0 項</span>
-        <button class="batch-btn" onclick="openShelfSelector()">下載至書架</button>
+        <button class="batch-btn" onclick="openShelfSelector()">下載至我的書架</button>
     </div>
 
     <!-- 書架選擇 Modal -->
@@ -172,12 +193,11 @@
 
         async function init() {
             try {
-                // 抓取國文目錄資料
                 const res = await fetch('https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/chinese-catalog.json');
                 fullCatalog = await res.json();
                 updateUI();
             } catch (e) {
-                document.getElementById('catalog-list').innerHTML = `<div style="padding:40px; text-align:center; color:#ef4444;">資料庫連線失敗。</div>`;
+                document.getElementById('catalog-list').innerHTML = `<div style="padding:40px; text-align:center; color:#ef4444;">數據載入失敗。</div>`;
             }
         }
 
@@ -228,7 +248,6 @@
 
         function toggleSelectAll() {
             const items = getCurrentLayer();
-            const btn = document.getElementById('check-all');
             if (selectedIndices.size === items.length) {
                 selectedIndices.clear();
             } else {

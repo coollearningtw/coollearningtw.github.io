@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>貼文討論 - 酷學習廣場</title>
+    <link rel="icon" type="image/png" href="../images/logo-gold.png">
+    <link rel="stylesheet" href="../styles/style.css">
+    <link rel="stylesheet" href="../styles/header.css">
+    <style>
+        :root {
+            --primary-deep: #0b76d1;
+            --primary-soft: #eff6ff;
+            --text-main: #0f172a;
+            --text-sub: #64748b;
+            --card-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        body { background-color: #f8fafc; padding-bottom: 100px; color: var(--text-main); }
+        .post-container { max-width: 720px; margin: 30px auto; padding: 0 15px; }
+
+        /* --- 返回鈕樣式 --- */
+        .back-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+            margin-right: 5px;
+            border-radius: 12px;
+            transition: background 0.2s;
+            color: var(--primary-deep) !important;
+        }
+        .back-link:hover { background: var(--primary-soft); }
+
+        .main-card { background: #fff; border-radius: 28px; padding: 35px; border: 1px solid #e2e8f0; box-shadow: var(--card-shadow); margin-bottom: 25px; }
+        .post-header { display: flex; align-items: center; gap: 14px; margin-bottom: 25px; }
+        .author-avatar { width: 48px; height: 48px; border-radius: 15px; background: #f1f5f9; border: 2px solid #fff; box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
+        .author-name { font-weight: 800; font-size: 1.1rem; }
+        .post-meta { font-size: 0.85rem; color: var(--text-sub); margin-top: 2px; }
+
+        .post-title { font-size: 1.8rem; font-weight: 900; margin-bottom: 20px; line-height: 1.3; }
+        .post-content { font-size: 1.1rem; color: #334155; line-height: 1.8; word-break: break-all; }
+
+        .comment-section { margin-top: 40px; }
+        .section-title { font-size: 1.2rem; font-weight: 900; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; color: var(--text-sub); }
+        .section-title span { background: #e2e8f0; color: #475569; padding: 2px 10px; border-radius: 8px; font-size: 0.9rem; }
+
+        .comment-item { background: #fff; border-radius: 20px; padding: 20px; margin-bottom: 15px; border: 1px solid #f1f5f9; box-shadow: 0 2px 10px rgba(0,0,0,0.02); animation: slideIn 0.3s ease-out; }
+        .c-user { font-weight: 800; color: var(--primary-deep); margin-bottom: 6px; font-size: 0.95rem; }
+        .c-text { color: #475569; font-size: 1rem; line-height: 1.6; }
+        .c-time { font-size: 0.75rem; color: #cbd5e1; margin-top: 10px; }
+
+        .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(15px); border-top: 1px solid #e2e8f0; padding: 15px; z-index: 1000; }
+        .reply-container { max-width: 720px; margin: 0 auto; display: flex; gap: 12px; align-items: flex-end; }
+        .reply-container textarea { flex: 1; background: #f1f5f9; border: 1.5px solid transparent; border-radius: 15px; padding: 12px 18px; font-size: 1rem; outline: none; resize: none; max-height: 120px; font-family: inherit; transition: 0.2s; }
+        .reply-container textarea:focus { background: #fff; border-color: var(--primary-deep); box-shadow: 0 0 0 4px var(--primary-soft); }
+        .send-btn { background: var(--primary-deep); color: #fff; border: none; width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; flex-shrink: 0; }
+        .send-btn svg { width: 22px; height: 22px; stroke: #fff; fill: none; stroke-width: 2.5; }
+
+        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">
+            <!-- 返回廣場列表 -->
+            <a href="index.html" class="back-link">
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </a>
+            <span class="header-title-area">貼文討論</span>
+        </div>
+        <div class="header-right" id="header-user-area"></div>
+    </header>
+
+    <div class="post-container">
+        <div id="post-detail-root"><div style="text-align:center; padding:100px 0; color:#cbd5e1;">載入貼文中...</div></div>
+        <div class="comment-section">
+            <div class="section-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                全部回覆 <span id="comment-count">0</span>
+            </div>
+            <div id="comment-list"></div>
+        </div>
+    </div>
+
+    <div class="bottom-bar">
+        <div class="reply-container" id="reply-area"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../scripts/supabase-config.js"></script>
+    <script src="../scripts/utils.js"></script>
+    <script src="../scripts/auth-helper.js"></script>
+    <script>
+        const PostDetail = {
+            postId: new URLSearchParams(window.location.search).get('id'),
+            action: new URLSearchParams(window.location.search).get('action'),
+            supabase: null,
+            user: null,
+
+            init: async function() {
+                if (!this.postId) { window.location.href = 'index.html'; return; }
+                this.supabase = window.supabaseClient;
+                const { data: { session } } = await this.supabase.auth.getSession();
+                this.user = session ? session.user : null;
+                await this.fetchPost();
+                await this.fetchComments();
+                this.renderReplyBox();
+                if (this.action === 'comment') {
+                    setTimeout(() => {
+                        const tx = document.getElementById('reply-text');
+                        if (tx) { tx.focus(); tx.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+                    }, 500);
+                }
+            },
+
+            fetchPost: async function() {
+                const { data: post, error } = await this.supabase
+                    .from('community_posts')
+                    .select('*, profiles!community_posts_author_id_fkey(username, avatar_url)')
+                    .eq('id', this.postId).single();
+                if (error || !post) return document.getElementById('post-detail-root').innerHTML = "貼文不存在";
+                const author = post.profiles || {};
+                const avatar = author.avatar_url || `https://api.dicebear.com/7.x/bottts/svg?seed=${post.author_id}`;
+                document.getElementById('post-detail-root').innerHTML = `
+                    <div class="main-card">
+                        <div class="post-header">
+                            <img src="${avatar}" class="author-avatar">
+                            <div class="author-info">
+                                <div class="author-name">${escapeHtml(author.username || '匿名')}</div>
+                                <div class="post-meta">${new Date(post.created_at).toLocaleString()}</div>
+                            </div>
+                        </div>
+                        <h1 class="post-title">${escapeHtml(post.title)}</h1>
+                        <div class="post-content">${parseMarkdown(post.content)}</div>
+                    </div>
+                `;
+            },
+
+            fetchComments: async function() {
+                const { data: comments, error } = await this.supabase
+                    .from('community_comments')
+                    .select('*, profiles(username)')
+                    .eq('post_id', this.postId).order('created_at', { ascending: true });
+                if (error) return;
+                document.getElementById('comment-count').innerText = comments.length;
+                const list = document.getElementById('comment-list');
+                if (comments.length === 0) { list.innerHTML = `<div style="text-align:center; padding:40px; color:#cbd5e1;">尚無回覆。</div>`; return; }
+                list.innerHTML = comments.map(c => `
+                    <div class="comment-item">
+                        <div class="c-user">${escapeHtml(c.profiles?.username || '匿名')}</div>
+                        <div class="c-text">${escapeHtml(c.content)}</div>
+                        <div class="c-time">${new Date(c.created_at).toLocaleString()}</div>
+                    </div>
+                `).join('');
+            },
+
+            renderReplyBox: function() {
+                const container = document.getElementById('reply-area');
+                if (!this.user) { container.innerHTML = `<div style="flex:1; text-align:center; color:#94a3b8;">請登入後參與討論</div>`; return; }
+                container.innerHTML = `
+                    <textarea id="reply-text" placeholder="寫下你的見解..." rows="1" oninput="this.style.height = '';this.style.height = this.scrollHeight + 'px'"></textarea>
+                    <button class="send-btn" onclick="PostDetail.submitComment()">
+                        <svg viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                `;
+            },
+
+            submitComment: async function() {
+                const tx = document.getElementById('reply-text');
+                const content = tx.value.trim();
+                if (!content) return;
+                const { error } = await this.supabase.from('community_comments').insert([{ post_id: this.postId, author_id: this.user.id, content: content }]);
+                if (!error) { tx.value = ''; tx.style.height = ''; this.fetchComments(); }
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const check = setInterval(() => { if (window.supabaseClient) { clearInterval(check); PostDetail.init(); } }, 100);
+        });
+    </script>
+</body>
+</html>

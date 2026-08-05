@@ -146,6 +146,10 @@
 
         // --- 強化版語音函數：移除 Markdown 標記後朗讀 ---
         function speak(input, lang = 'en-US') {
+            try {
+                if (window.__suppressSpeak) return;
+                if (window.__lastAnnoClick && (Date.now() - window.__lastAnnoClick) < 800) return;
+            } catch(e) {}
             if (!window.speechSynthesis) return;
             window.speechSynthesis.cancel();
 

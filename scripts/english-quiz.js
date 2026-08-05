@@ -240,7 +240,12 @@ document.addEventListener('DOMContentLoaded', () => {
     delete q._lastChosen;
 
     const speakBtnHtml = `<button type="button" class="tts-btn" title="朗讀"><svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></button>`;
-    const playAudio = () => { if(q.word){ window.speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(q.word); u.lang='en-US'; window.speechSynthesis.speak(u);} };
+    const playAudio = () => { 
+        if(!q.word) return;
+        try { if (window.__suppressSpeak) return; if (window.__lastAnnoClick && (Date.now() - window.__lastAnnoClick) < 800) return; } catch(e) {}
+        window.speechSynthesis.cancel(); 
+        const u=new SpeechSynthesisUtterance(q.word); u.lang='en-US'; window.speechSynthesis.speak(u);
+    };
     const bindSpeak = (el) => { const b=el.querySelector('.tts-btn'); if(b) b.onclick=(e)=>{e.stopPropagation();playAudio();}; };
     const onTimeout = () => { playAudio(); revealAnswer(false); }; 
 

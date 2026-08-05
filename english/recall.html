@@ -171,6 +171,10 @@
                 
                 // 朗讀
                 if ('speechSynthesis' in window) {
+                    try {
+                        if (window.__suppressSpeak) return;
+                        if (window.__lastAnnoClick && (Date.now() - window.__lastAnnoClick) < 800) return;
+                    } catch(e) {}
                     window.speechSynthesis.cancel();
                     const u = new SpeechSynthesisUtterance(word.word);
                     u.lang = 'en-US';

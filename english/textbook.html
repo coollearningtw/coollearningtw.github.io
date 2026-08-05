@@ -231,7 +231,15 @@
         function playNext() { if(idx<sents.length-1) { idx++; hl(idx); window.speechSynthesis.cancel(); if(play) loop(idx); else speak(getSpeakText(sents[idx])); } }
         function toggleSpeed() { slow=!slow; document.getElementById('spd-txt').innerText=slow?'慢速':'正常速度'; }
         function upI(on) { const ico=document.getElementById('icon-play'); const txt=document.getElementById('txt-play'); ico.innerHTML=on?'<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>':'<path d="M8 5v14l11-7z"/>'; txt.innerText=on?'暫停':'連續播放'; }
-        function speak(t,cb) { window.speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(t); u.lang='en-US'; u.rate=slow?0.7:1; if(cb) u.onend=cb; window.speechSynthesis.speak(u); }
+        function speak(t,cb) {
+            try {
+                if (window.__suppressSpeak) { if(cb) cb(); return; }
+                if (window.__lastAnnoClick && (Date.now() - window.__lastAnnoClick) < 800) { if(cb) cb(); return; }
+            } catch(e) {}
+            window.speechSynthesis.cancel();
+            const u=new SpeechSynthesisUtterance(t);
+            u.lang='en-US'; u.rate=slow?0.7:1; if(cb) u.onend=cb; window.speechSynthesis.speak(u);
+        }
     </script>
     <script>
         // Global click handler for word chips and annotated links

@@ -475,6 +475,10 @@
         }
 
         function speak(txt, cb) {
+            try {
+                if (window.__suppressSpeak) { if(cb) cb(); return; }
+                if (window.__lastAnnoClick && (Date.now() - window.__lastAnnoClick) < 800) { if(cb) cb(); return; }
+            } catch(e) {}
             window.speechSynthesis.cancel();
             const u = new SpeechSynthesisUtterance(txt); u.lang='en-US'; u.rate=0.9;
             if(cb) u.onend = cb;

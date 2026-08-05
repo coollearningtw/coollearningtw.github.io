@@ -60,18 +60,39 @@ function parseBracketContent(content) {
         if (!id) {
             return `[${content}]`;
         }
+        // Build classes based on rules:
+        // - If id is numeric -> text should be bold black, number (sup) blue
+        // - If sup is '*' -> whole item black italic
+        // - If text contains multiple words/characters -> mark as multi (blue bold later)
+        const classes = ['anno-link'];
+        if (/^\d+$/.test(id)) classes.push('anno-id-num');
+        if (sup === '*') classes.push('anno-asterisk');
+        if ((text || '').trim().length > 1 && /\s/.test(text)) classes.push('anno-multi');
+
         if (sup.startsWith('^')) {
             const renderedSup = sup.slice(1);
-            return `<span class="anno-link" data-id="${id}">${text}<sup class="anno-no">${renderedSup}</sup></span>`;
+            return `<span class="${classes.join(' ')}" data-id="${id}">${text}<sup class="anno-no">${renderedSup}</sup></span>`;
         }
-        return `<span class="anno-link" data-id="${id}">${text}${sup}</span>`;
+        // If sup is present, show it as superscript where appropriate; otherwise just append
+        if (sup) {
+            // If sup is numeric, keep as sup element so we can color it
+            if (/^\d+$/.test(sup) || sup === '*') {
+                return `<span class="${classes.join(' ')}" data-id="${id}">${text}<sup class="anno-no">${sup}</sup></span>`;
+            }
+            return `<span class="${classes.join(' ')}" data-id="${id}">${text}${sup}</span>`;
+        }
+        return `<span class="${classes.join(' ')}" data-id="${id}">${text}</span>`;
     }
     if (pipeIndexes.length === 1) {
         const first = pipeIndexes[0];
         const text = content.slice(0, first);
         const second = content.slice(first + 1);
+        // single pipe: numeric -> annotation with sup (and id), otherwise ruby
         if (/^\d+$/.test(second)) {
-            return `<span class="anno-link" data-id="${second}">${text}<sup class="anno-no">${second}</sup></span>`;
+            return `<span class="anno-link anno-id-num" data-id="${second}">${text}<sup class="anno-no">${second}</sup></span>`;
+        }
+        if (second === '*') {
+            return `<span class="anno-link anno-asterisk">${text}</span>`;
         }
         return `<ruby>${text}<rt>${second}</rt></ruby>`;
     }
@@ -164,8 +185,20 @@ function stripMarkdown(text) {
  * @param {function} callback - 朗讀結束後的回到函式
  */
 function speak(text, lang = 'zh-TW', rate = 1.0, callback = null) {
+    // 強力抑制：若全域抑制旗標開啟，或剛剛點擊過標註，則不要朗讀
+    try {
+        if (window.__suppressSpeak) {
+            if (callback) callback();
+            return;
+        }
+        if (window.__lastAnnoClick && (Date.now() - window.__lastAnnoClick) < 800) {
+            if (callback) callback();
+            return;
+        }
+    } catch (e) {}
+
     if (!window.speechSynthesis) return;
-    
+
     // 停止當前正在播放的所有聲音
     window.speechSynthesis.cancel();
 
@@ -214,6 +247,123 @@ document.addEventListener('DOMContentLoaded', () => {
         const btn = document.getElementById('btn-toggle-ruby');
         if (btn) btn.innerText = "顯示假名";
     }
+    // Post-process annotation links: group multi-part annotations and apply styles
+    try {
+        const annoEls = Array.from(document.querySelectorAll('.anno-link[data-id]'));
+        const groups = {};
+        annoEls.forEach(el => {
+            const id = el.getAttribute('data-id');
+            if (!groups[id]) groups[id] = [];
+            groups[id].push(el);
+            // star-marked anno-link should be black italic and not show trailing star
+            const mainText = el.textContent || '';
+            if (/\*+$/.test(mainText)) {
+                el.classList.add('anno-asterisk');
+                if (el.children.length === 0) {
+                    el.textContent = mainText.replace(/\*+$/,'');
+                } else {
+                    el.innerHTML = el.innerHTML.replace(/\*+$/,'');
+                }
+            }
+            // mark single-element multi-word items for later
+            if (/\S+\s+\S+/.test(mainText)) {
+                el.classList.add('anno-multi');
+            }
+        });
+
+        Object.keys(groups).forEach(id => {
+            const items = groups[id];
+            // 如果同一 id 出現多於 1 個元素，整組都要變藍色粗體
+            if (items.length > 1) {
+                items.forEach(it => it.classList.add('anno-group'));
+            }
+            // 若單一元素但包含多字，也讓其呈現藍色粗體
+            if (items.length === 1) {
+                const txt = (items[0].textContent || '').trim();
+                if (/\S+\s+\S+/.test(txt)) items[0].classList.add('anno-group');
+            }
+        });
+        // Additional post-processing for annotation-like elements
+        const extraNodes = Array.from(document.querySelectorAll('.anno-link, .word-chip, .example-word, .example-word-self'));
+        extraNodes.forEach(el => {
+            const txt = (el.textContent || '').trim();
+            if (!txt) return;
+            // trailing asterisk -> treat as anno-asterisk, remove trailing stars for clean display
+            if (/\*+$/.test(txt)) {
+                el.classList.add('anno-asterisk');
+                if (el.children.length === 0) {
+                    el.textContent = txt.replace(/\*+$/,'');
+                } else {
+                    el.innerHTML = el.innerHTML.replace(/\*+$/,'');
+                }
+            }
+            // contains digits -> mark as anno-id-num and wrap digits in <sup class="anno-no">
+            if (/\d/.test(txt)) {
+                el.classList.add('anno-id-num');
+                try {
+                    el.innerHTML = el.innerHTML.replace(/(\d+)/g, '<sup class="anno-no">$1</sup>');
+                } catch (e) {}
+            }
+            // multi-word
+            if (/\S+\s+\S+/.test(txt)) {
+                el.classList.add('anno-multi', 'anno-group');
+            }
+        });
+    } catch (e) {
+        console.warn('anno-group postprocess failed', e);
+    }
+
+    // Function to process a single annotation-like node (used by MutationObserver)
+    function processAnnoNode(el) {
+        if (!el || !el.textContent) return;
+        const original = el.textContent.trim();
+        if (!original) return;
+        // trailing asterisk
+        if (/\*+$/.test(original)) {
+            el.classList.add('anno-asterisk');
+            // remove trailing asterisks from visible text
+            // preserve existing innerHTML structure when possible
+            if (el.children.length === 0) el.textContent = original.replace(/\*+$/,'');
+            else el.innerHTML = el.innerHTML.replace(/\*+$/,'');
+        }
+        // digits -> wrap in sup
+        if (/\d/.test(original)) {
+            el.classList.add('anno-id-num');
+            try {
+                el.innerHTML = el.innerHTML.replace(/(\d+)/g, '<sup class="anno-no">$1</sup>');
+            } catch(e) {}
+        }
+        // multi-word
+        if (/\S+\s+\S+/.test(original)) {
+            el.classList.add('anno-multi', 'anno-group');
+        }
+    }
+
+    // Observe dynamic additions (English pages generate .word-chip after initial load)
+    try {
+        const observer = new MutationObserver(mutations => {
+            for (const m of mutations) {
+                if (m.type === 'childList' && m.addedNodes && m.addedNodes.length) {
+                    m.addedNodes.forEach(node => {
+                        if (!(node instanceof HTMLElement)) return;
+                        if (node.matches && node.matches('.word-chip, .example-word, .example-word-self')) {
+                            processAnnoNode(node);
+                        }
+                        // also check descendants
+                        const found = node.querySelectorAll && node.querySelectorAll('.word-chip, .example-word, .example-word-self');
+                        if (found && found.length) found.forEach(n => processAnnoNode(n));
+                    });
+                }
+                if (m.type === 'characterData' && m.target && m.target.parentNode) {
+                    const p = m.target.parentNode;
+                    if (p.matches && p.matches('.word-chip, .example-word, .example-word-self')) processAnnoNode(p);
+                }
+            }
+        });
+        observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+    } catch (e) {
+        console.warn('anno-group observer failed', e);
+    }
 });
 
 /**
@@ -224,3 +374,32 @@ if (window.speechSynthesis) {
         console.log("語音引擎已就緒，可用語音數:", window.speechSynthesis.getVoices().length);
     };
 }
+
+// 全域紀錄：最後一次在標註上點擊的時間（用來避免點擊標註時觸發朗讀）
+window.__lastAnnoClick = 0;
+// Record pointerdown (earlier than click) on annotation-like elements to better suppress immediate speak() calls
+const ANNO_SELECTORS = '.anno-link, .word-chip, .example-word, .example-word-self';
+document.addEventListener('pointerdown', (e) => {
+    try {
+        if (e.target && e.target.closest && e.target.closest(ANNO_SELECTORS)) {
+            window.__lastAnnoClick = Date.now();
+            // stronger suppression flag: set for a short window to completely block speak()
+            try { window.__suppressSpeak = true; } catch (er) {}
+            setTimeout(() => { try { window.__suppressSpeak = false; } catch(e){} }, 1200);
+        }
+    } catch (err) {
+        // ignore
+    }
+}, true);
+// fallback: also record click if pointerdown missed
+document.addEventListener('click', (e) => {
+    try {
+        if (e.target && e.target.closest && e.target.closest(ANNO_SELECTORS)) {
+            window.__lastAnnoClick = Date.now();
+            try { window.__suppressSpeak = true; } catch (er) {}
+            setTimeout(() => { try { window.__suppressSpeak = false; } catch(e){} }, 1200);
+        }
+    } catch (err) {
+        // ignore
+    }
+}, true);

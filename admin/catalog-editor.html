@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>下載目錄管理系統 - 酷學習</title>
+    <link rel="icon" type="image/png" href="../images/logo-gold.png">
+    <link rel="stylesheet" href="../styles/style.css">
+    <link rel="stylesheet" href="../styles/header.css">
+    <style>
+        /* --- 鎖定系統樣式 --- */
+        #page-lock-mask {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.65); backdrop-filter: blur(25px) saturate(160%);
+            z-index: 999999; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.6s ease, visibility 0.6s;
+        }
+        #lock-icon { width: 100px; height: 100px; cursor: pointer; fill: #0b76d1; margin-bottom: 25px; }
+        .unlocked-hidden { opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; }
+        body.locked-scrolling { overflow: hidden; }
+
+        /* --- 基礎佈局 --- */
+        body { background-color: #f8fafc; height: 100vh; overflow: hidden; display: flex; flex-direction: column; margin: 0; color: #1e293b; font-family: "Noto Sans TC", sans-serif; }
+        header { flex-shrink: 0; background: #fff !important; border-bottom: 1px solid #e2e8f0 !important; width: 100% !important; max-width: none !important; margin: 0 !important; border-radius: 0 !important; height: 65px; display: flex; align-items: center; justify-content: space-between; padding: 0 20px !important; }
+        
+        .admin-layout { display: grid; grid-template-columns: 420px 1fr; flex: 1; overflow: hidden; background: #e2e8f0; gap: 1px; }
+
+        /* 左側樹狀區域 */
+        .sidebar { background: #fff; display: flex; flex-direction: column; overflow-y: auto; }
+        .sidebar-header { padding: 20px; border-bottom: 1px solid #e2e8f0; background: #f8fafc; position: sticky; top: 0; z-index: 10; display: flex; justify-content: space-between; align-items: center; }
+        
+        .tree-root { padding: 15px; flex: 1; }
+        .tree-item { 
+            display: flex; align-items: center; padding: 8px 12px; border-radius: 10px; 
+            cursor: pointer; margin-bottom: 2px; transition: 0.2s; position: relative;
+            background: #fff; border: 1px solid transparent;
+        }
+        .tree-item:hover { background: #f1f5f9; border-color: #e2e8f0; }
+        .tree-item.active { background: #eff6ff; color: #0b76d1; border-color: #bfdbfe; }
+        .tree-item.dragging { opacity: 0.4; border: 2px dashed #0b76d1; }
+        .tree-item.drag-over { border-top: 3px solid #0b76d1; }
+
+        .drag-handle { cursor: grab; color: #cbd5e1; margin-right: 8px; display: flex; align-items: center; padding: 4px 0; }
+        .tree-icon { width: 20px; height: 20px; margin-right: 10px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+        .tree-name { font-size: 0.95rem; font-weight: 600; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        
+        /* 樹狀內的操作按鈕 */
+        .item-actions { display: flex; gap: 4px; opacity: 0; transition: 0.2s; }
+        .tree-item:hover .item-actions { opacity: 1; }
+        .action-btn { 
+            width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; 
+            border-radius: 6px; border: 1px solid #e2e8f0; background: #fff; cursor: pointer; color: #64748b;
+        }
+        .action-btn:hover { background: #f8fafc; color: #0b76d1; border-color: #0b76d1; }
+        .action-btn.delete:hover { color: #ef4444; border-color: #ef4444; background: #fee2e2; }
+
+        .tree-caret { width: 22px; height: 22px; transition: transform 0.2s; display: flex; align-items: center; justify-content: center; color: #94a3b8; }
+        .tree-caret.collapsed { transform: rotate(-90deg); }
+
+        /* 右側編輯面板 */
+        .editor-main { background: #fff; overflow-y: auto; padding: 40px; }
+        .form-container { max-width: 600px; margin: 0 auto; }
+        .form-group { margin-bottom: 24px; }
+        .form-group label { display: block; font-weight: 800; color: #475569; font-size: 0.8rem; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .form-control { width: 100%; padding: 12px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 1rem; outline: none; transition: 0.2s; background: #f8fafc; box-sizing: border-box; }
+        .form-control:focus { border-color: #0b76d1; background: #fff; box-shadow: 0 0 0 4px rgba(11,118,209,0.1); }
+
+        /* 輸入框組合按鈕 (隨機生成鈕) */
+        .input-with-btn { display: flex; gap: 8px; }
+        .btn-input-action { background: #f1f5f9; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 0 15px; cursor: pointer; color: #64748b; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
+        .btn-input-action:hover { background: #e0f2fe; border-color: #0b76d1; color: #0b76d1; }
+
+        .type-pill { display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 50px; font-size: 0.75rem; font-weight: 800; margin-bottom: 15px; }
+        .pill-folder { background: #fef3c7; color: #92400e; }
+        .pill-lesson { background: #dcfce7; color: #166534; }
+        .pill-code { background: #f5f3ff; color: #6d28d9; }
+
+        /* 科目切換 */
+        .subject-tabs { display: flex; background: #e2e8f0; padding: 4px; border-radius: 10px; gap: 4px; margin-right: 15px; }
+        .sub-btn { border: none; padding: 6px 16px; border-radius: 7px; font-weight: 800; cursor: pointer; color: #64748b; background: none; transition: 0.2s; }
+        .sub-btn.active { background: #fff; color: #0b76d1; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+
+        .svg-icon { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+        #save-status { font-size: 0.75rem; color: #10b981; margin-right: 15px; font-weight: 800; opacity: 0; transition: 0.3s; }
+
+        #json-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.8); display: none; align-items: center; justify-content: center; z-index: 3000; backdrop-filter: blur(4px); }
+        .json-box { background: #fff; padding: 30px; border-radius: 20px; width: 90%; max-width: 800px; }
+        textarea#json-output { width: 100%; height: 400px; font-family: monospace; font-size: 0.85rem; padding: 15px; background: #0f172a; color: #38bdf8; border-radius: 12px; resize: none; border: none; }
+    </style>
+</head>
+<body>
+    <div id="page-lock-mask">
+        <div class="lock-content">
+            <svg id="lock-icon" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm9 14H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg>
+            <div style="font-weight:900; color:#334155;">管理權限驗證中...</div>
+        </div>
+    </div>
+
+    <header>
+        <div class="logo">
+            <a href="index.html" class="back-link">
+                <svg class="svg-icon" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            </a>
+            <span style="font-weight:900; color:#0b76d1; margin-left:12px;">目錄架構與代碼編輯器</span>
+        </div>
+        <div class="header-right" style="display:flex; align-items:center;">
+            <span id="save-status">已存檔</span>
+            <div class="subject-tabs">
+                <button class="sub-btn active" id="btn-en" onclick="switchSubject('english')">英文</button>
+                <button class="sub-btn" id="btn-ch" onclick="switchSubject('chinese')">國文</button>
+            </div>
+            <button class="btn-tool-text" onclick="showJSON()">產出代碼</button>
+            <button class="btn-tool-text" style="color:#ef4444" onclick="resetData()">重置</button>
+        </div>
+    </header>
+
+    <div class="admin-layout">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <strong style="color:#475569; font-size:0.9rem;">目錄層級 Tree</strong>
+                <div style="display:flex; gap:6px;">
+                    <button class="action-btn" onclick="manualCollapseAll(true)" title="全部收合">
+                        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M4 14h7v7M20 10h-7V3M3 21l8-8M21 3l-8 8"/></svg>
+                    </button>
+                    <button class="action-btn" onclick="addRootFolder()" title="新增根資料夾">
+                        <svg class="svg-icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    </button>
+                </div>
+            </div>
+            <div id="tree-root" class="tree-root"></div>
+        </aside>
+
+        <main class="editor-main">
+            <div id="editor-form" class="form-container">
+                <div style="text-align:center; color:#94a3b8; margin-top:150px;">
+                    <svg class="svg-icon" style="width:60px; height:60px; margin-bottom:20px;" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+                    <h3>請點擊左側項目開始編輯</h3>
+                    <p>支援目錄拖放排序，預設資料夾為關閉狀態。</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="json-modal">
+        <div class="json-box">
+            <h3 style="margin-top:0;">複製 JSON 到 GitHub</h3>
+            <textarea id="json-output" readonly></textarea>
+            <div style="margin-top:20px; text-align:right;">
+                <button class="btn-tool-text" onclick="document.getElementById('json-modal').style.display='none'">關閉視窗</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../scripts/utils.js"></script>
+    <script src="../scripts/admin-lock.js"></script>
+    <script>
+        let currentSubject = 'english';
+        let dataStore = { categories: [], hidden_contents: [] };
+        let activeUID = null;
+        let collapsedUIDs = new Set();
+        let draggedUID = null;
+
+        const SVGS = {
+            folder: `<svg class="svg-icon" viewBox="0 0 24 24" style="color:#f59e0b"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>`,
+            file: `<svg class="svg-icon" viewBox="0 0 24 24" style="color:#0ea5e9"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`,
+            key: `<svg class="svg-icon" viewBox="0 0 24 24" style="color:#6d28d9"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`,
+            plus: `<svg class="svg-icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`,
+            trash: `<svg class="svg-icon" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`,
+            caret: `<svg class="svg-icon" viewBox="0 0 24 24" style="width:14px; height:14px;"><polyline points="6 9 12 15 18 9"/></svg>`,
+            grip: `<svg class="svg-icon" viewBox="0 0 24 24" style="width:16px; height:16px; color:#cbd5e1;"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg>`,
+            refresh: `<svg class="svg-icon" viewBox="0 0 24 24"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>`
+        };
+
+        async function init() {
+            const draft = localStorage.getItem(`catalog_draft_${currentSubject}`);
+            if (draft) {
+                dataStore = JSON.parse(draft);
+                if(collapsedUIDs.size === 0) manualCollapseAll(true);
+                else renderTree();
+            } else {
+                fetchOriginal();
+            }
+        }
+
+        async function fetchOriginal() {
+            try {
+                const url = `https://raw.githubusercontent.com/coollearningtw/cool-learning-data/refs/heads/main/${currentSubject}-catalog.json`;
+                const res = await fetch(url + '?t=' + Date.now());
+                dataStore = await res.json();
+                manualCollapseAll(true);
+            } catch (e) { console.error(e); }
+        }
+
+        function switchSubject(sub) {
+            currentSubject = sub;
+            document.querySelectorAll('.sub-btn').forEach(b => b.classList.toggle('active', b.id === (sub === 'english' ? 'btn-en' : 'btn-ch')));
+            activeUID = null;
+            collapsedUIDs.clear();
+            init();
+        }
+
+        // --- 核心渲染 ---
+        function renderTree() {
+            assignUIDs(dataStore.categories, "c_");
+            assignUIDs(dataStore.hidden_contents, "h_");
+
+            const container = document.getElementById('tree-root');
+            container.innerHTML = '';
+            
+            buildTreeHTML(dataStore.categories, container, 0, true);
+
+            const divider = document.createElement('div');
+            divider.style = "margin: 25px 0 10px; border-top: 1.5px solid #f1f5f9; padding-top: 15px; font-size: 0.7rem; color: #94a3b8; font-weight: 800; text-align: center; letter-spacing: 1px;";
+            divider.innerText = "SPECIAL / REDEEM CODES";
+            container.appendChild(divider);
+
+            buildHiddenRootHTML(container);
+        }
+
+        function assignUIDs(nodes, prefix) {
+            if(!nodes) return;
+            nodes.forEach(n => {
+                if (!n.uid) n.uid = prefix + Math.random().toString(36).substr(2, 9);
+                if (n.children) assignUIDs(n.children, prefix);
+                if (n.lessons) assignUIDs(n.lessons, prefix + "l_");
+            });
+        }
+
+        function autoCollapseAll(nodes) {
+            if (!nodes) return;
+            nodes.forEach(n => {
+                if (n.children || n.lessons) {
+                    collapsedUIDs.add(n.uid);
+                    if(n.children) autoCollapseAll(n.children);
+                }
+            });
+        }
+
+        function manualCollapseAll(isCollapse) {
+            collapsedUIDs.clear();
+            if (isCollapse) {
+                autoCollapseAll(dataStore.categories);
+                autoCollapseAll(dataStore.hidden_contents);
+            }
+            renderTree();
+        }
+
+        function buildTreeHTML(nodes, container, level, isDraggable) {
+            nodes.forEach((node) => {
+                const isFolder = !!node.children;
+                const isCollapsed = collapsedUIDs.has(node.uid);
+                const div = document.createElement('div');
+                div.className = `tree-item ${activeUID === node.uid ? 'active' : ''}`;
+                div.style.paddingLeft = (level * 22 + 10) + 'px';
+                
+                if (isDraggable) {
+                    div.draggable = true;
+                    div.ondragstart = (e) => { draggedUID = node.uid; div.classList.add('dragging'); };
+                    div.ondragend = () => { div.classList.remove('dragging'); document.querySelectorAll('.tree-item').forEach(el=>el.classList.remove('drag-over')); };
+                    div.ondragover = (e) => { e.preventDefault(); div.classList.add('drag-over'); };
+                    div.ondragleave = () => div.classList.remove('drag-over');
+                    div.ondrop = (e) => { e.preventDefault(); handleDrop(node.uid); };
+                }
+
+                let caret = isFolder ? `<div class="tree-caret ${isCollapsed ? 'collapsed' : ''}" onclick="event.stopPropagation(); toggleCollapse('${node.uid}')">${SVGS.caret}</div>` : `<div style="width:22px"></div>`;
+                
+                div.innerHTML = `
+                    <div class="drag-handle">${SVGS.grip}</div>
+                    ${caret}
+                    <div class="tree-icon">${isFolder ? SVGS.folder : SVGS.file}</div>
+                    <div class="tree-name">${node.name}</div>
+                    <div class="item-actions">
+                        ${isFolder ? `<button class="action-btn" onclick="event.stopPropagation(); quickAdd('${node.uid}', 'folder')" title="子目錄">${SVGS.folder}</button>` : ''}
+                        ${isFolder ? `<button class="action-btn" onclick="event.stopPropagation(); quickAdd('${node.uid}', 'lesson')" title="課程">${SVGS.file}</button>` : ''}
+                        <button class="action-btn delete" onclick="event.stopPropagation(); deleteNodeByUID('${node.uid}')">${SVGS.trash}</button>
+                    </div>
+                `;
+                
+                div.onclick = () => { activeUID = node.uid; renderTree(); editCategoryNode(node); };
+                container.appendChild(div);
+
+                if (isFolder && !isCollapsed) {
+                    buildTreeHTML(node.children, container, level + 1, isDraggable);
+                }
+            });
+        }
+
+        function buildHiddenRootHTML(container) {
+            const hRoot = document.createElement('div');
+            hRoot.className = `tree-item ${activeUID === 'hidden_root' ? 'active' : ''}`;
+            hRoot.innerHTML = `<div style="width:22px"></div><div class="tree-icon">${SVGS.key}</div><div class="tree-name">代碼組合總表</div><div class="item-actions"><button class="action-btn" onclick="event.stopPropagation(); addHiddenCode()">${SVGS.plus}</button></div>`;
+            hRoot.onclick = () => { activeUID = 'hidden_root'; renderTree(); editHiddenRoot(); };
+            container.appendChild(hRoot);
+
+            dataStore.hidden_contents.forEach((h) => {
+                const isCollapsed = collapsedUIDs.has(h.uid);
+                const hNode = document.createElement('div');
+                hNode.className = `tree-item ${activeUID === h.uid ? 'active' : ''}`;
+                hNode.style.paddingLeft = "25px";
+                hNode.innerHTML = `
+                    <div class="tree-caret ${isCollapsed ? 'collapsed' : ''}" onclick="event.stopPropagation(); toggleCollapse('${h.uid}')">${SVGS.caret}</div>
+                    <div class="tree-icon">${SVGS.folder}</div>
+                    <div class="tree-name" style="color:#6d28d9">${h.name} (${h.code})</div>
+                    <div class="item-actions">
+                        <button class="action-btn" onclick="event.stopPropagation(); addLessonToHiddenByUID('${h.uid}')">${SVGS.file}</button>
+                        <button class="action-btn delete" onclick="event.stopPropagation(); deleteHiddenByUID('${h.uid}')">${SVGS.trash}</button>
+                    </div>
+                `;
+                hNode.onclick = () => { activeUID = h.uid; renderTree(); editHiddenCodeNode(h); };
+                container.appendChild(hNode);
+
+                if (!isCollapsed && h.lessons) {
+                    h.lessons.forEach((l) => {
+                        const lNode = document.createElement('div');
+                        lNode.className = `tree-item ${activeUID === l.uid ? 'active' : ''}`;
+                        lNode.style.paddingLeft = "55px";
+                        lNode.innerHTML = `
+                            <div style="width:22px"></div>
+                            <div class="tree-icon">${SVGS.file}</div>
+                            <div class="tree-name">${l.source || '未設定'} L${l.lesson}</div>
+                            <div class="item-actions">
+                                <button class="action-btn delete" onclick="event.stopPropagation(); removeHiddenLessonByUID('${l.uid}')">${SVGS.trash}</button>
+                            </div>
+                        `;
+                        lNode.onclick = () => { activeUID = l.uid; renderTree(); editHiddenLessonNode(l, h); };
+                        container.appendChild(lNode);
+                    });
+                }
+            });
+        }
+
+        // --- 編輯面板 ---
+        function editCategoryNode(node) {
+            const isFolder = !!node.children;
+            const container = document.getElementById('editor-form');
+            container.innerHTML = `
+                <div class="type-pill ${isFolder ? 'pill-folder' : 'pill-lesson'}">${isFolder ? '資料夾 FOLDER' : '課程項目 LESSON'}</div>
+                <div class="form-group"><label>顯示標題</label><input type="text" class="form-control" value="${node.name}" oninput="updateField('name', this.value)"></div>
+                ${!isFolder ? `
+                    <div class="form-group"><label>Source (版本名稱)</label><input type="text" class="form-control" value="${node.source || ''}" oninput="updateField('source', this.value)"></div>
+                    <div class="form-group"><label>Lesson (課次序號)</label><input type="number" class="form-control" value="${node.lesson || ''}" oninput="updateField('lesson', parseInt(this.value))"></div>
+                ` : ''}
+            `;
+        }
+
+        function editHiddenRoot() {
+            document.getElementById('editor-form').innerHTML = `<div class="type-pill pill-code">兌換代碼管理</div><h3>建立下載代碼包</h3><p style="color:#64748b">一個 Code 可綁定多個課程，輸入後會一次性加入書架。</p><button class="btn-add" style="background:#0b76d1; color:#fff; padding:12px 25px; border:none; border-radius:10px; cursor:pointer;" onclick="addHiddenCode()">+ 新增序號組合</button>`;
+        }
+
+        function editHiddenCodeNode(h) {
+            document.getElementById('editor-form').innerHTML = `
+                <div class="type-pill pill-code">序號組合設定</div>
+                <div class="form-group"><label>組合名稱</label><input type="text" class="form-control" value="${h.name}" oninput="updateHiddenField('name', this.value)"></div>
+                <div class="form-group">
+                    <label>領取代碼 (CODE)</label>
+                    <div class="input-with-btn">
+                        <input type="text" id="inp-hidden-code" class="form-control" style="font-family:monospace; text-transform:uppercase" value="${h.code}" oninput="updateHiddenField('code', this.value.toUpperCase())">
+                        <button class="btn-input-action" onclick="generateRandomCode()" title="隨機生成 12 碼">${SVGS.refresh}</button>
+                    </div>
+                </div>
+                <button class="action-btn" style="width:100%; height:45px; background:#0b76d1; color:#fff; border:none; border-radius:10px; font-weight:bold; cursor:pointer; margin-top:10px" onclick="addLessonToHiddenByUID('${h.uid}')">+ 為此組合新增課程</button>
+            `;
+        }
+
+        function editHiddenLessonNode(l, parentH) {
+            document.getElementById('editor-form').innerHTML = `
+                <div class="type-pill pill-lesson">組合內容</div>
+                <p style="color:#94a3b8; font-size:0.85rem">所屬組合：${parentH.name}</p>
+                <div class="form-group"><label>資料庫版本 (Source)</label><input type="text" class="form-control" value="${l.source || ''}" oninput="updateHiddenLessonField('source', this.value)"></div>
+                <div class="form-group"><label>課次 (Lesson)</label><input type="number" class="form-control" value="${l.lesson || ''}" oninput="updateHiddenLessonField('lesson', parseInt(this.value))"></div>
+            `;
+        }
+
+        // --- 功能功能 ---
+        function generateRandomCode() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let result = '';
+            for (let i = 0; i < 12; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            const input = document.getElementById('inp-hidden-code');
+            if(input) input.value = result;
+            updateHiddenField('code', result);
+        }
+
+        function updateField(f,v) { const n = findNode(dataStore.categories, activeUID); if(n){ n[f]=v; sync(); if(f==='name') renderTree(); }}
+        function updateHiddenField(f,v) { const h = dataStore.hidden_contents.find(x=>x.uid===activeUID); if(h){ h[f]=v; sync(); if(f==='name' || f==='code') renderTree(); }}
+        function updateHiddenLessonField(f,v) { dataStore.hidden_contents.forEach(h => { const l = h.lessons.find(lx=>lx.uid===activeUID); if(l){ l[f]=v; sync(); renderTree(); }});}
+
+        function toggleCollapse(uid) { if(collapsedUIDs.has(uid)) collapsedUIDs.delete(uid); else collapsedUIDs.add(uid); renderTree(); }
+        
+        function quickAdd(pUID, type) {
+            const p = findNode(dataStore.categories, pUID);
+            const newNode = { name: type==='folder'?'新目錄':'新課次', uid:'c_'+Math.random().toString(36).substr(2,9) };
+            if(type==='folder') { newNode.children = []; collapsedUIDs.delete(pUID); } else { newNode.source=""; newNode.lesson=1; }
+            p.children.push(newNode); sync(); renderTree();
+        }
+
+        function addRootFolder() { dataStore.categories.push({ name:"新根目錄", uid:'c_'+Math.random().toString(36).substr(2,9), children:[] }); sync(); renderTree(); }
+        function addHiddenCode() { dataStore.hidden_contents.push({ name:"新序號包", code:"SECRET", uid:"h_"+Math.random().toString(36).substr(2,9), lessons:[] }); sync(); renderTree(); }
+        function addLessonToHiddenByUID(uid) { 
+            const h = dataStore.hidden_contents.find(x => x.uid === uid);
+            h.lessons.push({ source:"", lesson:1, uid:"hl_"+Math.random().toString(36).substr(2,9) }); 
+            collapsedUIDs.delete(uid); 
+            sync(); renderTree(); 
+        }
+
+        function deleteNodeByUID(uid) { if(!confirm("確定刪除？")) return; const remove=(arr)=>{const idx=arr.findIndex(n=>n.uid===uid); if(idx!==-1){arr.splice(idx,1);return true;} return arr.some(n=>n.children&&remove(n.children));}; remove(dataStore.categories); sync(); renderTree(); }
+        function deleteHiddenByUID(uid) { if(!confirm("刪除組合？")) return; dataStore.hidden_contents=dataStore.hidden_contents.filter(x=>x.uid !== uid); sync(); renderTree(); }
+        function removeHiddenLessonByUID(uid) { dataStore.hidden_contents.forEach(h=>h.lessons=h.lessons.filter(l=>l.uid!==uid)); sync(); renderTree(); }
+
+        function handleDrop(targetUID) {
+            if(draggedUID===targetUID) return;
+            const root = dataStore.categories;
+            let sNode, sArr, tArr;
+            const findInfo=(arr)=>{
+                const idx=arr.findIndex(n=>n.uid===draggedUID); if(idx!==-1){ sNode=arr[idx]; sArr=arr; }
+                if(arr.findIndex(n=>n.uid===targetUID)!==-1) tArr=arr;
+                arr.forEach(n=>n.children && findInfo(n.children));
+            };
+            findInfo(root);
+            if(sArr === tArr){ const sIdx=sArr.findIndex(n=>n.uid===draggedUID), tIdx=tArr.findIndex(n=>n.uid===targetUID); sArr.splice(sIdx,1); sArr.splice(tIdx,0,sNode); sync(); renderTree(); }
+        }
+
+        function findNode(nodes, uid) { for(let n of nodes){ if(n.uid===uid) return n; if(n.children){ let f=findNode(n.children, uid); if(f) return f; }} return null; }
+        function sync() { localStorage.setItem(`catalog_draft_${currentSubject}`, JSON.stringify(dataStore)); const s=document.getElementById('save-status'); s.style.opacity='1'; setTimeout(()=>s.style.opacity='0', 1000); }
+        function resetData() { if(confirm("重置暫存？")) { localStorage.removeItem(`catalog_draft_${currentSubject}`); location.reload(); } }
+        function showJSON() {
+            const clean = (arr) => arr.map(({uid, ...rest}) => { if(rest.children) rest.children = clean(rest.children); if(rest.lessons) rest.lessons = clean(rest.lessons); return rest; });
+            document.getElementById('json-output').value = JSON.stringify({ categories: clean(dataStore.categories), hidden_contents: clean(dataStore.hidden_contents) }, null, 2);
+            document.getElementById('json-modal').style.display = 'flex';
+        }
+
+        init();
+    </script>
+</body>
+</html>

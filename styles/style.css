@@ -201,3 +201,40 @@ body {
     letter-spacing: 0;
     vertical-align: baseline;
 }
+
+/* Annotation (anno-link) styling rules */
+.anno-link { cursor: pointer; text-decoration: none; color: inherit; }
+.anno-link .anno-no { font-size: 0.75em; margin-left: 0.2em; }
+
+/* 1) 當 data-id 為數字：主文字為黑色粗體，數字/上標為藍色 */
+.anno-id-num { font-weight: 800; color: #000 !important; }
+.anno-id-num .anno-no { color: var(--primary); }
+
+/* 2) 當標示為星號：整體黑色且斜體 */
+.anno-asterisk { color: #000 !important; font-style: italic; font-weight: 800; }
+.anno-asterisk .anno-no { color: #000 !important; font-weight: 800; }
+
+/* If an element is both asterisk-marked and multi/grouped, asterisk wins: black + bold (still italic)
+   This overrides the blue-group rules above. */
+.anno-asterisk.anno-multi, .anno-asterisk.anno-group, .anno-asterisk.anno-id-num {
+    color: #000 !important;
+    font-weight: 800;
+    font-style: italic;
+}
+.anno-asterisk.anno-multi .anno-no, .anno-asterisk.anno-group .anno-no, .anno-asterisk.anno-id-num .anno-no {
+    color: #000 !important;
+    font-weight: 800;
+}
+
+/* Ensure English-specific chips with asterisk also visually override other styles */
+.word-chip.anno-asterisk, .example-word.anno-asterisk, .example-word-self.anno-asterisk,
+span.anno-link.anno-asterisk {
+    color: #000 !important;
+    font-weight: 800 !important;
+    font-style: italic !important;
+}
+
+/* 3) 多字或同一 id 跨標籤群組：整體藍色粗體 */
+.anno-multi, .anno-group { color: var(--primary) !important; font-weight: 800; }
+.anno-multi .anno-no, .anno-group .anno-no { color: var(--primary) !important; }
+

@@ -110,7 +110,9 @@
         .insert-line { height: 1px; background: #94a3b8; flex: 1; }
         .insert-btn-text { background: #64748b; color: #fff; font-size: 11px; padding: 2px 10px; border-radius: 10px; font-weight: bold; margin: 0 10px; }
         
-        .data-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px; border: 1px solid #f1f3f5; border-radius: 6px; background: #fff; margin-bottom: 5px; }
+        .data-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px; border: 1px solid #f1f3f5; border-radius: 6px; background: #fff; margin-bottom: 5px; transition: background 0.2s, border-color 0.2s, box-shadow 0.2s; }
+        .data-item.drag-over { border-color: #0b76d1; background: #eff6ff; box-shadow: inset 0 0 0 1px rgba(15, 118, 209, 0.15); }
+        .data-item.dragging { opacity: 0.6; }
         .editable-cell { padding: 8px 10px; border-radius: 4px; cursor: text; min-height: 36px; border: 1px solid transparent; transition: 0.2s; }
         .editable-cell:hover { background: #f8fafc; border-color: #e2e8f0; }
         
@@ -242,6 +244,7 @@
     <script>
         let currentMode = 'words', dataStore = { words: { sources: [] }, textbook: { sources:[] } }, expandedKeys = new Set();
         let draggedSourceIdx = null; // 記錄拖拽中的版本索引
+        let draggedItemInfo = null; // 記錄拖拽中的單字/句子
         let currentVocabLesson = null;
 
         const POS_LIST = ["n.", "n. [C]", "n. [U]", "n. [C][U]", "v.", "vi.", "vt.", "adj.", "adv.", "prep.", "conj.", "pron.", "int.", "phr."];
@@ -301,23 +304,28 @@
 
         // --- 拖曳排序事件處理 ---
         function handleDragStart(e, index) {
-            // 修改：僅允許透過 .drag-handle 觸發拖曳
-            if (!e.target.closest('.drag-handle')) {
-                e.preventDefault();
-                return;
-            }
             draggedSourceIdx = index;
-            e.currentTarget.classList.add('dragging');
+            const root = e.target.closest('.source-block');
+            if (root) root.classList.add('dragging');
             e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', String(index));
+        }
+
+        function handleDragEnd(e) {
+            const root = e.target.closest('.source-block');
+            if (root) root.classList.remove('dragging');
         }
 
         function handleDragOver(e) {
             e.preventDefault();
-            e.currentTarget.classList.add('drag-over');
+            e.dataTransfer.dropEffect = 'move';
+            const root = e.currentTarget.closest('.source-block');
+            if (root) root.classList.add('drag-over');
         }
 
         function handleDragLeave(e) {
-            e.currentTarget.classList.remove('drag-over');
+            const root = e.currentTarget.closest('.source-block');
+            if (root) root.classList.remove('drag-over');
         }
 
         function handleDrop(e, targetIdx) {
@@ -327,12 +335,88 @@
 
             const db = currentMode === 'words' ? dataStore.words : dataStore.textbook;
             const [movedItem] = db.sources.splice(draggedSourceIdx, 1);
-            db.sources.splice(targetIdx, 0, movedItem);
+            let insertIdx = targetIdx;
+            if (draggedSourceIdx < targetIdx) insertIdx = targetIdx - 1;
+
+            const rect = e.currentTarget.getBoundingClientRect();
+            const shouldInsertAfter = e.clientY - rect.top > rect.height / 2;
+            if (shouldInsertAfter) insertIdx += 1;
+
+            if (insertIdx < 0) insertIdx = 0;
+            if (insertIdx > db.sources.length) insertIdx = db.sources.length;
+            db.sources.splice(insertIdx, 0, movedItem);
 
             expandedKeys.clear(); // 避免索引混亂，重置展開狀態
             sync();
             render();
             draggedSourceIdx = null;
+        }
+
+        function handleItemDragStart(e, sIdx, lIdx, iIdx) {
+            draggedItemInfo = { sIdx, lIdx, iIdx };
+            const row = e.target.closest('.data-item');
+            if (row) row.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', 'item');
+            e.stopPropagation();
+        }
+
+        function handleItemDragEnd(e) {
+            const row = e.target.closest('.data-item');
+            if (row) row.classList.remove('dragging');
+            draggedItemInfo = null;
+            e.stopPropagation();
+        }
+
+        function handleItemDragOver(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.dataTransfer.dropEffect = 'move';
+            const row = e.currentTarget.closest('.data-item');
+            if (row) row.classList.add('drag-over');
+        }
+
+        function handleItemDragEnter(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const row = e.currentTarget.closest('.data-item');
+            if (row) row.classList.add('drag-over');
+        }
+
+        function handleItemDragLeave(e) {
+            e.stopPropagation();
+            const row = e.currentTarget.closest('.data-item');
+            if (row) row.classList.remove('drag-over');
+        }
+
+        function handleItemDrop(e, sIdx, lIdx, targetIdx) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.currentTarget.classList.remove('drag-over');
+            if (!draggedItemInfo) return;
+            if (draggedItemInfo.sIdx !== sIdx || draggedItemInfo.lIdx !== lIdx) return;
+            if (draggedItemInfo.iIdx === targetIdx) return;
+
+            const db = currentMode === 'words' ? dataStore.words : dataStore.textbook;
+            const lesson = db.sources[sIdx].lessons[lIdx];
+            const arr = currentMode === 'words' ? lesson.vocabulary : lesson.sentences;
+            if (!Array.isArray(arr)) return;
+
+            const [movedItem] = arr.splice(draggedItemInfo.iIdx, 1);
+            let insertIdx = targetIdx;
+            if (draggedItemInfo.iIdx < targetIdx) insertIdx = targetIdx - 1;
+
+            const rect = e.currentTarget.getBoundingClientRect();
+            const shouldInsertAfter = e.clientY - rect.top > rect.height / 2;
+            if (shouldInsertAfter) insertIdx += 1;
+
+            if (insertIdx < 0) insertIdx = 0;
+            if (insertIdx > arr.length) insertIdx = arr.length;
+            arr.splice(insertIdx, 0, movedItem);
+
+            sync();
+            render();
+            draggedItemInfo = null;
         }
 
         function escapeHtml(value) { return String(value||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
@@ -345,17 +429,19 @@
                 const srcEl = document.createElement('div'); 
                 srcEl.className = `source-block ${expandedKeys.has(srcKey)?'expanded':''}`;
                 
-                // 設置拖曳屬性
-                srcEl.draggable = true;
-                srcEl.ondragstart = (e) => handleDragStart(e, sIdx);
+                // 只讓左側把手可拖曳，避免區塊內容觸發拖曳
+                srcEl.draggable = false;
                 srcEl.ondragover = (e) => handleDragOver(e);
                 srcEl.ondragleave = (e) => handleDragLeave(e);
                 srcEl.ondrop = (e) => handleDrop(e, sIdx);
-                srcEl.ondragend = (e) => e.currentTarget.classList.remove('dragging');
+                srcEl.ondragend = (e) => {
+                    const root = e.currentTarget.closest('.source-block');
+                    if (root) root.classList.remove('dragging');
+                };
 
                 srcEl.innerHTML = `<div class="accordion-header" onclick="toggleKey('${srcKey}')">
                     <div style="font-weight:600;display:flex;align-items:center;gap:8px;">
-                        <span class="drag-handle" style="color:#cbd5e1;">${ICONS.drag}</span>
+                        <span class="drag-handle" style="color:#cbd5e1;" draggable="true" ondragstart="handleDragStart(event, ${sIdx})" ondragend="handleDragEnd(event)">${ICONS.drag}</span>
                         ${ICONS.folder} ${src.name}
                     </div>
                     <div style="display:flex;gap:5px;">
@@ -390,7 +476,7 @@
                             </div>
                         <div style="display:${expandedKeys.has(lKey)?'block':'none'};padding:10px;">
                             ${createInsertBarHtml(sIdx, lIdx, 0)}
-                            ${items.map((item, iIdx) => `<div class="data-item"><div class="drag-handle" style="color:#e2e8f0;">${ICONS.drag}</div><div style="flex:1">
+                            ${items.map((item, iIdx) => `<div class="data-item" ondragenter="handleItemDragEnter(event)" ondragover="handleItemDragOver(event)" ondragleave="handleItemDragLeave(event)" ondrop="handleItemDrop(event, ${sIdx}, ${lIdx}, ${iIdx})"><div class="drag-handle" style="color:#e2e8f0;" draggable="true" ondragstart="handleItemDragStart(event, ${sIdx}, ${lIdx}, ${iIdx})" ondragend="handleItemDragEnd(event)" onmousedown="event.stopPropagation()">${ICONS.drag}</div><div style="flex:1">
                                 ${currentMode === 'words' ? `<div style="display:grid;grid-template-columns:180px 100px 1fr;gap:10px"><div class="editable-cell" style="font-weight:bold" onclick="startEdit(this,${sIdx},${lIdx},${iIdx},'word')">${parseMarkdown(item.word)}</div><div class="editable-cell cell-pos" onclick="startEdit(this,${sIdx},${lIdx},${iIdx},'pos')">${item.pos||'(Pos)'}</div><div class="editable-cell" onclick="startEdit(this,${sIdx},${lIdx},${iIdx},'chinese')">${parseMarkdown(item.chinese)}</div></div>
 ${item.pos === 'phr.' ? `
     <div style="margin-top:10px; background:#f8fafc; padding:10px; border-radius:6px; border:1px solid #e2e8f0;">
@@ -456,13 +542,13 @@ ${item.pos === 'phr.' ? `
 
             if (useInput) {
                 const inputClass = (f === 'title' || f === 'name') ? 'inline-input inline-input-title' : 'inline-input';
-                el.innerHTML = `<input type=\"text\" class=\"${inputClass}\" value=\"${rawVal||''}\">`;
+                el.innerHTML = `<input type="text" class="${inputClass}" value="${rawVal||''}" onclick="event.stopPropagation()" onmousedown="event.stopPropagation()">`;
                 if (f === 'pos') {
                     const input = el.querySelector('input');
                     input.addEventListener('focus', function(e) { hidePosPopover(); showPosPopover(input, s, l, i); });
                 }
             } else {
-                el.innerHTML = `<textarea class=\"inline-textarea\">${rawVal||''}</textarea>`;
+                el.innerHTML = `<textarea class="inline-textarea" onclick="event.stopPropagation()" onmousedown="event.stopPropagation()">${rawVal||''}</textarea>`;
             }
 
             const inputEl = el.querySelector('input, textarea');
@@ -483,6 +569,8 @@ ${item.pos === 'phr.' ? `
             inputEl.addEventListener('input', () => save());
             inputEl.addEventListener('keydown', (e) => { if(e.key === 'Enter') { e.preventDefault(); save(); inputEl.blur(); } });
             inputEl.addEventListener('focus', () => { if (f !== 'pos') hidePosPopover(); });
+            inputEl.addEventListener('mousedown', (e) => e.stopPropagation());
+            inputEl.addEventListener('click', (e) => e.stopPropagation());
             inputEl.addEventListener('blur', () => {
                 el.classList.remove('editing-cell');
                 let val2 = inputEl.value;

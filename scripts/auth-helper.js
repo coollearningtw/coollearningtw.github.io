@@ -15,7 +15,7 @@
     // 計算相對路徑首碼
     function getRootPrefix() {
         const path = window.location.pathname;
-        const subfolders = ['/tools/', '/english/', '/chinese/', '/japanese/', '/chess/', '/science/', '/admin/', '/auth/'];
+        const subfolders = ['/tools/', '/english/', '/chinese/', '/japanese/', '/chess/', '/science/', '/community/', '/admin/', '/auth/'];
         for (const folder of subfolders) {
             if (path.includes(folder)) return '../';
         }

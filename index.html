@@ -210,14 +210,21 @@
             <img src="images/logo.png" alt="Logo" height="50px">
             <img src="images/logo_text.png" alt="酷學習" height="28" class="logo-text">
             <!-- 將指南移至左側，避免被 auth-helper.js 覆蓋 -->
-            <a href="guide/index.html" class="guide-link" style="font-weight:bold; color:var(--primary,#0b76d1); margin-left:15px; font-size: 0.95rem; text-decoration: none;">使用指南</a>
+            <!--<a href="guide/index.html" class="guide-link" style="font-weight:bold; color:var(--primary,#0b76d1); margin-left:15px; font-size: 0.95rem; text-decoration: none;">使用指南</a>-->
         </div>
         
         <div style="display: flex; align-items: center; margin-left: auto;">
             <!-- 右側由 auth-helper.js 自動渲染登入資訊 -->
             <div class="header-right" id="auth-header-right"></div>
 
-            <!-- 公告手動觸發按鈕：置於頭像右側 -->
+            <!-- 廣場快速入口：新增於公告左側 -->
+            <a href="community/index.html" class="btn-tool-icon" title="酷學習廣場" style="margin-left: 8px; color: var(--primary);">
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+            </a>
+
+            <!-- 公告手動觸發按鈕 -->
             <button class="btn-tool-icon" onclick="window.loadAndShowAnnouncements(true)" title="查看最新公告" style="margin-left: 8px;">
                 <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
                     <path d="M20 3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 14H5v-2h6v2zm8-4H5V7h14v6z"/>
@@ -248,7 +255,10 @@
                 <a href="chinese/chinese.html" class="subject-card top-row">
                     <div class="card-tag" style="background: #e74c3c;">NEW</div>
                     <div class="subject-icon">
-                        <svg viewBox="0 0 24 24" fill="#e74c3c"><path d="M3 3v17a1 1 0 001 1h17v-2H5V3H3m15.25 6.75c.41-.41.41-1.09 0-1.5l-1.5-1.5c-.41-.41-1.09-.41-1.5 0l-8.25 8.25V18h2.25l8.25-8.25m-8.5 5l-3 3 3 3h10v-6h-10z"/></svg>
+                       <svg viewBox="0 0 24 24" fill="#e74c3c">
+                           <path d="M12 20h9" stroke="#e74c3c" stroke-width="2" stroke-linecap="round" fill="none"></path>
+                           <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                       </svg>
                     </div>
                     <span class="subject-name">國文</span>
                 </a>
@@ -334,8 +344,19 @@
     </h2>
     <div class="main-layout" style="margin-top: 0;">
         <div style="width: 100%; display: flex; gap: 20px; flex-wrap: wrap;">
+            <!-- 酷學習廣場 -->
+            <a href="community/index.html" class="subject-card" style="flex: 1; min-width: 280px; flex-direction: row; justify-content: flex-start; gap: 20px; height: auto; padding: 25px;">
+                <div class="card-tag" style="background: #f59e0b;">HOT</div>
+                <div class="subject-icon" style="background: #fffcf0; padding: 15px; border-radius: 16px; margin: 0; display:flex; align-items:center; justify-content:center;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin:0; width:40px; height:40px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                </div>
+                <div style="text-align: left;">
+                    <div style="font-size: 1.3rem; font-weight: bold; color: #d97706; margin-bottom: 5px;">酷學習廣場</div>
+                    <div style="color: #64748b; font-size: 0.95rem;">學習交流、分享心得與官方動態</div>
+                </div>
+            </a>
             <!-- 虛擬筆記本 -->
-            <a href="tools/notebook.html" class="subject-card" style="flex: 1; min-width: 250px; flex-direction: row; justify-content: flex-start; gap: 20px; height: auto; padding: 25px;">
+            <a href="tools/notebook.html" class="subject-card" style="flex: 1; min-width: 280px; flex-direction: row; justify-content: flex-start; gap: 20px; height: auto; padding: 25px;">
                 <div class="card-tag" style="background: #db2777;">NEW</div>
                 <div class="subject-icon" style="background: #fdf2f8; padding: 15px; border-radius: 16px; margin: 0;">
                     <svg viewBox="0 0 24 24" fill="#db2777" style="width:40px; height:40px; margin:0;"><path d="M3 3v18h18V3H3zm16 16H5V5h14v14zm-2-8H7v-2h10v2zm-4 4H7v-2h6v2z"/></svg>
@@ -346,7 +367,7 @@
                 </div>
             </a>
             <!-- 英文對戰 -->
-            <a href="english/english-battle.html" class="subject-card" style="flex: 1; min-width: 250px; flex-direction: row; justify-content: flex-start; gap: 20px; height: auto; padding: 25px;">
+            <a href="english/english-battle.html" class="subject-card" style="flex: 1; min-width: 280px; flex-direction: row; justify-content: flex-start; gap: 20px; height: auto; padding: 25px;">
                 <div class="card-tag" style="background: #ef4444;">NEW</div>
                 <div class="subject-icon" style="background: #fef2f2; padding: 15px; border-radius: 16px; margin: 0; display:flex; align-items:center; justify-content:center;">
                     <span style="font-size:2rem; font-weight:bold; color:#ef4444; font-family:'Cinzel', sans-serif;">VS</span>

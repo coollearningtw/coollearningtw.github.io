@@ -29,6 +29,10 @@ function filterWords(sources, selectedLessons) {
 
 // 文字轉語音 (TTS)
 function speak(text, onEndCallback, rate = 1) {
+    try {
+        if (window.__suppressSpeak) { if (onEndCallback) onEndCallback(); return; }
+        if (window.__lastAnnoClick && (Date.now() - window.__lastAnnoClick) < 800) { if (onEndCallback) onEndCallback(); return; }
+    } catch (e) {}
     if (!window.speechSynthesis) return;
     window.speechSynthesis.cancel(); // 停止當前
 
